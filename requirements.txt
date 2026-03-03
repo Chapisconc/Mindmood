@@ -1,0 +1,27 @@
+# ─── Diario Personal Inteligente — Dependencias ───────────────────────────
+# Python 3.10+
+# Instalar con: pip install -r requirements.txt
+
+# ─── NLP y Análisis de Sentimientos ───────────────────────────────────────
+# Motor principal: pysentimiento (RoBERTuito) - análisis en español
+pysentimiento>=0.7.0
+
+# Backend de transformers (CPU por defecto)
+torch>=2.0.0
+
+# Tokenización de oraciones
+nltk>=3.8.1
+
+# ─── Datos y Matemáticas ─────────────────────────────────────────────────
+numpy>=1.26.0
+pandas>=2.1.0
+
+# ─── Visualización ───────────────────────────────────────────────────────
+matplotlib>=3.8.0
+
+# ─── Interfaz Web ───────────────────────────────────────────────────────
+streamlit>=1.32.0
+
+# ─── Base de datos ───────────────────────────────────────────────────────
+# sqlite3 - incluido en Python stdlib (no requiere instalación)
+
