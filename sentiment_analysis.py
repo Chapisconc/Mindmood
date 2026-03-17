@@ -60,10 +60,13 @@ SISTEMA DE PUNTUACIÓN PROPIO (CustomMoodScore) — SIN CAMBIOS
 
 import math
 import numpy as np
-from functools import lru_cache
+import streamlit as st
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 from pysentimiento import create_analyzer
 
+from text_preprocessing import fnPreprocessText
 from text_processing import (
     split_into_sentences,
     extract_emotional_keywords,
@@ -120,25 +123,18 @@ EMOTION_COLORS = {
 }
 
 
-# ─── Carga lazy de modelos (se descargan sólo cuando se usan por primera vez) ─
-# Se usa un dict global para que el modelo persista entre llamadas en Streamlit.
-
-_models: dict = {}
-
+@st.cache_resource
 def _get_sentiment_analyzer():
-    """Retorna el analizador de sentimiento (carga lazy, singleton)."""
-    if "sentiment" not in _models:
-        _models["sentiment"] = create_analyzer(task="sentiment", lang="es")
-    return _models["sentiment"]
+    """Retorna el analizador de sentimiento (cache Streamlit)."""
+    return create_analyzer(task="sentiment", lang="es")
 
+@st.cache_resource  
 def _get_emotion_analyzer():
-    """Retorna el analizador de emociones (carga lazy, singleton)."""
-    if "emotion" not in _models:
-        try:
-            _models["emotion"] = create_analyzer(task="emotion", lang="es")
-        except Exception:
-            _models["emotion"] = None  # modelo de emociones opcional
-    return _models["emotion"]
+    """Retorna el analizador de emociones (cache Streamlit)."""
+    try:
+        return create_analyzer(task="emotion", lang="es")
+    except Exception:
+        return None
 
 
 # ─── API pública ──────────────────────────────────────────────────────────────
