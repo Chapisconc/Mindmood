@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function EmotionModal({ visible, onClose, type, summary, navigation }) {
+export default function EmotionModal({ visible, onClose, type, summary, distribution, navigation }) {
   const isCrisis = type === 'crisis';
 
   const handleClose = () => {
@@ -12,6 +12,20 @@ export default function EmotionModal({ visible, onClose, type, summary, navigati
 
   const handleCall = (number) => {
     Linking.openURL(`tel:${number}`);
+  };
+
+  const renderDistribution = () => {
+    if (!distribution || Object.keys(distribution).length <= 1) return null;
+    
+    return (
+      <View style={styles.distributionContainer}>
+        {Object.entries(distribution).map(([name, percentage], index) => (
+          <View key={index} style={styles.distBadge}>
+            <Text style={styles.distText}>{name}: {percentage}%</Text>
+          </View>
+        ))}
+      </View>
+    );
   };
 
   return (
@@ -35,8 +49,11 @@ export default function EmotionModal({ visible, onClose, type, summary, navigati
 
           {/* Title */}
           <Text style={[styles.title, isCrisis ? styles.crisisTitle : styles.normalTitle]}>
-            {isCrisis ? 'No estas solo' : 'Diario Guardado'}
+            {isCrisis ? 'No estás solo' : 'Análisis Completado'}
           </Text>
+
+          {/* Distribution */}
+          {!isCrisis && renderDistribution()}
 
           {/* Divider */}
           <View style={[styles.divider, isCrisis ? styles.crisisDivider : styles.normalDivider]} />
@@ -44,8 +61,8 @@ export default function EmotionModal({ visible, onClose, type, summary, navigati
           {/* Message */}
           <Text style={styles.message}>
             {isCrisis 
-              ? 'Hemos notado que estas pasando por un momento dificil. Por favor, considera hablar con alguien de confianza.'
-              : summary || 'Tu reflexion ha sido guardada correctamente.'
+              ? 'Hemos notado que estás pasando por un momento difícil. Por favor, considera hablar con alguien de confianza.'
+              : summary || 'Tu reflexión ha sido guardada correctamente.'
             }
           </Text>
 
@@ -167,6 +184,30 @@ const styles = StyleSheet.create({
   },
   crisisTitle: {
     color: '#FCA5A5',
+  },
+
+  // Distribution
+  distributionContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 16,
+    paddingHorizontal: 10,
+  },
+  distBadge: {
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.25)',
+  },
+  distText: {
+    color: '#6366F1',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
 
   // Divider

@@ -14,7 +14,7 @@ export default function NewEntryScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalData, setModalData] = useState({ type: 'normal', summary: '' });
+  const [modalData, setModalData] = useState({ type: 'normal', summary: '', distribution: null });
 
   // URL of our local AI Backend
   const API_URL = "http://192.168.1.70:8000/analyze"; 
@@ -45,7 +45,7 @@ export default function NewEntryScreen({ navigation }) {
 
     setLoading(true);
     try {
-      let aiData = { mood: 'Neutral', score: 0, requires_help: false, summary: '' };
+      let aiData = { mood: 'Neutral', score: 0, requires_help: false, summary: '', emotions_distribution: null };
 
       if (!isOffline) {
         try {
@@ -63,7 +63,7 @@ export default function NewEntryScreen({ navigation }) {
       }
 
       const { data: { user } } = await supabase.auth.getUser();
-      const { mood, score, requires_help, summary } = aiData;
+      const { mood, score, requires_help, summary, emotions_distribution } = aiData;
 
       // Save Entry
       const { error: entryError } = await supabase
@@ -80,7 +80,8 @@ export default function NewEntryScreen({ navigation }) {
 
       setModalData({
         type: requires_help ? 'crisis' : 'normal',
-        summary: isOffline ? 'Guardado localmente (Modo Offline)' : summary
+        summary: isOffline ? 'Guardado localmente (Modo Offline)' : summary,
+        distribution: emotions_distribution
       });
       setModalVisible(true);
       
@@ -171,6 +172,7 @@ export default function NewEntryScreen({ navigation }) {
         onClose={() => setModalVisible(false)}
         type={modalData.type}
         summary={modalData.summary}
+        distribution={modalData.distribution}
         navigation={navigation}
       />
     </SafeAreaView>

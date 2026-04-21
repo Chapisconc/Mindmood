@@ -6,6 +6,7 @@ from deep_translator import GoogleTranslator
 from functools import lru_cache
 import re
 import logging
+from typing import List, Dict
  
 # Configurar logging para crisis
 logging.basicConfig(level=logging.WARNING)
@@ -129,7 +130,7 @@ EMOTION_KEYWORDS = {
         'desvalido', 'desvalida', 'en peligro', 'amenazado', 'amenazada',
         'claustrofobia', 'agorafobia', 'fobia social', 'medroso', 'miedoso',
     ],
-    'Tristeza': [
+    'Triste': [
         'triste', 'tristeza', 'sad', 'deprimido', 'deprimida', 'depresión',
         'desconsolado', 'desconsolada', 'desolado', 'desolada', 'melancólico', 'melancólica',
         'pesimista', 'pesimismo', 'abatido', 'abatida', 'decaído', 'decaída',
@@ -171,6 +172,18 @@ EMOTION_KEYWORDS = {
         'insoportable', 'insoportablemente', 'no resisto más', 'me ahoga todo',
         'quiero desaparecer', 'quiero dejar de existir', 'maldigo mi existencia',
         'quisiera no haber nacido', 'me arrepiento de vivir', 'maldición',
+    ],
+    'Feliz': [
+        'feliz', 'felicidad', 'alegre', 'alegría', 'contento', 'contenta',
+        'disfrutando', 'disfruto', 'placer', 'gozo', 'gozoso', 'gozosa',
+        'sonriente', 'optimista', 'entusiasmado', 'entusiasmada', 'entusiasmo',
+        'animado', 'animada', 'buen humor', 'de buenas', 'chido', 'chingón',
+    ],
+    'Excelente': [
+        'excelente', 'increíble', 'maravilloso', 'maravillosa', 'fantástico', 'fantástica',
+        'estupendo', 'estupenda', 'genial', 'perfecto', 'perfecta', 'éxito',
+        'triunfo', 'victoria', 'eufórico', 'eufórica', 'radiante', 'espectacular',
+        'sublime', 'insuperable', 'lo mejor', 'brillante', 'magnífico', 'magnífica',
     ]
 }
  
@@ -357,12 +370,13 @@ class AnalyzeRequest(BaseModel):
  
 class AnalysisResponse(BaseModel):
     mood: str
-    all_moods: list
-    summary: str
+    all_moods: List[str]
+    emotions_distribution: Dict[str, float]
     score: float
-    requires_help: bool
     confidence: float
-    crisis_level: str  # "normal", "warning", "critical"
+    summary: str
+    requires_help: bool
+    crisis_level: str
  
 # ============================================================================
 # 🎯 GENERACIÓN DE RESUMEN MEJORADA
@@ -495,19 +509,30 @@ def analyze(data: AnalyzeRequest):
             detected_moods.append(mood_name)
     
     # Paso 6: Análisis basado en score
-    if not requires_help:  # No agregar moods si ya hay crisis
-        if compound >= 0.8:
-            detected_moods.append("Excelente")
-        elif compound >= 0.1:
-            detected_moods.append("Feliz")
-        elif compound <= -0.9:  # Ajustado de -0.8 a -0.9 para evitar falsos positivos por enojo
+    if compound >= 0.8:
+        detected_moods.append("Excelente")
+    elif compound >= 0.1:
+        detected_moods.append("Feliz")
+    elif compound <= -0.9:  # Umbral estricto para crisis genérica
+        if not any(m in ["Enojo", "Tristeza", "Ansiedad", "Miedo"] for m in detected_moods):
             detected_moods.append("Crisis")
             requires_help = True
             crisis_level = "critical"
-        elif compound <= -0.1:
-            detected_moods.append("Triste")
+    elif compound <= -0.1:
+        detected_moods.append("Triste")
     
-    # Paso 7: Determinar mood primario (Priorizando emociones específicas)
+    # Paso 7: Determinar distribución de emociones
+    distribution = {}
+    if not detected_moods:
+        distribution = {"Neutral": 100.0}
+    else:
+        # Contar ocurrencias para dar peso (basado en cuántas palabras de cada tipo hay)
+        total_found = len(detected_moods)
+        for m in set(detected_moods):
+            count = detected_moods.count(m)
+            distribution[m] = round((count / total_found) * 100, 1)
+
+    # Paso 8: Determinar mood primario (Priorizando emociones específicas)
     if not detected_moods:
         primary_mood = "Neutral"
         crisis_level = "normal"
@@ -540,7 +565,7 @@ def analyze(data: AnalyzeRequest):
         else: 
             primary_mood = detected_moods[0] if detected_moods else "Neutral"
  
-    # Paso 8: Calcular confianza
+    # Paso 9: Calcular confianza
     has_keywords = len(detected_moods) > 0
     score_confidence = min(abs(compound), 1.0)
     confidence = (score_confidence + (0.5 if has_keywords else 0.0)) / 1.5
@@ -552,7 +577,7 @@ def analyze(data: AnalyzeRequest):
         
     confidence = max(min(round(confidence, 2), 1.0), 0.1)
     
-    # Paso 9: Generar resumen
+    # Paso 10: Generar resumen
     human_summary = generate_human_summary(detected_moods, compound, requires_help)
     
     # Limpiar moods duplicados
@@ -560,7 +585,8 @@ def analyze(data: AnalyzeRequest):
     
     return AnalysisResponse(
         mood=primary_mood,
-        all_moods=detected_moods,
+        all_moods=detected_moods if detected_moods else ["Neutral"],
+        emotions_distribution=distribution,
         summary=human_summary,
         score=round(compound, 3),
         requires_help=requires_help,

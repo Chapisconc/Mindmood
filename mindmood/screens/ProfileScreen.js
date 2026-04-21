@@ -6,6 +6,7 @@ import { useTranslation } from '../i18n/I18nContext';
 import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import NoticeModal from '../components/NoticeModal';
 
 export default function ProfileScreen({ navigation }) {
   const { themeStyles } = useTheme();
@@ -15,8 +16,8 @@ export default function ProfileScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const [notice, setNotice] = useState({ visible: false, title: '', message: '', icon: 'checkmark-circle', color: '#10B981' });
   
-  // Initialize date object for picker based on 20:00 default
   const [date, setDate] = useState(new Date(new Date().setHours(20, 0, 0, 0)));
 
   useEffect(() => {
@@ -56,7 +57,6 @@ export default function ProfileScreen({ navigation }) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Use upsert to handle both insert and update cases
       const { error } = await supabase
         .from('profiles')
         .upsert({ 
@@ -74,9 +74,21 @@ export default function ProfileScreen({ navigation }) {
         await Notifications.cancelAllScheduledNotificationsAsync();
       }
 
-      Alert.alert(t('success'), t('profileUpdated'));
+      setNotice({
+        visible: true,
+        title: t('success'),
+        message: t('profileUpdated'),
+        icon: 'checkmark-circle',
+        color: '#10B981'
+      });
     } catch (error) {
-      Alert.alert('Error', error.message);
+      setNotice({
+        visible: true,
+        title: 'Error',
+        message: error.message,
+        icon: 'alert-circle',
+        color: '#EF4444'
+      });
     } finally {
       setSaving(false);
     }
@@ -85,14 +97,20 @@ export default function ProfileScreen({ navigation }) {
   const scheduleNotification = async () => {
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permiso denegado', 'No pudimos activar los recordatorios.');
+      setNotice({
+        visible: true,
+        title: 'Permiso denegado',
+        message: 'No pudimos activar los recordatorios.',
+        icon: 'notifications-off',
+        color: '#F97316'
+      });
       return;
     }
 
     await Notifications.cancelAllScheduledNotificationsAsync();
     
     await Notifications.scheduleNotificationAsync({
-      content: {
+       content: {
         title: "MindMood ❤️",
         body: lang === 'es' ? "¿Cómo te sientes hoy? No olvides registrar tu diario." : "How are you feeling today? Don't forget your log.",
       },
@@ -126,85 +144,91 @@ export default function ProfileScreen({ navigation }) {
   });
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>{t('settings')}</Text>
+    <View style={{ flex: 1, backgroundColor: themeStyles.background }}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <Text style={styles.title}>{t('settings')}</Text>
 
-      <View style={styles.section}>
-        <Text style={styles.label}>{t('displayName')}</Text>
-        <TextInput
-          style={styles.input}
-          value={displayName}
-          onChangeText={setDisplayName}
-          placeholder={lang === 'es' ? "Tu nombre" : "Your name"}
-          placeholderTextColor={themeStyles.secondaryText}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.label}>{t('languageSection')}</Text>
-        <View style={styles.langSelector}>
-          <TouchableOpacity 
-            style={[styles.langBtn, lang === 'es' && styles.langBtnActive]} 
-            onPress={() => lang !== 'es' && toggleLang()}
-          >
-            <Text style={[styles.langText, lang === 'es' && styles.langTextActive]}>🇲🇽 Español</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.langBtn, lang === 'en' && styles.langBtnActive]} 
-            onPress={() => lang !== 'en' && toggleLang()}
-          >
-            <Text style={[styles.langText, lang === 'en' && styles.langTextActive]}>🇺🇸 English</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.label}>{t('dailyReminder')}</Text>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>{t('toggleReminder')}</Text>
-          <Switch
-            value={reminderEnabled}
-            onValueChange={setReminderEnabled}
-            trackColor={{ false: "#CBD5E1", true: "#818CF8" }}
-            thumbColor={reminderEnabled ? "#6366F1" : "#F4F3F4"}
+        <View style={styles.section}>
+          <Text style={styles.label}>{t('displayName')}</Text>
+          <TextInput
+            style={styles.input}
+            value={displayName}
+            onChangeText={setDisplayName}
+            placeholder={lang === 'es' ? "Tu nombre" : "Your name"}
+            placeholderTextColor={themeStyles.secondaryText}
           />
         </View>
-        {reminderEnabled && (
-          <View>
-            <TouchableOpacity style={styles.timeDisplay} onPress={() => setShowPicker(true)}>
-              <Text style={styles.timeText}>
-                {date.getHours().toString().padStart(2, '0')}:{date.getMinutes().toString().padStart(2, '0')}
-              </Text>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>{t('languageSection')}</Text>
+          <View style={styles.langSelector}>
+            <TouchableOpacity 
+              style={[styles.langBtn, lang === 'es' && styles.langBtnActive]} 
+              onPress={() => lang !== 'es' && toggleLang()}
+            >
+              <Text style={[styles.langText, lang === 'es' && styles.langTextActive]}>🇲🇽 Español</Text>
             </TouchableOpacity>
-            
-            {(showPicker || Platform.OS === 'ios') && (
-              <DateTimePicker
-                value={date}
-                mode="time"
-                is24Hour={true}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={onChangeTime}
-              />
-            )}
-            {showPicker && Platform.OS === 'android' && (
-              <TouchableOpacity onPress={() => setShowPicker(false)} style={{alignItems: 'center', marginTop: 10}}>
-                <Text style={{color: themeStyles.accent, fontWeight: 'bold'}}>OK</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity 
+              style={[styles.langBtn, lang === 'en' && styles.langBtnActive]} 
+              onPress={() => lang !== 'en' && toggleLang()}
+            >
+              <Text style={[styles.langText, lang === 'en' && styles.langTextActive]}>🇺🇸 English</Text>
+            </TouchableOpacity>
           </View>
-        )}
-      </View>
+        </View>
 
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
-        <Text style={styles.saveButtonText}>{saving ? '...' : t('save')}</Text>
-      </TouchableOpacity>
+        <View style={styles.section}>
+          <Text style={styles.label}>{t('dailyReminder')}</Text>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>{t('toggleReminder')}</Text>
+            <Switch
+              value={reminderEnabled}
+              onValueChange={setReminderEnabled}
+              trackColor={{ false: "#CBD5E1", true: "#818CF8" }}
+              thumbColor={reminderEnabled ? "#6366F1" : "#F4F3F4"}
+            />
+          </View>
+          {reminderEnabled && (
+            <View>
+              <TouchableOpacity style={styles.timeDisplay} onPress={() => setShowPicker(true)}>
+                <Text style={styles.timeText}>
+                  {date.getHours().toString().padStart(2, '0')}:{date.getMinutes().toString().padStart(2, '0')}
+                </Text>
+              </TouchableOpacity>
+              
+              {(showPicker || Platform.OS === 'ios') && (
+                <DateTimePicker
+                  value={date}
+                  mode="time"
+                  is24Hour={true}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onChangeTime}
+                />
+              )}
+            </View>
+          )}
+        </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={async () => {
-        await supabase.auth.signOut();
-        navigation.replace('Login');
-      }}>
-        <Text style={styles.logoutText}>{t('logout')}</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
+          <Text style={styles.saveButtonText}>{saving ? '...' : t('save')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={async () => {
+          await supabase.auth.signOut();
+          navigation.replace('Login');
+        }}>
+          <Text style={styles.logoutText}>{t('logout')}</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      <NoticeModal 
+        visible={notice.visible}
+        onClose={() => setNotice({ ...notice, visible: false })}
+        title={notice.title}
+        message={notice.message}
+        icon={notice.icon}
+        color={notice.color}
+      />
+    </View>
   );
 }
