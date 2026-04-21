@@ -66,6 +66,15 @@ export default function AdminDashboardScreen({ navigation }) {
     }
   };
 
+  const getEmoji = (mood) => {
+    const map = {
+      'Excelente': '🤩', 'Feliz': '😊', 'Agradecido': '🙏', 'Sorpresa': '😲',
+      'Neutral': '😐', 'Enojo': '😠', 'Ansiedad': '😰', 'Miedo': '😨',
+      'Triste': '😔', 'Crisis': '🆘'
+    };
+    return map[mood] || '😐';
+  };
+
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: themeStyles.background },
     scroll: { padding: 20 },
@@ -87,11 +96,22 @@ export default function AdminDashboardScreen({ navigation }) {
     sectionTitle: { fontSize: 20, fontWeight: '800', color: themeStyles.text, marginBottom: 15 },
     
     alarmCard: { backgroundColor: themeStyles.card, padding: 22, borderRadius: 28, marginBottom: 18, borderWidth: 1, borderColor: themeStyles.error + '40', borderLeftWidth: 6, borderLeftColor: themeStyles.error, shadowColor: '#000', shadowOffset: {width:0, height:4}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
-    alarmHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: themeStyles.border + '20' },
-    userMail: { color: themeStyles.text, fontWeight: '800', fontSize: 15 },
-    alarmDate: { color: themeStyles.secondaryText, fontSize: 12, fontWeight: '600' },
-    alarmText: { color: themeStyles.text, fontSize: 15, lineHeight: 24, fontStyle: 'italic', fontWeight: '500' },
+    alarmHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: themeStyles.border + '20' },
+    userMail: { color: themeStyles.text, fontWeight: '800', fontSize: 14, marginBottom: 4 },
+    alarmDate: { color: themeStyles.secondaryText, fontSize: 11, fontWeight: '700' },
+    alarmTime: { color: themeStyles.error, fontSize: 11, fontWeight: '900', marginTop: 2 },
+    moodBadge: { alignItems: 'flex-end' },
+    emoji: { fontSize: 24 },
+    moodName: { fontSize: 9, fontWeight: '900', color: themeStyles.text, textTransform: 'uppercase' },
     
+    alarmText: { color: themeStyles.text, fontSize: 15, lineHeight: 24, fontStyle: 'italic', fontWeight: '500', marginBottom: 15 },
+
+    distributionContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    distBadge: { backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    primaryBadge: { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.3)' },
+    distText: { color: '#94A3B8', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
+    primaryText: { color: '#F87171' },
+
     exportBtn: { backgroundColor: themeStyles.secondaryText, padding: 16, borderRadius: 18, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10, marginBottom: 40 },
     exportBtnText: { color: themeStyles.background, fontWeight: 'bold', fontSize: 16, marginLeft: 10 }
   });
@@ -99,16 +119,16 @@ export default function AdminDashboardScreen({ navigation }) {
   if (loading) return <View style={[styles.container, { justifyContent: 'center' }]}><ActivityIndicator size="large" color={themeStyles.accent} /></View>;
 
   const chartData = stats ? [
-    { name: 'Excelente', count: stats.excellent_entries, color: themeStyles.success, legendFontColor: themeStyles.text, legendFontSize: 12 },
-    { name: 'Felices', count: stats.happy_entries, color: '#6366F1', legendFontColor: themeStyles.text, legendFontSize: 12 },
-    { name: 'Agradecido', count: stats.gratitude_entries, color: '#FACC15', legendFontColor: themeStyles.text, legendFontSize: 12 },
-    { name: 'Sorpresa', count: stats.surprise_entries, color: '#06B6D4', legendFontColor: themeStyles.text, legendFontSize: 12 },
-    { name: 'Neutral', count: stats.neutral_entries, color: themeStyles.neutral, legendFontColor: themeStyles.text, legendFontSize: 12 },
-    { name: 'Enojo', count: stats.anger_entries, color: '#F97316', legendFontColor: themeStyles.text, legendFontSize: 12 },
-    { name: 'Ansiedad', count: stats.anxiety_entries, color: '#8B5CF6', legendFontColor: themeStyles.text, legendFontSize: 12 },
-    { name: 'Miedo', count: stats.fear_entries, color: '#4B5563', legendFontColor: themeStyles.text, legendFontSize: 12 },
-    { name: 'Tristes', count: stats.sad_entries, color: '#F87171', legendFontColor: themeStyles.text, legendFontSize: 12 },
-    { name: 'Crisis', count: stats.crisis_entries, color: themeStyles.error, legendFontColor: themeStyles.text, legendFontSize: 12 }
+    { name: 'Exc', count: stats.excellent_entries, color: '#10B981', legendFontColor: themeStyles.text, legendFontSize: 10 },
+    { name: 'Fel', count: stats.happy_entries, color: '#6366F1', legendFontColor: themeStyles.text, legendFontSize: 10 },
+    { name: 'Agr', count: stats.gratitude_entries, color: '#FACC15', legendFontColor: themeStyles.text, legendFontSize: 10 },
+    { name: 'Sor', count: stats.surprise_entries, color: '#06B6D4', legendFontColor: themeStyles.text, legendFontSize: 10 },
+    { name: 'Neu', count: stats.neutral_entries, color: '#94A3B8', legendFontColor: themeStyles.text, legendFontSize: 10 },
+    { name: 'Eno', count: stats.anger_entries, color: '#F97316', legendFontColor: themeStyles.text, legendFontSize: 10 },
+    { name: 'Ans', count: stats.anxiety_entries, color: '#8B5CF6', legendFontColor: themeStyles.text, legendFontSize: 10 },
+    { name: 'Mie', count: stats.fear_entries, color: '#4B5563', legendFontColor: themeStyles.text, legendFontSize: 10 },
+    { name: 'Tri', count: stats.sad_entries, color: '#F87171', legendFontColor: themeStyles.text, legendFontSize: 10 },
+    { name: 'Cri', count: stats.crisis_entries, color: '#EF4444', legendFontColor: themeStyles.text, legendFontSize: 10 }
   ].filter(i => i.count > 0) : [];
 
   return (
@@ -147,10 +167,10 @@ export default function AdminDashboardScreen({ navigation }) {
               data={chartData}
               width={screenWidth - 80}
               height={180}
-              chartConfig={{ color: (op = 1) => themeStyles.text }}
+              chartConfig={{ color: () => themeStyles.text }}
               accessor="count"
               backgroundColor="transparent"
-              paddingLeft="0"
+              paddingLeft="15"
               center={[10, 0]}
               absolute
             />
@@ -169,15 +189,40 @@ export default function AdminDashboardScreen({ navigation }) {
         </View>
 
         <Text style={styles.sectionTitle}>Bitácora de Riesgos 🔥</Text>
-        {filteredAlarms.length > 0 ? filteredAlarms.map((item, index) => (
-          <View key={index} style={styles.alarmCard}>
-            <View style={styles.alarmHeader}>
-              <Text style={styles.userMail}>{item.student_email}</Text>
-              <Text style={styles.alarmDate}>{new Date(item.recorded_at).toLocaleDateString()}</Text>
+        {filteredAlarms.length > 0 ? filteredAlarms.map((item, index) => {
+          const dateObj = new Date(item.recorded_at);
+          const sortedMoods = item.distribution ? Object.entries(item.distribution).sort((a,b) => b[1] - a[1]) : [[item.mood, 100]];
+
+          return (
+            <View key={index} style={styles.alarmCard}>
+              <View style={styles.alarmHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.userMail} numberOfLines={1}>{item.student_email}</Text>
+                  <Text style={styles.alarmDate}>{dateObj.toLocaleDateString()}</Text>
+                  <Text style={styles.alarmTime}>
+                    <Ionicons name="time-outline" size={12} /> {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
+                <View style={styles.moodBadge}>
+                  <Text style={styles.emoji}>{getEmoji(item.mood)}</Text>
+                  <Text style={styles.moodName}>{item.mood}</Text>
+                </View>
+              </View>
+              
+              <Text style={styles.alarmText}>"{item.diary_text}"</Text>
+
+              <View style={styles.distributionContainer}>
+                {sortedMoods.map(([name], idx) => (
+                  <View key={idx} style={[styles.distBadge, name === item.mood && styles.primaryBadge]}>
+                    <Text style={[styles.distText, name === item.mood && styles.primaryText]}>
+                      {name === item.mood ? `🔥 ${name}` : name}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </View>
-            <Text style={styles.alarmText}>"{item.diary_text}"</Text>
-          </View>
-        )) : (
+          );
+        }) : (
           <Text style={{ color: themeStyles.secondaryText, textAlign: 'center', fontStyle: 'italic', marginVertical: 20 }}>No hay alertas que coincidan.</Text>
         )}
 
