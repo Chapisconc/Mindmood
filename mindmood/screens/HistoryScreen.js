@@ -51,7 +51,12 @@ export default function HistoryScreen() {
   const getEmoji = (mood) => {
     if (mood === 'Excelente') return '🤩';
     if (mood === 'Feliz') return '😊';
+    if (mood === 'Agradecido') return '🙏';
+    if (mood === 'Sorpresa') return '😲';
     if (mood === 'Neutral') return '😐';
+    if (mood === 'Enojo') return '😠';
+    if (mood === 'Ansiedad') return '😰';
+    if (mood === 'Miedo') return '😨';
     if (mood === 'Triste') return '😔';
     if (mood === 'Crisis') return '🆘';
     return '😐';

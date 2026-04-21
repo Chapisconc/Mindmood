@@ -70,9 +70,16 @@ export default function StatsScreen() {
 
   // Calculate mood distribution
   let excelente = 0, feliz = 0, triste = 0, neutral = 0, crisis = 0;
+  let agradecido = 0, sorpresa = 0, enojo = 0, ansiedad = 0, miedo = 0;
+  
   entries.forEach(e => {
     if (e.mood === 'Excelente') excelente++;
     else if (e.mood === 'Feliz') feliz++;
+    else if (e.mood === 'Agradecido') agradecido++;
+    else if (e.mood === 'Sorpresa') sorpresa++;
+    else if (e.mood === 'Enojo') enojo++;
+    else if (e.mood === 'Ansiedad') ansiedad++;
+    else if (e.mood === 'Miedo') miedo++;
     else if (e.mood === 'Triste') triste++;
     else if (e.mood === 'Crisis') crisis++;
     else neutral++;
@@ -81,7 +88,12 @@ export default function StatsScreen() {
   const pieData = [
     { name: 'Excelente', population: excelente, color: themeStyles.success, legendFontColor: themeStyles.text, legendFontSize: 12 },
     { name: 'Feliz', population: feliz, color: '#6366F1', legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Agradecido', population: agradecido, color: '#FACC15', legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Sorpresa', population: sorpresa, color: '#06B6D4', legendFontColor: themeStyles.text, legendFontSize: 12 },
     { name: 'Neutral', population: neutral, color: themeStyles.neutral, legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Enojo', population: enojo, color: '#F97316', legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Ansiedad', population: ansiedad, color: '#8B5CF6', legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Miedo', population: miedo, color: '#4B5563', legendFontColor: themeStyles.text, legendFontSize: 12 },
     { name: 'Triste', population: triste, color: '#F87171', legendFontColor: themeStyles.text, legendFontSize: 12 },
     { name: 'Crisis', population: crisis, color: themeStyles.error, legendFontColor: themeStyles.text, legendFontSize: 12 }
   ].filter(item => item.population > 0);

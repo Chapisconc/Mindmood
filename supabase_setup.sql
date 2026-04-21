@@ -73,7 +73,12 @@ RETURNS TABLE (
   happy_entries INT, 
   sad_entries INT,
   neutral_entries INT,
-  crisis_entries INT
+  crisis_entries INT,
+  anger_entries INT,
+  anxiety_entries INT,
+  fear_entries INT,
+  gratitude_entries INT,
+  surprise_entries INT
 ) AS $$
 DECLARE
   caller_role text;
@@ -91,7 +96,12 @@ BEGIN
     (SELECT count(*)::int FROM public.entries WHERE mood = 'Feliz'),
     (SELECT count(*)::int FROM public.entries WHERE mood = 'Triste'),
     (SELECT count(*)::int FROM public.entries WHERE mood = 'Neutral'),
-    (SELECT count(*)::int FROM public.entries WHERE mood = 'Crisis');
+    (SELECT count(*)::int FROM public.entries WHERE mood = 'Crisis'),
+    (SELECT count(*)::int FROM public.entries WHERE mood = 'Enojo'),
+    (SELECT count(*)::int FROM public.entries WHERE mood = 'Ansiedad'),
+    (SELECT count(*)::int FROM public.entries WHERE mood = 'Miedo'),
+    (SELECT count(*)::int FROM public.entries WHERE mood = 'Agradecido'),
+    (SELECT count(*)::int FROM public.entries WHERE mood = 'Sorpresa');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

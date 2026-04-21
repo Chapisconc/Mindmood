@@ -5,6 +5,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n/I18nContext';
 import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function ProfileScreen({ navigation }) {
   const { theme, themeStyles, toggleTheme } = useTheme();
@@ -13,7 +14,10 @@ export default function ProfileScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [reminderEnabled, setReminderEnabled] = useState(false);
-  const [reminderTime, setReminderTime] = useState('20:00');
+  const [showPicker, setShowPicker] = useState(false);
+  
+  // Initialize date object for picker based on 20:00 default
+  const [date, setDate] = useState(new Date(new Date().setHours(20, 0, 0, 0)));
 
   useEffect(() => {
     fetchProfile();
@@ -37,6 +41,13 @@ export default function ProfileScreen({ navigation }) {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onChangeTime = (event, selectedDate) => {
+    setShowPicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setDate(selectedDate);
     }
   };
 
@@ -73,7 +84,6 @@ export default function ProfileScreen({ navigation }) {
     }
 
     await Notifications.cancelAllScheduledNotificationsAsync();
-    const [hours, minutes] = reminderTime.split(':').map(Number);
     
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -81,8 +91,8 @@ export default function ProfileScreen({ navigation }) {
         body: lang === 'es' ? "¿Cómo te sientes hoy? No olvides registrar tu diario." : "How are you feeling today? Don't forget your log.",
       },
       trigger: {
-        hour: hours,
-        minute: minutes,
+        hour: date.getHours(),
+        minute: date.getMinutes(),
         repeats: true,
       },
     });
@@ -96,6 +106,13 @@ export default function ProfileScreen({ navigation }) {
     input: { backgroundColor: themeStyles.background, borderRadius: 16, padding: 16, color: themeStyles.text, fontSize: 16, borderWidth: 1, borderColor: themeStyles.border, marginBottom: 5 },
     row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 12 },
     rowLabel: { fontSize: 17, color: themeStyles.text, fontWeight: '600' },
+    langSelector: { flexDirection: 'row', gap: 10, marginTop: 5 },
+    langBtn: { flex: 1, padding: 12, borderRadius: 14, alignItems: 'center', borderWidth: 1, borderColor: themeStyles.border },
+    langBtnActive: { backgroundColor: themeStyles.accent, borderColor: themeStyles.accent },
+    langText: { fontWeight: '700', color: themeStyles.secondaryText },
+    langTextActive: { color: '#FFF' },
+    timeDisplay: { backgroundColor: themeStyles.itemBg, padding: 15, borderRadius: 16, alignItems: 'center' },
+    timeText: { fontSize: 24, fontWeight: '800', color: themeStyles.accent },
     saveButton: { backgroundColor: themeStyles.accent, padding: 20, borderRadius: 20, alignItems: 'center', marginTop: 10, shadowColor: themeStyles.accent, shadowOffset: {height:4, width:0}, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
     saveButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 18 },
     logoutButton: { padding: 20, alignItems: 'center', marginTop: 20, marginBottom: 60 },
@@ -128,21 +145,27 @@ export default function ProfileScreen({ navigation }) {
             thumbColor={theme === 'dark' ? "#6366F1" : "#F4F3F4"}
           />
         </View>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>{t('language')}: {lang.toUpperCase()}</Text>
-          <Switch
-            value={lang === 'en'}
-            onValueChange={toggleLang}
-            trackColor={{ false: "#CBD5E1", true: "#818CF8" }}
-            thumbColor={lang === 'en' ? "#6366F1" : "#F4F3F4"}
-          />
+        <Text style={[styles.label, {marginTop: 10}]}>{t('language')}</Text>
+        <View style={styles.langSelector}>
+          <TouchableOpacity 
+            style={[styles.langBtn, lang === 'es' && styles.langBtnActive]} 
+            onPress={() => lang !== 'es' && toggleLang()}
+          >
+            <Text style={[styles.langText, lang === 'es' && styles.langTextActive]}>Español</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.langBtn, lang === 'en' && styles.langBtnActive]} 
+            onPress={() => lang !== 'en' && toggleLang()}
+          >
+            <Text style={[styles.langText, lang === 'en' && styles.langTextActive]}>English</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.label}>{t('dailyReminder')}</Text>
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>Activar</Text>
+          <Text style={styles.rowLabel}>{t('activate') || 'Activar'}</Text>
           <Switch
             value={reminderEnabled}
             onValueChange={setReminderEnabled}
@@ -151,14 +174,27 @@ export default function ProfileScreen({ navigation }) {
           />
         </View>
         {reminderEnabled && (
-          <View style={[styles.row, { borderTopWidth: 1, borderTopColor: themeStyles.border, pt: 15, mt: 10 }]}>
-            <Text style={styles.rowLabel}>Hora</Text>
-            <TextInput
-              style={[styles.input, { width: 90, marginBottom: 0, textAlign: 'center' }]}
-              value={reminderTime}
-              onChangeText={setReminderTime}
-              placeholder="20:00"
-            />
+          <View style={{ mt: 10 }}>
+            <TouchableOpacity style={styles.timeDisplay} onPress={() => setShowPicker(true)}>
+              <Text style={styles.timeText}>
+                {date.getHours().toString().padStart(2, '0')}:{date.getMinutes().toString().padStart(2, '0')}
+              </Text>
+            </TouchableOpacity>
+            
+            {(showPicker || Platform.OS === 'ios') && (
+              <DateTimePicker
+                value={date}
+                mode="time"
+                is24Hour={true}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={onChangeTime}
+              />
+            )}
+            {showPicker && Platform.OS === 'android' && (
+              <TouchableOpacity onPress={() => setShowPicker(false)} style={{alignItems: 'center', marginTop: 10}}>
+                <Text style={{color: themeStyles.accent, fontWeight: 'bold'}}>OK</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>

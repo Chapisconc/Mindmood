@@ -112,6 +112,14 @@ MEXICAN_SLANG = {
     r'\bestar pasado de lanza\b': 'haber exagerado'
 }
 
+EMOTION_KEYWORDS = {
+    'Enojo': ['enojado', 'molesto', 'ira', 'rabia', 'frustrado', 'encabronado', 'harto', 'encabronada', 'puteado'],
+    'Ansiedad': ['ansioso', 'estresado', 'preocupado', 'nervios', 'panico', 'pánico', 'inquieto', 'estresada', 'ansiosa'],
+    'Miedo': ['miedo', 'terror', 'asustado', 'pavor', 'temor', 'asustada'],
+    'Agradecido': ['gracias', 'gratitud', 'agradecer', 'bendecido', 'bendecida', 'afortunado'],
+    'Sorpresa': ['sorpresa', 'asombro', 'increible', 'increíble', 'asombrado']
+}
+
 def normalize_mexican_slang(text: str) -> str:
     text_lower = text.lower()
     for slang, standard in MEXICAN_SLANG.items():
@@ -124,6 +132,7 @@ class AnalyzeRequest(BaseModel):
 @app.post("/analyze")
 def analyze(data: AnalyzeRequest):
     original_text = data.text
+    text_lower = original_text.lower()
     
     normalized_text = normalize_mexican_slang(original_text)
     
@@ -138,6 +147,7 @@ def analyze(data: AnalyzeRequest):
     compound = score["compound"]
     requires_help = False
     
+    # Base mood from VADER
     if compound >= 0.5:
         mood = "Excelente"
     elif compound >= 0.05:
@@ -149,6 +159,22 @@ def analyze(data: AnalyzeRequest):
         mood = "Triste"
     else:
         mood = "Neutral"
+
+    # Specific Keyword Overrides
+    if compound < -0.05:
+        # Check for specific negative emotions
+        if any(word in text_lower for word in EMOTION_KEYWORDS['Enojo']):
+            mood = "Enojo"
+        elif any(word in text_lower for word in EMOTION_KEYWORDS['Ansiedad']):
+            mood = "Ansiedad"
+        elif any(word in text_lower for word in EMOTION_KEYWORDS['Miedo']):
+            mood = "Miedo"
+    elif compound > 0.1:
+        # Check for specific positive emotions
+        if any(word in text_lower for word in EMOTION_KEYWORDS['Agradecido']):
+            mood = "Agradecido"
+        elif any(word in text_lower for word in EMOTION_KEYWORDS['Sorpresa']):
+            mood = "Sorpresa"
         
     return {
         "mood": mood,

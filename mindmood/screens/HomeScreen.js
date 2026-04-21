@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../services/supabase';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen({ navigation }) {
-  const { themeStyles } = useTheme();
+  const { theme, themeStyles, toggleTheme } = useTheme();
   const [userData, setUserData] = useState(null);
   const [lastMood, setLastMood] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,7 +23,6 @@ export default function HomeScreen({ navigation }) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Fetch Profile data (streak, name)
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -36,17 +35,15 @@ export default function HomeScreen({ navigation }) {
           streak: profile?.streak || 0
         });
 
-        // Fetch Last Mood
         const { data: lastEntry } = await supabase
           .from('entries')
           .select('mood')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+          .limit(1);
           
-        if (lastEntry) {
-          setLastMood(lastEntry.mood);
+        if (lastEntry && lastEntry.length > 0) {
+          setLastMood(lastEntry[0].mood);
         }
       }
     } catch (error) {
@@ -60,8 +57,13 @@ export default function HomeScreen({ navigation }) {
     switch (lastMood) {
       case 'Excelente': return '¡Qué gran energía llevas! Sigue construyendo memorias geniales hoy. 🌟';
       case 'Feliz': return 'Es un buen día para seguir sonriendo y agradecer. 😊';
+      case 'Agradecido': return 'La gratitud es la memoria del corazón. Qué bueno que valoras lo positivo. 🙏';
+      case 'Sorpresa': return '¡La vida siempre tiene formas de asombrarnos! Mantén esa curiosidad. 😲';
       case 'Neutral': return 'La calma es el mejor lienzo para empezar a pintar una nueva historia. 🍃';
       case 'Triste': return 'Recuerda que después de la tormenta siempre sale el sol. Un paso a la vez. ❤️';
+      case 'Enojo': return 'Respira profundo. Es válido sentir ira, pero no dejes que ella maneje el volante. 🧘‍♂️';
+      case 'Ansiedad': return 'Estás a salvo aquí y ahora. Enfócate en tu respiración, todo pasará. 🌊';
+      case 'Miedo': return 'El valor no es la ausencia de miedo, sino actuar a pesar de él. Tú puedes. 🛡️';
       case 'Crisis': return 'No tienes que pasar por esto a solas. Hay ayuda disponible para ti justo ahora. 🫂';
       default: return 'Bienvenido a MindMood. Escribe tu primer registro para empezar a medir tu energía.';
     }
@@ -69,28 +71,12 @@ export default function HomeScreen({ navigation }) {
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: themeStyles.background },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 60, marginBottom: 20 },
-    welcomeText: { fontSize: 16, color: themeStyles.secondaryText, fontWeight: '600' },
-    nameText: { fontSize: 28, fontWeight: '900', color: themeStyles.text },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 20, marginBottom: 20 },
+    welcomeContainer: { flex: 1, marginLeft: 15 },
+    welcomeText: { fontSize: 14, color: themeStyles.secondaryText, fontWeight: '600' },
+    nameText: { fontSize: 24, fontWeight: '900', color: themeStyles.text },
     profileBtn: { width: 45, height: 45, borderRadius: 22.5, backgroundColor: themeStyles.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: themeStyles.border },
-    
-    streakCard: { backgroundColor: themeStyles.accent, marginHorizontal: 20, borderRadius: 20, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, shadowColor: themeStyles.accent, shadowOffset: {height: 5, width: 0}, shadowOpacity: 0.3, shadowRadius: 10, elevation: 8 },
-    streakInfo: { flexDirection: 'row', alignItems: 'center' },
-    streakText: { color: '#FFF', fontSize: 18, fontWeight: '800', marginLeft: 10 },
-    streakLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '600', textTransform: 'uppercase' },
-
-    quoteBox: { backgroundColor: themeStyles.card, marginHorizontal: 20, padding: 20, borderRadius: 24, marginBottom: 30, borderLeftWidth: 5, borderColor: themeStyles.accent, shadowColor: '#000', shadowOffset: {height:5, width:0}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
-    quoteLabel: { fontSize: 11, fontWeight: '900', color: themeStyles.accent, marginBottom: 8, letterSpacing: 1, textTransform: 'uppercase' },
-    quoteText: { fontSize: 16, color: themeStyles.text, fontStyle: 'italic', lineHeight: 24, fontWeight: '500' },
-    
-    sectionTitle: { fontSize: 20, fontWeight: '800', color: themeStyles.text, marginLeft: 20, marginBottom: 15 },
-    cardsContainer: { paddingHorizontal: 20, gap: 16, marginBottom: 30 },
-    card: { flexDirection: 'row', alignItems: 'center', backgroundColor: themeStyles.card, padding: 18, borderRadius: 24, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {height: 2, width: 0}, shadowOpacity: 0.02, shadowRadius: 5 },
-    cardIconContainer: { width: 56, height: 56, borderRadius: 18, backgroundColor: themeStyles.itemBg, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-    cardIcon: { fontSize: 26 },
-    cardTextContent: { flex: 1 },
-    cardTitle: { fontSize: 18, fontWeight: '700', color: themeStyles.text, marginBottom: 2 },
-    cardDesc: { fontSize: 13, color: themeStyles.secondaryText, fontWeight: '500' }
+    toggleContainer: { flexDirection: 'row', alignItems: 'center' }
   });
 
   if (loading && !userData) {
@@ -105,12 +91,23 @@ export default function HomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.welcomeText}>¡Hola de nuevo!</Text>
-            <Text style={styles.nameText}>{userData?.displayName}</Text>
+          <View style={styles.toggleContainer}>
+             <Ionicons name={theme === 'dark' ? "moon" : "sunny"} size={20} color={themeStyles.secondaryText} style={{marginRight: 8}} />
+             <Switch 
+                value={theme === 'dark'} 
+                onValueChange={toggleTheme}
+                trackColor={{ false: "#CBD5E1", true: "#818CF8" }}
+                thumbColor={theme === 'dark' ? "#6366F1" : "#F4F3F4"}
+             />
           </View>
+          
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeText}>¡Hola!</Text>
+            <Text style={styles.nameText} numberOfLines={1}>{userData?.displayName}</Text>
+          </View>
+
           <TouchableOpacity style={styles.profileBtn} onPress={() => navigation.navigate('Profile')}>
-            <Ionicons name="settings-outline" size={24} color={themeStyles.text} />
+            <Ionicons name="person-outline" size={22} color={themeStyles.text} />
           </TouchableOpacity>
         </View>
 

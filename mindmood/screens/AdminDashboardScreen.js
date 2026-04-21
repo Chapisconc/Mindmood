@@ -101,7 +101,12 @@ export default function AdminDashboardScreen({ navigation }) {
   const chartData = stats ? [
     { name: 'Excelente', count: stats.excellent_entries, color: themeStyles.success, legendFontColor: themeStyles.text, legendFontSize: 12 },
     { name: 'Felices', count: stats.happy_entries, color: '#6366F1', legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Agradecido', count: stats.gratitude_entries, color: '#FACC15', legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Sorpresa', count: stats.surprise_entries, color: '#06B6D4', legendFontColor: themeStyles.text, legendFontSize: 12 },
     { name: 'Neutral', count: stats.neutral_entries, color: themeStyles.neutral, legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Enojo', count: stats.anger_entries, color: '#F97316', legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Ansiedad', count: stats.anxiety_entries, color: '#8B5CF6', legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Miedo', count: stats.fear_entries, color: '#4B5563', legendFontColor: themeStyles.text, legendFontSize: 12 },
     { name: 'Tristes', count: stats.sad_entries, color: '#F87171', legendFontColor: themeStyles.text, legendFontSize: 12 },
     { name: 'Crisis', count: stats.crisis_entries, color: themeStyles.error, legendFontColor: themeStyles.text, legendFontSize: 12 }
   ].filter(i => i.count > 0) : [];
