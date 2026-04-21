@@ -6,12 +6,15 @@ import { useTheme } from '../theme/ThemeContext';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import EmotionModal from '../components/EmotionModal';
 
 export default function NewEntryScreen({ navigation }) {
   const { themeStyles } = useTheme();
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalData, setModalData] = useState({ type: 'normal', summary: '' });
 
   // URL of our local AI Backend
   const API_URL = "http://192.168.1.70:8000/analyze"; 
@@ -42,7 +45,7 @@ export default function NewEntryScreen({ navigation }) {
 
     setLoading(true);
     try {
-      let aiData = { mood: 'Neutral', score: 0, requires_help: false };
+      let aiData = { mood: 'Neutral', score: 0, requires_help: false, summary: '' };
 
       if (!isOffline) {
         try {
@@ -75,19 +78,11 @@ export default function NewEntryScreen({ navigation }) {
       // Clear Draft
       await AsyncStorage.removeItem('entry_draft');
 
-      if (requires_help) {
-        Alert.alert(
-          'No estás solo ❤️',
-          'Hemos notado que estás pasando por un momento difícil. Por favor, considera hablar con alguien.\n\nLínea Cero Suicidios: 075\nLínea de la Vida: 800-911-2000',
-          [{ text: 'Entendido', onPress: () => navigation.goBack() }]
-        );
-      } else {
-        Alert.alert(
-          'Diario Guardado', 
-          isOffline ? 'Guardado localmente (Modo Offline)' : summary,
-          [{ text: 'Cerrar', onPress: () => navigation.goBack() }]
-        );
-      }
+      setModalData({
+        type: requires_help ? 'crisis' : 'normal',
+        summary: isOffline ? 'Guardado localmente (Modo Offline)' : summary
+      });
+      setModalVisible(true);
       
     } catch (e) {
       Alert.alert('Error', e.message);
@@ -170,6 +165,14 @@ export default function NewEntryScreen({ navigation }) {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+      
+      <EmotionModal 
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        type={modalData.type}
+        summary={modalData.summary}
+        navigation={navigation}
+      />
     </SafeAreaView>
   );
 }
