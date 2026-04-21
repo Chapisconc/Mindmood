@@ -13,11 +13,13 @@ import ProfileScreen from './screens/ProfileScreen';
 
 import { ThemeProvider } from './theme/ThemeContext';
 import { I18nProvider } from './i18n/I18nContext';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
+    <SafeAreaProvider>
     <I18nProvider>
     <ThemeProvider>
       <NavigationContainer>
@@ -43,5 +45,6 @@ export default function App() {
     </NavigationContainer>
     </ThemeProvider>
     </I18nProvider>
+    </SafeAreaProvider>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Dimensions, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { supabase } from '../services/supabase';
 import { useTheme } from '../theme/ThemeContext';
