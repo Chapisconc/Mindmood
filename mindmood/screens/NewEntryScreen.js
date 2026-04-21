@@ -128,14 +128,14 @@ export default function NewEntryScreen({ navigation }) {
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: themeStyles.background },
-    scroll: { padding: 20 },
-    title: { fontSize: 28, fontWeight: '900', color: themeStyles.text, marginBottom: 8 },
-    subtitle: { fontSize: 15, color: themeStyles.secondaryText, marginBottom: 25, lineHeight: 22, fontWeight: '500' },
-    textArea: { backgroundColor: themeStyles.card, color: themeStyles.text, borderRadius: 24, padding: 20, fontSize: 18, minHeight: 300, borderWidth: 1, borderColor: themeStyles.border, textAlignVertical: 'top' },
-    saveButton: { backgroundColor: themeStyles.accent, padding: 20, borderRadius: 18, alignItems: 'center', marginTop: 30, shadowColor: themeStyles.accent, shadowOffset: {width:0, height:4}, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
-    saveButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 18, letterSpacing: 0.5 },
-    offlineBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: themeStyles.itemBg, padding: 10, borderRadius: 12, marginBottom: 20 },
-    offlineText: { color: themeStyles.secondaryText, fontSize: 13, marginLeft: 8, fontWeight: '600' }
+    scroll: { padding: 25 },
+    title: { fontSize: 30, fontWeight: '900', color: themeStyles.text, marginBottom: 10, letterSpacing: -0.5 },
+    subtitle: { fontSize: 16, color: themeStyles.secondaryText, marginBottom: 30, lineHeight: 24, fontWeight: '500' },
+    textArea: { backgroundColor: themeStyles.card, color: themeStyles.text, borderRadius: 30, padding: 25, fontSize: 18, minHeight: 400, borderWidth: 1, borderColor: themeStyles.border, textAlignVertical: 'top', shadowColor: '#000', shadowOffset: {width:0, height:4}, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 },
+    saveButton: { backgroundColor: themeStyles.accent, padding: 22, borderRadius: 22, alignItems: 'center', marginTop: 35, shadowColor: themeStyles.accent, shadowOffset: {width:0, height:10}, shadowOpacity: 0.4, shadowRadius: 15, elevation: 8 },
+    saveButtonText: { color: '#FFF', fontWeight: '900', fontSize: 18, letterSpacing: 1, textTransform: 'uppercase' },
+    offlineBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: themeStyles.itemBg, padding: 12, borderRadius: 16, marginBottom: 25, borderWidth: 1, borderColor: themeStyles.border + '20' },
+    offlineText: { color: themeStyles.secondaryText, fontSize: 14, marginLeft: 10, fontWeight: '700' }
   });
 
   return (

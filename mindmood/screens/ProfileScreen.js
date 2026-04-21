@@ -136,16 +136,7 @@ export default function ProfileScreen({ navigation }) {
 
       <View style={styles.section}>
         <Text style={styles.label}>{t('appearance')}</Text>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>{t('darkMode')}</Text>
-          <Switch
-            value={theme === 'dark'}
-            onValueChange={toggleTheme}
-            trackColor={{ false: "#CBD5E1", true: "#818CF8" }}
-            thumbColor={theme === 'dark' ? "#6366F1" : "#F4F3F4"}
-          />
-        </View>
-        <Text style={[styles.label, {marginTop: 10}]}>{t('language')}</Text>
+        <Text style={[styles.label, {marginTop: 0}]}>{t('language')}</Text>
         <View style={styles.langSelector}>
           <TouchableOpacity 
             style={[styles.langBtn, lang === 'es' && styles.langBtnActive]} 

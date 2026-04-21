@@ -86,11 +86,11 @@ export default function AdminDashboardScreen({ navigation }) {
     card: { backgroundColor: themeStyles.card, padding: 20, borderRadius: 24, marginBottom: 20, borderWidth: 1, borderColor: themeStyles.border },
     sectionTitle: { fontSize: 20, fontWeight: '800', color: themeStyles.text, marginBottom: 15 },
     
-    alarmCard: { backgroundColor: themeStyles.card, padding: 18, borderRadius: 24, marginBottom: 15, borderWidth: 1, borderColor: themeStyles.error + '40', borderLeftWidth: 5, borderLeftColor: themeStyles.error },
-    alarmHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-    userMail: { color: themeStyles.text, fontWeight: '700', fontSize: 15 },
-    alarmDate: { color: themeStyles.secondaryText, fontSize: 12 },
-    alarmText: { color: themeStyles.text, fontSize: 14, lineHeight: 22, fontStyle: 'italic', fontWeight: '500' },
+    alarmCard: { backgroundColor: themeStyles.card, padding: 22, borderRadius: 28, marginBottom: 18, borderWidth: 1, borderColor: themeStyles.error + '40', borderLeftWidth: 6, borderLeftColor: themeStyles.error, shadowColor: '#000', shadowOffset: {width:0, height:4}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
+    alarmHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: themeStyles.border + '20' },
+    userMail: { color: themeStyles.text, fontWeight: '800', fontSize: 15 },
+    alarmDate: { color: themeStyles.secondaryText, fontSize: 12, fontWeight: '600' },
+    alarmText: { color: themeStyles.text, fontSize: 15, lineHeight: 24, fontStyle: 'italic', fontWeight: '500' },
     
     exportBtn: { backgroundColor: themeStyles.secondaryText, padding: 16, borderRadius: 18, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10, marginBottom: 40 },
     exportBtnText: { color: themeStyles.background, fontWeight: 'bold', fontSize: 16, marginLeft: 10 }

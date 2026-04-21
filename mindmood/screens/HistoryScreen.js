@@ -13,17 +13,17 @@ export default function HistoryScreen() {
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: themeStyles.background },
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeStyles.background },
-    list: { padding: 20 },
-    entryCard: { backgroundColor: themeStyles.card, padding: 20, borderRadius: 24, marginBottom: 16, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {width:0, height:2}, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
-    entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: themeStyles.border },
+    list: { padding: 20, paddingBottom: 100 },
+    entryCard: { backgroundColor: themeStyles.card, padding: 22, borderRadius: 28, marginBottom: 18, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {width:0, height:6}, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 },
+    entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: themeStyles.border + '30' },
     dateContainer: { flexDirection: 'row', alignItems: 'center' },
-    date: { color: themeStyles.secondaryText, fontSize: 13, fontWeight: '700', marginLeft: 6, textTransform: 'uppercase' },
-    emoji: { fontSize: 28 },
-    entryText: { color: themeStyles.text, fontSize: 16, lineHeight: 26, fontWeight: '500' },
+    date: { color: themeStyles.secondaryText, fontSize: 13, fontWeight: '800', marginLeft: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+    emoji: { fontSize: 32 },
+    entryText: { color: themeStyles.text, fontSize: 17, lineHeight: 28, fontWeight: '500', letterSpacing: 0.2 },
     emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-    emptyEmoji: { fontSize: 64, marginBottom: 20 },
-    emptyText: { color: themeStyles.text, fontSize: 22, fontWeight: '900', textAlign: 'center' },
-    emptySub: { color: themeStyles.secondaryText, fontSize: 16, textAlign: 'center', marginTop: 10, fontWeight: '500' }
+    emptyEmoji: { fontSize: 72, marginBottom: 24 },
+    emptyText: { color: themeStyles.text, fontSize: 24, fontWeight: '900', textAlign: 'center' },
+    emptySub: { color: themeStyles.secondaryText, fontSize: 16, textAlign: 'center', marginTop: 12, fontWeight: '600', lineHeight: 24 }
   });
 
   useEffect(() => {
