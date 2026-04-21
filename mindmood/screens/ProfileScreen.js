@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function ProfileScreen({ navigation }) {
-  const { theme, themeStyles, toggleTheme } = useTheme();
+  const { themeStyles } = useTheme();
   const { lang, t, toggleLang } = useTranslation();
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
@@ -55,10 +55,16 @@ export default function ProfileScreen({ navigation }) {
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      
+      // Use upsert to handle both insert and update cases
       const { error } = await supabase
         .from('profiles')
-        .update({ display_name: displayName })
-        .eq('id', user.id);
+        .upsert({ 
+          id: user.id, 
+          display_name: displayName.trim() 
+        }, { 
+          onConflict: 'id' 
+        });
 
       if (error) throw error;
       
@@ -68,7 +74,7 @@ export default function ProfileScreen({ navigation }) {
         await Notifications.cancelAllScheduledNotificationsAsync();
       }
 
-      Alert.alert(t('success') || 'Éxito', t('save') || 'Perfil actualizado');
+      Alert.alert(t('success'), t('profileUpdated'));
     } catch (error) {
       Alert.alert('Error', error.message);
     } finally {
@@ -111,7 +117,7 @@ export default function ProfileScreen({ navigation }) {
     langBtnActive: { backgroundColor: themeStyles.accent, borderColor: themeStyles.accent },
     langText: { fontWeight: '700', color: themeStyles.secondaryText },
     langTextActive: { color: '#FFF' },
-    timeDisplay: { backgroundColor: themeStyles.itemBg, padding: 15, borderRadius: 16, alignItems: 'center' },
+    timeDisplay: { backgroundColor: themeStyles.itemBg, padding: 15, borderRadius: 16, alignItems: 'center', marginTop: 10 },
     timeText: { fontSize: 24, fontWeight: '800', color: themeStyles.accent },
     saveButton: { backgroundColor: themeStyles.accent, padding: 20, borderRadius: 20, alignItems: 'center', marginTop: 10, shadowColor: themeStyles.accent, shadowOffset: {height:4, width:0}, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
     saveButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 18 },
@@ -129,26 +135,25 @@ export default function ProfileScreen({ navigation }) {
           style={styles.input}
           value={displayName}
           onChangeText={setDisplayName}
-          placeholder="Tu nombre"
+          placeholder={lang === 'es' ? "Tu nombre" : "Your name"}
           placeholderTextColor={themeStyles.secondaryText}
         />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.label}>{t('appearance')}</Text>
-        <Text style={[styles.label, {marginTop: 0}]}>{t('language')}</Text>
+        <Text style={styles.label}>{t('languageSection')}</Text>
         <View style={styles.langSelector}>
           <TouchableOpacity 
             style={[styles.langBtn, lang === 'es' && styles.langBtnActive]} 
             onPress={() => lang !== 'es' && toggleLang()}
           >
-            <Text style={[styles.langText, lang === 'es' && styles.langTextActive]}>Español</Text>
+            <Text style={[styles.langText, lang === 'es' && styles.langTextActive]}>🇲🇽 Español</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.langBtn, lang === 'en' && styles.langBtnActive]} 
             onPress={() => lang !== 'en' && toggleLang()}
           >
-            <Text style={[styles.langText, lang === 'en' && styles.langTextActive]}>English</Text>
+            <Text style={[styles.langText, lang === 'en' && styles.langTextActive]}>🇺🇸 English</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -156,7 +161,7 @@ export default function ProfileScreen({ navigation }) {
       <View style={styles.section}>
         <Text style={styles.label}>{t('dailyReminder')}</Text>
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>{t('activate') || 'Activar'}</Text>
+          <Text style={styles.rowLabel}>{t('toggleReminder')}</Text>
           <Switch
             value={reminderEnabled}
             onValueChange={setReminderEnabled}
@@ -165,7 +170,7 @@ export default function ProfileScreen({ navigation }) {
           />
         </View>
         {reminderEnabled && (
-          <View style={{ mt: 10 }}>
+          <View>
             <TouchableOpacity style={styles.timeDisplay} onPress={() => setShowPicker(true)}>
               <Text style={styles.timeText}>
                 {date.getHours().toString().padStart(2, '0')}:{date.getMinutes().toString().padStart(2, '0')}

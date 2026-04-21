@@ -9,6 +9,7 @@ export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function signUpWithEmail() {
     if (!email || !password) {
@@ -80,8 +81,11 @@ export default function RegisterScreen({ navigation }) {
               placeholderTextColor={themeStyles.secondaryText}
               onChangeText={setPassword}
               value={password}
-              secureTextEntry
+              secureTextEntry={!showPassword}
             />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={22} color={themeStyles.secondaryText} />
+            </TouchableOpacity>
           </View>
 
           {loading ? (

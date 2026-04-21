@@ -9,6 +9,7 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -105,8 +106,11 @@ export default function LoginScreen({ navigation }) {
               placeholderTextColor={themeStyles.secondaryText}
               onChangeText={setPassword}
               value={password}
-              secureTextEntry
+              secureTextEntry={!showPassword}
             />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={22} color={themeStyles.secondaryText} />
+            </TouchableOpacity>
           </View>
 
           {loading ? (
