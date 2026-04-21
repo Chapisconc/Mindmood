@@ -13,7 +13,12 @@ DROP TABLE IF EXISTS public.profiles;
 CREATE TABLE public.profiles (
   id uuid REFERENCES auth.users PRIMARY KEY,
   email text,
+  display_name text,
   role text DEFAULT 'user' NOT NULL,
+  streak int DEFAULT 0 NOT NULL,
+  last_entry_at timestamp with time zone,
+  theme text DEFAULT 'dark' NOT NULL,
+  lang text DEFAULT 'es' NOT NULL,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

@@ -9,14 +9,20 @@ import NewEntryScreen from './screens/NewEntryScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import StatsScreen from './screens/StatsScreen';
 import AdminDashboardScreen from './screens/AdminDashboardScreen';
+import ProfileScreen from './screens/ProfileScreen';
+
+import { ThemeProvider } from './theme/ThemeContext';
+import { I18nProvider } from './i18n/I18nContext';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator 
-        initialRouteName="Login" 
+    <I18nProvider>
+    <ThemeProvider>
+      <NavigationContainer>
+        <Stack.Navigator 
+          initialRouteName="Login" 
         screenOptions={{ 
           headerBackTitleVisible: false,
           headerStyle: { backgroundColor: '#1A202C' },
@@ -32,7 +38,10 @@ export default function App() {
         <Stack.Screen name="NewEntry" component={NewEntryScreen} options={{ title: 'Escribir Diario' }} />
         <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'Historial' }} />
         <Stack.Screen name="Stats" component={StatsScreen} options={{ title: 'Tus Estadísticas' }} />
+        <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Perfil' }} />
       </Stack.Navigator>
     </NavigationContainer>
+    </ThemeProvider>
+    </I18nProvider>
   );
 }

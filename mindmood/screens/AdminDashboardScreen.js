@@ -1,142 +1,182 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Dimensions, TextInput, Share, SafeAreaView } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 import { supabase } from '../services/supabase';
+import { useTheme } from '../theme/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function AdminDashboardScreen({ navigation }) {
+  const { themeStyles } = useTheme();
   const [stats, setStats] = useState(null);
   const [alarms, setAlarms] = useState([]);
+  const [filteredAlarms, setFilteredAlarms] = useState([]);
+  const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
+    fetchAdminData();
   }, []);
 
-  const fetchData = async () => {
+  useEffect(() => {
+    if (searchText.trim() === '') {
+      setFilteredAlarms(alarms);
+    } else {
+      const filtered = alarms.filter(a => 
+        a.student_email?.toLowerCase().includes(searchText.toLowerCase()) ||
+        a.diary_text?.toLowerCase().includes(searchText.toLowerCase())
+      );
+      setFilteredAlarms(filtered);
+    }
+  }, [searchText, alarms]);
+
+  const fetchAdminData = async () => {
     try {
       const { data: statsData, error: statsError } = await supabase.rpc('get_admin_stats');
       if (statsError) throw statsError;
       if (statsData && statsData.length > 0) setStats(statsData[0]);
 
-      // Fetch Crisis Alarms
       const { data: alarmData, error: alarmError } = await supabase.rpc('get_admin_alarms');
       if (alarmError) throw alarmError;
       setAlarms(alarmData || []);
+      setFilteredAlarms(alarmData || []);
     } catch (error) {
-      console.error('Fetch Admin Data Error:', error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigation.replace('Login');
+  const shareReport = async () => {
+    if (!stats) return;
+    const report = `# Reporte MindMood - ${new Date().toLocaleDateString()}\n\n` +
+      `Estadísticas Generales:\n` +
+      `- Total Usuarios: ${stats.total_users}\n` +
+      `- Total Diarios: ${stats.total_entries}\n` +
+      `- Casos en Riesgo Crítico: ${stats.crisis_entries}\n\n` +
+      `Alertas Detectadas:\n` +
+      alarms.map(a => `- [${a.student_email}] ${a.diary_text.substring(0, 50)}...`).join('\n');
+
+    try {
+      await Share.share({ message: report });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  if (loading) return <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#F87171" /></View>;
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: themeStyles.background },
+    scroll: { padding: 20 },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25, marginTop: 10 },
+    title: { fontSize: 28, fontWeight: '900', color: themeStyles.text },
+    statsRow: { flexDirection: 'row', gap: 12, marginBottom: 15 },
+    statCard: { flex: 1, backgroundColor: themeStyles.card, padding: 16, borderRadius: 24, borderWidth: 1, borderColor: themeStyles.border, alignItems: 'center' },
+    statValue: { fontSize: 24, fontWeight: '900', color: themeStyles.text },
+    statLabel: { fontSize: 11, color: themeStyles.secondaryText, fontWeight: '800', textTransform: 'uppercase', marginTop: 4 },
+    
+    crisisCard: { backgroundColor: theme === 'dark' ? '#450a0a' : '#FEE2E2', padding: 20, borderRadius: 24, borderWidth: 1, borderColor: theme === 'dark' ? '#7f1d1d' : '#EF4444', alignItems: 'center', marginBottom: 20 },
+    crisisValue: { fontSize: 36, fontWeight: '900', color: theme === 'dark' ? '#fca5a5' : '#B91C1C' },
+    crisisLabel: { fontSize: 12, fontWeight: '800', color: theme === 'dark' ? '#fca5a5' : '#B91C1C', textTransform: 'uppercase', marginTop: 4 },
+
+    searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: themeStyles.card, borderRadius: 16, paddingHorizontal: 15, marginBottom: 20, borderWidth: 1, borderColor: themeStyles.border },
+    searchInput: { flex: 1, padding: 12, color: themeStyles.text, fontSize: 16 },
+    
+    card: { backgroundColor: themeStyles.card, padding: 20, borderRadius: 24, marginBottom: 20, borderWidth: 1, borderColor: themeStyles.border },
+    sectionTitle: { fontSize: 20, fontWeight: '800', color: themeStyles.text, marginBottom: 15 },
+    
+    alarmCard: { backgroundColor: themeStyles.card, padding: 18, borderRadius: 24, marginBottom: 15, borderWidth: 1, borderColor: themeStyles.error + '40', borderLeftWidth: 5, borderLeftColor: themeStyles.error },
+    alarmHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+    userMail: { color: themeStyles.text, fontWeight: '700', fontSize: 15 },
+    alarmDate: { color: themeStyles.secondaryText, fontSize: 12 },
+    alarmText: { color: themeStyles.text, fontSize: 14, lineHeight: 22, fontStyle: 'italic', fontWeight: '500' },
+    
+    exportBtn: { backgroundColor: themeStyles.secondaryText, padding: 16, borderRadius: 18, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10, marginBottom: 40 },
+    exportBtnText: { color: themeStyles.background, fontWeight: 'bold', fontSize: 16, marginLeft: 10 }
+  });
+
+  if (loading) return <View style={[styles.container, { justifyContent: 'center' }]}><ActivityIndicator size="large" color={themeStyles.accent} /></View>;
 
   const chartData = stats ? [
-    { name: 'Excelente', count: stats.excellent_entries, color: '#34D399', legendFontColor: '#CBD5E1', legendFontSize: 12 },
-    { name: 'Felices', count: stats.happy_entries, color: '#10B981', legendFontColor: '#CBD5E1', legendFontSize: 12 },
-    { name: 'Neutral', count: stats.neutral_entries, color: '#FCD34D', legendFontColor: '#CBD5E1', legendFontSize: 12 },
-    { name: 'Tristes', count: stats.sad_entries, color: '#F87171', legendFontColor: '#CBD5E1', legendFontSize: 12 },
-    { name: 'Riesgo Crítico', count: stats.crisis_entries, color: '#EF4444', legendFontColor: '#CBD5E1', legendFontSize: 12 }
+    { name: 'Excelente', count: stats.excellent_entries, color: themeStyles.success, legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Felices', count: stats.happy_entries, color: '#6366F1', legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Neutral', count: stats.neutral_entries, color: themeStyles.neutral, legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Tristes', count: stats.sad_entries, color: '#F87171', legendFontColor: themeStyles.text, legendFontSize: 12 },
+    { name: 'Crisis', count: stats.crisis_entries, color: themeStyles.error, legendFontColor: themeStyles.text, legendFontSize: 12 }
   ].filter(i => i.count > 0) : [];
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.headerTitle}>Panel de Control</Text>
-      <Text style={styles.headerSub}>Métricas Institucionales MindMood</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Panel Admin</Text>
+          <TouchableOpacity onPress={() => navigation.replace('Login')}>
+            <Ionicons name="log-out-outline" size={26} color={themeStyles.error} />
+          </TouchableOpacity>
+        </View>
 
-      {stats && (
-        <View style={styles.statsContainer}>
-          <View style={styles.statRow}>
-            <View style={styles.statBoxHalf}>
-              <Text style={styles.statLabel}>Usuarios</Text>
-              <Text style={styles.statNumber}>{String(stats.total_users ?? 0)}</Text>
-            </View>
-            <View style={styles.statBoxHalf}>
-              <Text style={styles.statLabel}>Diarios</Text>
-              <Text style={styles.statNumber}>{String(stats.total_entries ?? 0)}</Text>
-            </View>
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats?.total_users}</Text>
+            <Text style={styles.statLabel}>Usuarios</Text>
           </View>
-
-          <View style={styles.crisisBox}>
-            <Text style={styles.statLabel}>Alertas Activas (Crisis Estudiantes)</Text>
-            <Text style={styles.crisisNumber}>{String(stats.crisis_entries ?? 0)}</Text>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats?.total_entries}</Text>
+            <Text style={styles.statLabel}>Diarios</Text>
           </View>
+        </View>
 
-          <Text style={styles.sectionTitle}>Distribución Poblacional</Text>
+        <View style={styles.crisisCard}>
+            <Text style={styles.crisisValue}>{stats?.crisis_entries}</Text>
+            <Text style={styles.crisisLabel}>Alertas de Riesgo Activas</Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Distribución poblacional</Text>
           {chartData.length > 0 ? (
-            <View style={styles.chartWrapper}>
-              <PieChart
-                data={chartData}
-                width={screenWidth - 40}
-                height={180}
-                chartConfig={{ color: (op = 1) => `rgba(0,0,0,${op})` }}
-                accessor="count"
-                backgroundColor="transparent"
-                paddingLeft="15"
-                absolute
-              />
-            </View>
-          ) : <Text style={styles.emptyText}>No hay registros todavía.</Text>}
+            <PieChart
+              data={chartData}
+              width={screenWidth - 80}
+              height={180}
+              chartConfig={{ color: (op = 1) => themeStyles.text }}
+              accessor="count"
+              backgroundColor="transparent"
+              paddingLeft="0"
+              center={[10, 0]}
+              absolute
+            />
+          ) : <Text style={{ color: themeStyles.secondaryText, textAlign: 'center' }}>Sin registros aún.</Text>}
         </View>
-      )}
 
-      <Text style={styles.sectionAlertTitle}>🚨 Bitácoras de Riesgo Expreso</Text>
-      <Text style={styles.sectionAlertSub}>Estos diarios activaron el protocolo de intervención.</Text>
-      
-      {alarms.length > 0 ? (
-        alarms.map((alarm, idx) => (
-          <View key={idx} style={styles.alarmCard}>
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color={themeStyles.secondaryText} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Filtrar por correo o texto..."
+            placeholderTextColor={themeStyles.secondaryText}
+            value={searchText}
+            onChangeText={setSearchText}
+          />
+        </View>
+
+        <Text style={styles.sectionTitle}>Bitácora de Riesgos 🔥</Text>
+        {filteredAlarms.length > 0 ? filteredAlarms.map((item, index) => (
+          <View key={index} style={styles.alarmCard}>
             <View style={styles.alarmHeader}>
-              <Text style={styles.alarmEmail}>{alarm.student_email}</Text>
-              <Text style={styles.alarmDate}>{new Date(alarm.recorded_at).toLocaleDateString()}</Text>
+              <Text style={styles.userMail}>{item.student_email}</Text>
+              <Text style={styles.alarmDate}>{new Date(item.recorded_at).toLocaleDateString()}</Text>
             </View>
-            <Text style={styles.alarmText}>"{alarm.diary_text}"</Text>
+            <Text style={styles.alarmText}>"{item.diary_text}"</Text>
           </View>
-        ))
-      ) : (
-        <View style={styles.noAlarmsBox}>
-          <Text style={styles.noAlarmsText}>✅ Todo excelente. No hay alumnos en crisis.</Text>
-        </View>
-      )}
+        )) : (
+          <Text style={{ color: themeStyles.secondaryText, textAlign: 'center', fontStyle: 'italic', marginVertical: 20 }}>No hay alertas que coincidan.</Text>
+        )}
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Cerrar Sesión Administrador</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity style={styles.exportBtn} onPress={shareReport}>
+          <Ionicons name="share-social-outline" size={22} color={themeStyles.background} />
+          <Text style={styles.exportBtnText}>Exportar Reporte Mensual</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#09090B', padding: 20 },
-  loadingContainer: { flex: 1, justifyContent: 'center', backgroundColor: '#09090B' },
-  headerTitle: { color: '#FAFAFA', fontSize: 32, fontWeight: '900', marginTop: 40, letterSpacing: -0.5 },
-  headerSub: { color: '#A1A1AA', fontSize: 15, marginBottom: 30 },
-  statsContainer: { gap: 15, marginBottom: 15 },
-  statRow: { flexDirection: 'row', gap: 15 },
-  statBoxHalf: { flex: 1, backgroundColor: '#18181B', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: '#27272A' },
-  crisisBox: { backgroundColor: '#450a0a', padding: 24, borderRadius: 16, borderWidth: 1, borderColor: '#7f1d1d', alignItems: 'center' },
-  statLabel: { color: '#A1A1AA', fontSize: 13, fontWeight: '800', textTransform: 'uppercase', marginBottom: 5 },
-  statNumber: { color: '#FAFAFA', fontSize: 40, fontWeight: 'bold' },
-  crisisNumber: { color: '#fca5a5', fontSize: 50, fontWeight: '900' },
-  sectionTitle: { color: '#FAFAFA', fontSize: 18, fontWeight: 'bold', marginTop: 15, marginBottom: 5 },
-  chartWrapper: { backgroundColor: '#18181B', borderRadius: 16, paddingVertical: 10, borderWidth: 1, borderColor: '#27272A', alignItems: 'center' },
-  sectionAlertTitle: { color: '#fca5a5', fontSize: 20, fontWeight: 'bold', marginTop: 20 },
-  sectionAlertSub: { color: '#A1A1AA', fontSize: 13, marginBottom: 15 },
-  alarmCard: { backgroundColor: '#18181B', padding: 15, borderRadius: 12, marginBottom: 15, borderWidth: 1, borderLeftWidth: 4, borderColor: '#27272A', borderLeftColor: '#ef4444' },
-  alarmHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  alarmEmail: { color: '#FAFAFA', fontWeight: 'bold', fontSize: 15 },
-  alarmDate: { color: '#52525B', fontSize: 12 },
-  alarmText: { color: '#D4D4D8', fontSize: 15, fontStyle: 'italic', lineHeight: 22 },
-  noAlarmsBox: { backgroundColor: '#14532d', padding: 20, borderRadius: 12, alignItems: 'center', marginBottom: 15 },
-  noAlarmsText: { color: '#86efac', fontWeight: 'bold' },
-  emptyText: { color: '#52525B', textAlign: 'center', marginTop: 10 },
-  logoutBtn: { padding: 15, alignSelf: 'center', marginTop: 10, marginBottom: 40, backgroundColor: '#27272A', borderRadius: 12 },
-  logoutText: { color: '#FAFAFA', fontSize: 14, fontWeight: 'bold' }
-});
