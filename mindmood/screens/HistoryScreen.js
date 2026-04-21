@@ -10,6 +10,22 @@ export default function HistoryScreen() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: themeStyles.background },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeStyles.background },
+    list: { padding: 20 },
+    entryCard: { backgroundColor: themeStyles.card, padding: 20, borderRadius: 24, marginBottom: 16, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {width:0, height:2}, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
+    entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: themeStyles.border },
+    dateContainer: { flexDirection: 'row', alignItems: 'center' },
+    date: { color: themeStyles.secondaryText, fontSize: 13, fontWeight: '700', marginLeft: 6, textTransform: 'uppercase' },
+    emoji: { fontSize: 28 },
+    entryText: { color: themeStyles.text, fontSize: 16, lineHeight: 26, fontWeight: '500' },
+    emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+    emptyEmoji: { fontSize: 64, marginBottom: 20 },
+    emptyText: { color: themeStyles.text, fontSize: 22, fontWeight: '900', textAlign: 'center' },
+    emptySub: { color: themeStyles.secondaryText, fontSize: 16, textAlign: 'center', marginTop: 10, fontWeight: '500' }
+  });
+
   useEffect(() => {
     fetchHistory();
   }, []);
@@ -54,21 +70,6 @@ export default function HistoryScreen() {
     </View>
   );
 
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: themeStyles.background },
-    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeStyles.background },
-    list: { padding: 20 },
-    entryCard: { backgroundColor: themeStyles.card, padding: 20, borderRadius: 24, marginBottom: 16, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {width:0, height:2}, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
-    entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: themeStyles.border },
-    dateContainer: { flexDirection: 'row', alignItems: 'center' },
-    date: { color: themeStyles.secondaryText, fontSize: 13, fontWeight: '700', marginLeft: 6, textTransform: 'uppercase' },
-    emoji: { fontSize: 28 },
-    entryText: { color: themeStyles.text, fontSize: 16, lineHeight: 26, fontWeight: '500' },
-    emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-    emptyEmoji: { fontSize: 64, marginBottom: 20 },
-    emptyText: { color: themeStyles.text, fontSize: 22, fontWeight: '900', textAlign: 'center' },
-    emptySub: { color: themeStyles.secondaryText, fontSize: 16, textAlign: 'center', marginTop: 10, fontWeight: '500' }
-  });
 
   if (loading) {
     return (

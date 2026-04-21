@@ -13,6 +13,22 @@ export default function StatsScreen() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: themeStyles.background },
+    scroll: { padding: 20 },
+    title: { fontSize: 26, fontWeight: '900', color: themeStyles.text, marginBottom: 20, marginTop: 10 },
+    chartCard: { backgroundColor: themeStyles.card, padding: 20, borderRadius: 28, marginBottom: 20, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {height: 4, width: 0}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
+    chartTitle: { fontSize: 16, fontWeight: '800', color: themeStyles.text, marginBottom: 4, textAlign: 'center' },
+    chartSub: { fontSize: 12, color: themeStyles.secondaryText, textAlign: 'center', marginBottom: 20, fontWeight: '600' },
+    loadingContainer: { flex: 1, justifyContent: 'center' },
+    emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    emptyEmoji: { fontSize: 60, marginBottom: 15 },
+    emptyText: { fontSize: 20, fontWeight: 'bold' },
+    emptySub: { fontSize: 14, marginTop: 5 },
+    legendContainer: { marginTop: 10 },
+    legendRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 }
+  });
+
   useEffect(() => {
     fetchHistory();
   }, []);
@@ -73,21 +89,6 @@ export default function StatsScreen() {
   const lineValues = entries.map(e => e.score);
   const recentValues = lineValues.slice(-10);
 
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: themeStyles.background },
-    scroll: { padding: 20 },
-    title: { fontSize: 26, fontWeight: '900', color: themeStyles.text, marginBottom: 20, marginTop: 10 },
-    chartCard: { backgroundColor: themeStyles.card, padding: 20, borderRadius: 28, marginBottom: 20, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {height: 4, width: 0}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
-    chartTitle: { fontSize: 16, fontWeight: '800', color: themeStyles.text, marginBottom: 4, textAlign: 'center' },
-    chartSub: { fontSize: 12, color: themeStyles.secondaryText, textAlign: 'center', marginBottom: 20, fontWeight: '600' },
-    loadingContainer: { flex: 1, justifyContent: 'center' },
-    emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    emptyEmoji: { fontSize: 60, marginBottom: 15 },
-    emptyText: { fontSize: 20, fontWeight: 'bold' },
-    emptySub: { fontSize: 14, marginTop: 5 },
-    legendContainer: { marginTop: 10 },
-    legendRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 }
-  });
 
   return (
     <SafeAreaView style={styles.container}>
