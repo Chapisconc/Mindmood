@@ -79,9 +79,14 @@ export default function HistoryScreen() {
     const dateStr = dateObj.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
     const timeStr = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true });
     
-    // Sort distribution if present
-    const dist = item.distribution;
-    const sortedMoods = dist ? Object.entries(dist).sort((a,b) => b[1] - a[1]) : [];
+    // Sort distribution if present, or create a fallback list with just the primary mood
+    let sortedMoods = [];
+    if (item.distribution && Object.keys(item.distribution).length > 0) {
+      sortedMoods = Object.entries(item.distribution).sort((a,b) => b[1] - a[1]);
+    } else {
+      // Fallback para entradas antiguas o sin distribución guardada
+      sortedMoods = [[item.mood, 100]];
+    }
 
     return (
       <View style={styles.entryCard}>
@@ -105,17 +110,15 @@ export default function HistoryScreen() {
 
         <Text style={styles.entryText}>{item.text}</Text>
 
-        {sortedMoods.length > 0 && (
-          <View style={styles.distributionContainer}>
-            {sortedMoods.map(([name], idx) => (
-              <View key={idx} style={[styles.distBadge, name === item.mood && styles.primaryBadge]}>
-                <Text style={[styles.distText, name === item.mood && styles.primaryText]}>
-                  {name === item.mood ? `✨ ${name}` : name}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
+        <View style={styles.distributionContainer}>
+          {sortedMoods.map(([name], idx) => (
+            <View key={idx} style={[styles.distBadge, name === item.mood && styles.primaryBadge]}>
+              <Text style={[styles.distText, name === item.mood && styles.primaryText]}>
+                {name === item.mood ? `✨ ${name}` : name}
+              </Text>
+            </View>
+          ))}
+        </View>
       </View>
     );
   };
