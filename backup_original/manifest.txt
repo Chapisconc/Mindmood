@@ -1,0 +1,14 @@
+BACKUP DEL PROYECTO DIARIO INTELIGENTE - $(date)
+
+Archivos incluidos:
+- app.py
+- database.py
+- sentiment_analysis.py (si existe)
+- utils.py
+- statistics.py (o statistics_fixed.py)
+- requirements.txt
+- .gitignore
+- .streamlit/config.toml
+
+ESTADO: Creado antes de refactorización a capas AUTOSAR + notación húngara.
+

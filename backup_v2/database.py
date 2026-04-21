@@ -13,6 +13,7 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
+from cryptography.fernet import Fernet
 
 # ─── Configuración ──────────────────────────────────────────────────────────
 DB_DIR = Path(__file__).parent / "data"

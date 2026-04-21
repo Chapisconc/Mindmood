@@ -1,22 +1,18 @@
 """
 statistics.py — Estadísticas avanzadas sobre el historial del diario.
-
-[DOCSTRING ORIGINAL MANTENIDA]
 """
 
 import numpy as np
 import pandas as pd
 from collections import Counter
-from datetime import datetime
-
+from datetime import datetime, timedelta
 
 # ─── Constantes ──────────────────────────────────────────────────────────────
 VERY_POSITIVE_LABELS = {"Muy bueno"}
 VERY_NEGATIVE_LABELS = {"Muy malo"}
 
-
 def _to_dataframe(entries: list[dict]) -> pd.DataFrame:
-    \"\"\"Convierte lista de dicts a DataFrame con tipos correctos.\"\"\"
+    """Convierte lista de dicts a DataFrame con tipos correctos."""
     df = pd.DataFrame(entries)
     df["entry_date"] = pd.to_datetime(df["entry_date"])
     df["compound_mean"] = pd.to_numeric(df["compound_mean"], errors="coerce").fillna(0)
@@ -25,9 +21,8 @@ def _to_dataframe(entries: list[dict]) -> pd.DataFrame:
     df["neg_ratio"] = pd.to_numeric(df["neg_ratio"], errors="coerce").fillna(0)
     return df
 
-
 def _empty_stats() -> dict:
-    \"\"\"Estadísticas vacías cuando no hay entradas.\"\"\"
+    """Estadísticas vacías cuando no hay entradas."""
     empty_df = pd.DataFrame(columns=["entry_date", "compound_mean"])
     return {
         "mood_distribution": {l: 0 for l in ["Muy bueno","Bueno","Regular","Malo","Muy malo"]},
@@ -44,7 +39,6 @@ def _empty_stats() -> dict:
         "global_compound_mean": 0.0,
         "global_neg_ratio_mean": 0.0,
     }
-
 
 def compute_all_stats(entries: list[dict]) -> dict:
     if not entries:
@@ -72,13 +66,10 @@ def compute_all_stats(entries: list[dict]) -> dict:
         "global_neg_ratio_mean": round(float(df["neg_ratio"].mean()), 4),
     }
 
-
-# [RESTA DEL CÓDIGO IDENTICO - mood_distribution, temporal_evolution, etc. MANTENIDO]
 def mood_distribution(df: pd.DataFrame) -> dict[str, int]:
     order = ["Muy bueno", "Bueno", "Regular", "Malo", "Muy malo"]
     counts = Counter(df["mood_label"].dropna())
     return {label: counts.get(label, 0) for label in order}
-
 
 def temporal_evolution(df_sorted: pd.DataFrame) -> pd.DataFrame:
     daily = (
@@ -90,7 +81,6 @@ def temporal_evolution(df_sorted: pd.DataFrame) -> pd.DataFrame:
     daily["compound_mean"] = daily["compound_mean"].round(4)
     return daily
 
-
 def emotional_variability_by_day(df_sorted: pd.DataFrame) -> pd.DataFrame:
     daily = (
         df_sorted.groupby("entry_date")["emotional_var"]
@@ -100,7 +90,6 @@ def emotional_variability_by_day(df_sorted: pd.DataFrame) -> pd.DataFrame:
     daily.columns = ["entry_date", "emotional_var"]
     daily["emotional_var"] = daily["emotional_var"].round(4)
     return daily
-
 
 def period_average(df_sorted: pd.DataFrame, freq: str) -> pd.DataFrame:
     df_copy = df_sorted.copy()
@@ -116,13 +105,11 @@ def period_average(df_sorted: pd.DataFrame, freq: str) -> pd.DataFrame:
     result["compound_mean"] = result["compound_mean"].round(4)
     return result
 
-
 def pct_extreme_days(df: pd.DataFrame, label_set: set[str]) -> float:
     if len(df) == 0:
         return 0.0
     count = df["mood_label"].isin(label_set).sum()
     return round(100 * count / len(df), 2)
-
 
 def emotional_stability_index(df: pd.DataFrame) -> float:
     if len(df) < 2:
@@ -130,7 +117,6 @@ def emotional_stability_index(df: pd.DataFrame) -> float:
     sigma = float(df["compound_mean"].std())
     ise = 1.0 - min(sigma / 2.0, 1.0)
     return round(ise, 4)
-
 
 def linear_trend(df_sorted: pd.DataFrame) -> dict:
     y = df_sorted["compound_mean"].values.astype(float)
@@ -160,4 +146,3 @@ def linear_trend(df_sorted: pd.DataFrame) -> dict:
         "trend_line": trend_line,
         "trend_label": trend_label,
     }
-

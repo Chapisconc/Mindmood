@@ -1,0 +1,38 @@
+**ARCHIVOS ESENCIALES para otra IA (Diario Inteligente)**
+
+**OBLIGATORIOS (funcionan el proyecto)**:
+```
+1. requirements.txt  - Dependencias + versiones
+2. app.py           - Frontend Streamlit + UI + lógica
+3. database.py      - SQLite persistencia
+4. utils.py         - Colores/emojis/helpers
+5. sentiment_analysis.py  - IA pysentimiento
+6. statistics.py    - Estadísticas avanzadas
+```
+
+**OPCIONALES (config/UI)**:
+```
+7. .streamlit/config.toml   - Colores Streamlit
+8. .gitignore
+9. TODO.md
+```
+
+**MÍNIMO VIABLE (5 archivos)**:
+```
+requirements.txt + app.py + database.py + utils.py + sentiment_analysis.py
+```
+
+**Comando ejecución**:
+```bash
+pip install -r requirements.txt
+python -m streamlit run app.py
+```
+
+**Faltantes identificados** (runtime errors):
+```
+statistics.py - NameError _to_dataframe
+sentiment_analysis.py - transformers/torch dynamo
+```
+
+**Copiar estos 6 archivos** para 100% funcionalidad.
+

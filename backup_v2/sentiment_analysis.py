@@ -65,6 +65,11 @@ import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 from pysentimiento import create_analyzer
+import hashlib
+import os
+import json
+from typing import Dict, List, Optional, Tuple
+import emoji
 
 from text_preprocessing import fnPreprocessText
 from text_processing import (

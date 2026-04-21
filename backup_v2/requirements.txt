@@ -1,0 +1,31 @@
+# ─── Diario Personal Inteligente — Dependencias ───────────────────────────
+# Python 3.10+
+# Instalar con: pip install -r requirements.txt
+
+# ─── NLP y Análisis de Sentimientos ───────────────────────────────────────
+pysentimiento>=0.7.0
+torch>=2.0.0
+nltk>=3.8.1
+
+# ─── Datos y Matemáticas ─────────────────────────────────────────────────
+numpy>=1.26.0
+pandas>=2.1.0
+
+# ─── Visualización Interactiva ───────────────────────────────────────────
+plotly>=5.18.0
+kaleido>=0.2.1
+
+# ─── Interfaz Web ───────────────────────────────────────────────────────
+streamlit>=1.32.0
+streamlit-authenticator>=0.2.0
+
+# ─── Exportación ─────────────────────────────────────────────────────────
+emoji>=2.0.0
+cryptography>=41.0.0
+fpdf>=1.7.2
+xlsxwriter>=3.1.0
+
+# ─── Base de datos ───────────────────────────────────────────────────────
+# sqlite3 - incluido en Python stdlib
+emoji>=2.0.0
+cryptography>=41.0.0
