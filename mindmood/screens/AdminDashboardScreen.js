@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 const screenWidth = Dimensions.get('window').width;
 
 export default function AdminDashboardScreen({ navigation }) {
-  const { themeStyles } = useTheme();
+  const { theme, themeStyles } = useTheme();
   const [stats, setStats] = useState(null);
   const [alarms, setAlarms] = useState([]);
   const [filteredAlarms, setFilteredAlarms] = useState([]);
@@ -110,7 +110,10 @@ export default function AdminDashboardScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Panel Admin</Text>
-          <TouchableOpacity onPress={() => navigation.replace('Login')}>
+          <TouchableOpacity onPress={async () => {
+            await supabase.auth.signOut();
+            navigation.replace('Login');
+          }}>
             <Ionicons name="log-out-outline" size={26} color={themeStyles.error} />
           </TouchableOpacity>
         </View>

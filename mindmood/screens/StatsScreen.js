@@ -136,5 +136,4 @@ export default function StatsScreen() {
       </ScrollView>
     </SafeAreaView>
   );
-}ntSize: 18 }
-});
+}
