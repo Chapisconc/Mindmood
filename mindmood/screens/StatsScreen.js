@@ -101,7 +101,7 @@ export default function StatsScreen() {
     if (!entries.length) return;
     
     const now = new Date();
-    let filtered = [];
+    let filtered = [...entries];
 
     if (period === 'Semana') {
       const lastWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
@@ -109,7 +109,7 @@ export default function StatsScreen() {
     } else if (period === 'Mes') {
       const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
       filtered = entries.filter(e => new Date(e.created_at) >= lastMonth);
-    } else {
+    } else if (period === 'Año') {
       const lastYear = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
       filtered = entries.filter(e => new Date(e.created_at) >= lastYear);
     }
@@ -118,7 +118,7 @@ export default function StatsScreen() {
   };
 
   const getInsight = (data) => {
-    if (data.length < 2) return { text: "Registra al menos dos días para recibir un análisis de tendencia.", trend: "Estable", color: "#94A3B8", icon: "remove" };
+    if (data.length < 2) return { text: "Necesitamos más registros en este periodo para darte un análisis de tendencia.", trend: "Estable", color: "#94A3B8", icon: "remove" };
     
     const scores = data.map(r => r.score);
     const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
@@ -143,9 +143,7 @@ export default function StatsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={themeStyles.accent} />
-      </View>
+      <ActivityIndicator size="large" color={themeStyles.accent} style={{flex: 1, backgroundColor: themeStyles.background}} />
     );
   }
 
@@ -158,13 +156,29 @@ export default function StatsScreen() {
     );
   }
 
-  const chartData = filteredEntries.length > 0 ? filteredEntries : entries.slice(-10);
-  const labels = chartData.map((_, i) => `${i + 1}`);
+  // Determine chart data (use filtered or fallback)
+  const chartData = filteredEntries.length > 0 ? filteredEntries : entries;
+  
+  // Format Labels based on period
+  const labels = chartData.map(e => {
+    const d = new Date(e.created_at);
+    if (period === 'Semana') return `${d.getDate()} / ${d.getMonth() + 1}`;
+    if (period === 'Mes') return `${d.getDate()}/${d.getMonth() + 1}`;
+    return `${d.getMonth() + 1}/${d.getFullYear().toString().slice(-2)}`;
+  });
+
   const scores = chartData.map(e => e.score);
   const dotColors = chartData.map(e => {
     const emotion = emotionsMap.find(emo => emo.name === e.mood);
     return emotion ? emotion.color : themeStyles.accent;
   });
+
+  // Calculate dynamic width
+  // If semana, fixed to screen. If mes/año, scrollable based on points
+  let calcWidth = screenWidth - 40;
+  if (period !== 'Semana' && chartData.length > 5) {
+     calcWidth = chartData.length * 60;
+  }
 
   const moodCounts = {};
   chartData.forEach(e => { moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1; });
@@ -178,15 +192,12 @@ export default function StatsScreen() {
 
   const insight = getInsight(chartData);
 
-  // Dynamic width for LineChart (Allows scrolling if many points)
-  const calcWidth = Math.max(screenWidth - 40, chartData.length * 50);
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Estadísticas</Text>
-          <Text style={styles.subtitle}>Evolución de tu energía vital</Text>
+          <Text style={styles.subtitle}>Tu evolución histórica ({period})</Text>
         </View>
 
         <View style={styles.periodSelector}>
@@ -203,7 +214,7 @@ export default function StatsScreen() {
         
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>Trayectoria Personal</Text>
-          <Text style={styles.chartSub}>Pulso de tu mente en este periodo</Text>
+          <Text style={styles.chartSub}>Detalle de tus registros en este periodo</Text>
           
           <View style={styles.miniLegend}>
             {emotionsMap.filter(emo => chartData.some(e => e.mood === emo.name)).map((emo, i) => (
@@ -214,11 +225,11 @@ export default function StatsScreen() {
             ))}
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={{ paddingHorizontal: 10 }}>
             <LineChart
               data={{ labels, datasets: [{ data: scores }] }}
               width={calcWidth}
-              height={260}
+              height={280} // Increased height
               chartConfig={{
                 backgroundColor: themeStyles.card,
                 backgroundGradientFrom: themeStyles.card,
@@ -239,7 +250,7 @@ export default function StatsScreen() {
               getDotColor={(_, index) => dotColors[index]}
               bezier
               segments={4}
-              style={{ borderRadius: 16 }}
+              style={{ borderRadius: 16, paddingRight: 40 }}
             />
           </ScrollView>
         </View>
