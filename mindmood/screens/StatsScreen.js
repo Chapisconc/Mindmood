@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { supabase } from '../services/supabase';
@@ -11,61 +11,74 @@ const screenWidth = Dimensions.get('window').width;
 export default function StatsScreen() {
   const { theme, themeStyles } = useTheme();
   const [entries, setEntries] = useState([]);
+  const [filteredEntries, setFilteredEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState('Semana'); // 'Semana', 'Mes', 'Año'
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: themeStyles.background },
-    scroll: { padding: 20 },
-    title: { fontSize: 32, fontWeight: '900', color: themeStyles.text, marginBottom: 5, marginTop: 10, letterSpacing: -1 },
-    subtitle: { fontSize: 16, color: themeStyles.secondaryText, marginBottom: 25, fontWeight: '600' },
+    scroll: { paddingBottom: 60 },
+    header: { padding: 25, paddingBottom: 15 },
+    title: { fontSize: 34, fontWeight: '900', color: themeStyles.text, letterSpacing: -1 },
+    subtitle: { fontSize: 16, color: themeStyles.secondaryText, fontWeight: '600', marginTop: 4 },
     
-    chartCard: { backgroundColor: themeStyles.card, padding: 20, borderRadius: 32, marginBottom: 20, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {height: 4, width: 0}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
-    chartTitle: { fontSize: 18, fontWeight: '800', color: themeStyles.text, marginBottom: 4, textAlign: 'center' },
-    chartSub: { fontSize: 13, color: themeStyles.secondaryText, textAlign: 'center', marginBottom: 15, fontWeight: '600' },
+    // Period Selector
+    periodSelector: { flexDirection: 'row', paddingHorizontal: 25, marginBottom: 20, gap: 10 },
+    periodBtn: { flex: 1, paddingVertical: 12, borderRadius: 16, backgroundColor: themeStyles.card, alignItems: 'center', borderWidth: 1, borderColor: themeStyles.border },
+    periodBtnActive: { backgroundColor: themeStyles.accent, borderColor: themeStyles.accent },
+    periodText: { fontWeight: '800', color: themeStyles.secondaryText, fontSize: 13 },
+    periodTextActive: { color: '#FFF' },
+
+    chartCard: { backgroundColor: themeStyles.card, marginHorizontal: 20, borderRadius: 32, marginBottom: 24, paddingVertical: 25, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {height: 10, width: 0}, shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 },
+    chartTitle: { fontSize: 20, fontWeight: '900', color: themeStyles.text, textAlign: 'center', marginBottom: 5 },
+    chartSub: { fontSize: 13, color: themeStyles.secondaryText, textAlign: 'center', marginBottom: 20, fontWeight: '600' },
     
-    // Quick Legend for LineChart
-    miniLegend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginBottom: 10, paddingHorizontal: 10 },
-    legendItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    // Mini Legend
+    miniLegend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginBottom: 20, paddingHorizontal: 20 },
+    legendItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
     legendDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
     legendLabel: { fontSize: 10, fontWeight: '800', color: themeStyles.secondaryText, textTransform: 'uppercase' },
 
-    insightCard: { backgroundColor: themeStyles.card, padding: 25, borderRadius: 28, marginBottom: 25, borderLeftWidth: 8, borderLeftColor: themeStyles.accent },
+    insightCard: { backgroundColor: themeStyles.card, marginHorizontal: 20, padding: 25, borderRadius: 28, marginBottom: 24, borderLeftWidth: 8, borderLeftColor: themeStyles.accent },
     insightTitle: { fontSize: 18, fontWeight: '900', color: themeStyles.text, marginBottom: 10 },
     insightText: { fontSize: 15, color: themeStyles.text, lineHeight: 22, fontWeight: '500' },
-    trendBadge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, marginTop: 12, flexDirection: 'row', alignItems: 'center' },
-    trendText: { fontWeight: '800', fontSize: 12, color: '#FFF', marginLeft: 6 },
+    trendBadge: { alignSelf: 'flex-start', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 12, marginTop: 15, flexDirection: 'row', alignItems: 'center' },
+    trendText: { fontWeight: '800', fontSize: 12, color: '#FFF', marginLeft: 8 },
 
-    glossaryTitle: { fontSize: 22, fontWeight: '900', color: themeStyles.text, marginTop: 10, marginBottom: 15, paddingHorizontal: 10 },
-    glossaryContainer: { backgroundColor: themeStyles.card, borderRadius: 28, padding: 20, marginBottom: 40, borderWidth: 1, borderColor: themeStyles.border },
-    emotionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
-    emotionIcon: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+    glossaryTitle: { fontSize: 24, fontWeight: '900', color: themeStyles.text, marginTop: 20, marginBottom: 20, marginHorizontal: 25 },
+    glossaryContainer: { backgroundColor: themeStyles.card, marginHorizontal: 20, borderRadius: 32, padding: 25, marginBottom: 50, borderWidth: 1, borderColor: themeStyles.border },
+    emotionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+    emotionIcon: { width: 48, height: 48, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginRight: 18 },
     emotionInfo: { flex: 1 },
-    emotionName: { fontSize: 16, fontWeight: '800', color: themeStyles.text },
-    emotionDesc: { fontSize: 13, color: themeStyles.secondaryText, marginTop: 2, lineHeight: 18 },
+    emotionName: { fontSize: 17, fontWeight: '800', color: themeStyles.text },
+    emotionDesc: { fontSize: 13, color: themeStyles.secondaryText, marginTop: 3, lineHeight: 18 },
     
-    loadingContainer: { flex: 1, justifyContent: 'center' },
-    emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+    loadingContainer: { flex: 1, justifyContent: 'center', backgroundColor: themeStyles.background },
+    emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40, backgroundColor: themeStyles.background },
     emptyEmoji: { fontSize: 80, marginBottom: 20 },
-    emptyText: { fontSize: 22, fontWeight: '900', textAlign: 'center' },
-    emptySub: { fontSize: 15, marginTop: 10, textAlign: 'center', lineHeight: 22 },
+    emptyText: { fontSize: 24, fontWeight: '900', textAlign: 'center', color: themeStyles.text },
   });
 
   const emotionsMap = [
-    { name: 'Excelente', desc: 'Momentos de máxima felicidad, euforia o logros importantes.', color: '#10B981', icon: 'star' },
-    { name: 'Feliz', desc: 'Paz, bienestar general y satisfacción con tu día.', color: '#6366F1', icon: 'happy' },
-    { name: 'Agradecido', desc: 'Sentimiento profundo de gratitud y aprecio por la vida.', color: '#FACC15', icon: 'heart' },
-    { name: 'Sorpresa', desc: 'Asombro ante eventos inesperados o revelaciones.', color: '#06B6D4', icon: 'flash' },
-    { name: 'Neutral', desc: 'Equilibrio, calma emocional y estabilidad sin extremos.', color: '#94A3B8', icon: 'remove-circle' },
-    { name: 'Enojo', desc: 'Frustración, irritación o ira contenida o expresada.', color: '#F97316', icon: 'flame' },
-    { name: 'Ansiedad', desc: 'Estrés, preocupación por el futuro o inquietud mental.', color: '#8B5CF6', icon: 'pulse' },
-    { name: 'Miedo', desc: 'Temor, inseguridad o sensación de vulnerabilidad.', color: '#4B5563', icon: 'eye-off' },
-    { name: 'Triste', desc: 'Melancolía, nostalgia o tristeza por alguna pérdida.', color: '#F87171', icon: 'rainy' },
-    { name: 'Crisis', desc: 'Estado de alta angustia que requiere atención y apoyo.', color: '#EF4444', icon: 'alert-circle' },
+    { name: 'Excelente', color: '#10B981', icon: 'star', desc: 'Momentos de máxima plenitud y alegría.' },
+    { name: 'Feliz', color: '#6366F1', icon: 'happy', desc: 'Bienestar, paz y satisfacción general.' },
+    { name: 'Agradecido', color: '#FACC15', icon: 'heart', desc: 'Sentimiento profundo de aprecio.' },
+    { name: 'Sorpresa', color: '#06B6D4', icon: 'flash', desc: 'Asombro ante lo inesperado.' },
+    { name: 'Neutral', color: '#94A3B8', icon: 'remove-circle', desc: 'Equilibrio y calma estable.' },
+    { name: 'Enojo', color: '#F97316', icon: 'flame', desc: 'Frustración o irritación intensa.' },
+    { name: 'Ansiedad', color: '#8B5CF6', icon: 'pulse', desc: 'Inquietud o estrés por el futuro.' },
+    { name: 'Miedo', color: '#4B5563', icon: 'eye-off', desc: 'Sensación de inseguridad o temor.' },
+    { name: 'Triste', color: '#F87171', icon: 'rainy', desc: 'Melancolía o tristeza por pérdida.' },
+    { name: 'Crisis', color: '#EF4444', icon: 'alert-circle', desc: 'Angustia alta que requiere apoyo.' },
   ];
 
   useEffect(() => {
     fetchHistory();
   }, []);
+
+  useEffect(() => {
+    filterData();
+  }, [entries, period]);
 
   const fetchHistory = async () => {
     try {
@@ -84,10 +97,30 @@ export default function StatsScreen() {
     }
   };
 
-  const getInsight = (recent) => {
-    if (recent.length < 2) return { text: "Necesito un par de días más para darte un análisis profundo.", trend: "Estable", color: "#94A3B8", icon: "remove" };
+  const filterData = () => {
+    if (!entries.length) return;
     
-    const scores = recent.map(r => r.score);
+    const now = new Date();
+    let filtered = [];
+
+    if (period === 'Semana') {
+      const lastWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+      filtered = entries.filter(e => new Date(e.created_at) >= lastWeek);
+    } else if (period === 'Mes') {
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      filtered = entries.filter(e => new Date(e.created_at) >= lastMonth);
+    } else {
+      const lastYear = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      filtered = entries.filter(e => new Date(e.created_at) >= lastYear);
+    }
+
+    setFilteredEntries(filtered);
+  };
+
+  const getInsight = (data) => {
+    if (data.length < 2) return { text: "Registra al menos dos días para recibir un análisis de tendencia.", trend: "Estable", color: "#94A3B8", icon: "remove" };
+    
+    const scores = data.map(r => r.score);
     const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
     const last = scores[scores.length - 1];
     const prev = scores[scores.length - 2];
@@ -98,20 +131,19 @@ export default function StatsScreen() {
     let color = "#94A3B8";
     let icon = "remove";
 
-    if (avg > 0.5) text = "Tu ánimo general es muy positivo. Estás en una racha de gran bienestar.";
-    else if (avg > 0) text = "Te encuentras en un estado equilibrado. Sigues manteniendo una energía estable.";
-    else if (avg > -0.5) text = "Se nota que los últimos días han sido pesados. Tu curva muestra cierta fatiga emocional.";
-    else text = "Tus niveles de bienestar están en zona de alerta. Sería bueno que descansaras o hablaras con alguien.";
+    if (avg > 0.4) text = "Tu energía general es vibrante y positiva en este periodo.";
+    else if (avg > -0.1) text = "Mantienes un equilibrio emocional notable. Estás en centro.";
+    else text = "Este periodo ha sido emocionalmente exigente. Prioriza tu descanso.";
 
-    if (diff > 0.2) { trend = "Mejorando"; color = "#10B981"; icon = "trending-up"; }
-    else if (diff < -0.2) { trend = "Bajando"; color = "#EF4444"; icon = "trending-down"; }
+    if (diff > 0.15) { trend = "Mejorando"; color = "#10B981"; icon = "trending-up"; }
+    else if (diff < -0.15) { trend = "Bajando"; color = "#EF4444"; icon = "trending-down"; }
 
     return { text, trend, color, icon };
   };
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: themeStyles.background }]}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={themeStyles.accent} />
       </View>
     );
@@ -119,30 +151,24 @@ export default function StatsScreen() {
 
   if (entries.length === 0) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: themeStyles.background }]}>
+      <View style={styles.emptyContainer}>
         <Text style={styles.emptyEmoji}>📊</Text>
-        <Text style={[styles.emptyText, { color: themeStyles.text }]}>Tu gráfico está esperando</Text>
-        <Text style={[styles.emptySub, { color: themeStyles.secondaryText }]}>Cuando guardes tu primer diario, aquí verás el mapa de tu mente.</Text>
+        <Text style={styles.emptyText}>Tu mapa emocional llegará pronto</Text>
       </View>
     );
   }
 
-  const total = entries.length;
-  const moodCounts = {};
-  entries.forEach(e => { moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1; });
-
-  const recentEntries = entries.slice(-8);
-  const recentScores = recentEntries.map(e => e.score);
-  
-  // Get UNIQUE emotions present in the current LineChart to show in mini legend
-  const presentEmotions = emotionsMap.filter(emo => 
-    recentEntries.some(e => e.mood === emo.name)
-  );
-
-  const dotColors = recentEntries.map(e => {
+  const chartData = filteredEntries.length > 0 ? filteredEntries : entries.slice(-10);
+  const labels = chartData.map((_, i) => `${i + 1}`);
+  const scores = chartData.map(e => e.score);
+  const dotColors = chartData.map(e => {
     const emotion = emotionsMap.find(emo => emo.name === e.mood);
     return emotion ? emotion.color : themeStyles.accent;
   });
+
+  const moodCounts = {};
+  chartData.forEach(e => { moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1; });
+  const total = chartData.length;
 
   const pieData = emotionsMap.map(emo => {
     const count = moodCounts[emo.name] || 0;
@@ -150,21 +176,37 @@ export default function StatsScreen() {
     return { name: `${emo.name} (${percentage}%)`, population: count, color: emo.color, legendFontColor: themeStyles.text, legendFontSize: 12 };
   }).filter(item => item.population > 0);
 
-  const insight = getInsight(recentEntries);
+  const insight = getInsight(chartData);
+
+  // Dynamic width for LineChart (Allows scrolling if many points)
+  const calcWidth = Math.max(screenWidth - 40, chartData.length * 50);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Estadísticas</Text>
-        <Text style={styles.subtitle}>Tu evolución emocional en datos</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Estadísticas</Text>
+          <Text style={styles.subtitle}>Evolución de tu energía vital</Text>
+        </View>
+
+        <View style={styles.periodSelector}>
+          {['Semana', 'Mes', 'Año'].map(p => (
+            <TouchableOpacity 
+              key={p} 
+              style={[styles.periodBtn, period === p && styles.periodBtnActive]}
+              onPress={() => setPeriod(p)}
+            >
+              <Text style={[styles.periodText, period === p && styles.periodTextActive]}>{p}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
         
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>Trayectoria Personal</Text>
-          <Text style={styles.chartSub}>Pulso de tus últimos días</Text>
+          <Text style={styles.chartSub}>Pulso de tu mente en este periodo</Text>
           
-          {/* 📍 MINI-LEYENDA DINÁMICA */}
           <View style={styles.miniLegend}>
-            {presentEmotions.map((emo, i) => (
+            {emotionsMap.filter(emo => chartData.some(e => e.mood === emo.name)).map((emo, i) => (
               <View key={i} style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: emo.color }]} />
                 <Text style={styles.legendLabel}>{emo.name}</Text>
@@ -172,65 +214,61 @@ export default function StatsScreen() {
             ))}
           </View>
 
-          <LineChart
-            data={{
-              labels: recentScores.map((_, i) => `${i + 1}`),
-              datasets: [{ data: recentScores }]
-            }}
-            width={screenWidth - 80}
-            height={200}
-            chartConfig={{
-              backgroundColor: themeStyles.card,
-              backgroundGradientFrom: themeStyles.card,
-              backgroundGradientTo: themeStyles.card,
-              decimalPlaces: 1,
-              color: (opacity = 1) => themeStyles.accent,
-              labelColor: (opacity = 1) => themeStyles.secondaryText,
-              style: { borderRadius: 16 },
-              propsForDots: { r: "7", strokeWidth: "0" },
-              formatYLabel: (y) => {
-                const val = parseFloat(y);
-                if (val >= 0.8) return "Cenit";
-                if (val >= 0.3) return "Bien";
-                if (val >= -0.1) return "Neutro";
-                if (val >= -0.6) return "Bajo";
-                return "Crítico";
-              }
-            }}
-            getDotColor={(dataPoint, index) => dotColors[index]}
-            bezier
-            fromZero={false}
-            segments={4}
-            style={{ marginVertical: 8, borderRadius: 16 }}
-          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
+            <LineChart
+              data={{ labels, datasets: [{ data: scores }] }}
+              width={calcWidth}
+              height={260}
+              chartConfig={{
+                backgroundColor: themeStyles.card,
+                backgroundGradientFrom: themeStyles.card,
+                backgroundGradientTo: themeStyles.card,
+                decimalPlaces: 1,
+                color: () => themeStyles.accent,
+                labelColor: () => themeStyles.secondaryText,
+                propsForDots: { r: "7", strokeWidth: "0" },
+                formatYLabel: (y) => {
+                  const val = parseFloat(y);
+                  if (val >= 0.8) return "Cenit";
+                  if (val >= 0.3) return "Bien";
+                  if (val >= -0.1) return "Neutro";
+                  if (val >= -0.6) return "Bajo";
+                  return "Crítico";
+                }
+              }}
+              getDotColor={(_, index) => dotColors[index]}
+              bezier
+              segments={4}
+              style={{ borderRadius: 16 }}
+            />
+          </ScrollView>
         </View>
 
         <View style={styles.insightCard}>
           <Text style={styles.insightTitle}>Análisis de Bienestar</Text>
           <Text style={styles.insightText}>{insight.text}</Text>
           <View style={[styles.trendBadge, { backgroundColor: insight.color }]}>
-            <Ionicons name={insight.icon} size={16} color="#FFF" />
-            <Text style={styles.trendText}>Tendencia: {insight.trend}</Text>
+            <Ionicons name={insight.icon} size={18} color="#FFF" />
+            <Text style={styles.trendText}>Tendencia {period.toLowerCase()}: {insight.trend}</Text>
           </View>
         </View>
 
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>Panorama Mental</Text>
-          <Text style={styles.chartSub}>Distribución de tus estados</Text>
+          <Text style={styles.chartSub}>Distribución de estados ({period})</Text>
           <PieChart
             data={pieData}
-            width={screenWidth - 80}
-            height={180}
-            chartConfig={{ color: (op = 1) => themeStyles.text }}
+            width={screenWidth - 40}
+            height={200}
+            chartConfig={{ color: () => themeStyles.text }}
             accessor="population"
             backgroundColor="transparent"
-            paddingLeft="0"
-            center={[12, 0]}
-            absolute={false}
+            paddingLeft="15"
+            center={[10, 0]}
           />
         </View>
 
-        <Text style={styles.glossaryTitle}>Glosario Emocional</Text>
+        <Text style={styles.glossaryTitle}>Glosario de Emociones</Text>
         <View style={styles.glossaryContainer}>
           {emotionsMap.map((emo, idx) => (
             <View key={idx} style={styles.emotionRow}>
