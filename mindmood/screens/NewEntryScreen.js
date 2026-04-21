@@ -65,8 +65,8 @@ export default function NewEntryScreen({ navigation }) {
       const { data: { user } } = await supabase.auth.getUser();
       const { mood, score, requires_help, summary, emotions_distribution } = aiData;
 
-      // Save Entry
-      const { error: entryError } = await supabase
+      // Intento de guardado "Seguro"
+      let { error: entryError } = await supabase
         .from('entries')
         .insert([{ 
           user_id: user.id, 
@@ -75,6 +75,20 @@ export default function NewEntryScreen({ navigation }) {
           score,
           distribution: emotions_distribution
         }]);
+      
+      // Si el error es por la columna faltante, intentamos guardar sin ella para no perder el diario
+      if (entryError && entryError.message.includes('distribution')) {
+        console.log("Columna 'distribution' no detectada. Guardando versión básica...");
+        const fallback = await supabase
+          .from('entries')
+          .insert([{ 
+            user_id: user.id, 
+            text, 
+            mood, 
+            score 
+          }]);
+        entryError = fallback.error;
+      }
       
       if (entryError) throw entryError;
 
