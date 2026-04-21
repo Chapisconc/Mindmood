@@ -68,7 +68,13 @@ export default function NewEntryScreen({ navigation }) {
       // Save Entry
       const { error: entryError } = await supabase
         .from('entries')
-        .insert([{ user_id: user.id, text, mood, score }]);
+        .insert([{ 
+          user_id: user.id, 
+          text, 
+          mood, 
+          score,
+          distribution: emotions_distribution
+        }]);
       
       if (entryError) throw entryError;
 
@@ -81,7 +87,8 @@ export default function NewEntryScreen({ navigation }) {
       setModalData({
         type: requires_help ? 'crisis' : 'normal',
         summary: isOffline ? 'Guardado localmente (Modo Offline)' : summary,
-        distribution: emotions_distribution
+        distribution: emotions_distribution,
+        primaryMood: mood
       });
       setModalVisible(true);
       
@@ -173,6 +180,7 @@ export default function NewEntryScreen({ navigation }) {
         type={modalData.type}
         summary={modalData.summary}
         distribution={modalData.distribution}
+        primaryMood={modalData.primaryMood}
         navigation={navigation}
       />
     </SafeAreaView>

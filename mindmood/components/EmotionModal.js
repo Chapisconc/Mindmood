@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function EmotionModal({ visible, onClose, type, summary, distribution, navigation }) {
+export default function EmotionModal({ visible, onClose, type, summary, distribution, primaryMood, navigation }) {
   const isCrisis = type === 'crisis';
 
   const handleClose = () => {
@@ -15,19 +15,18 @@ export default function EmotionModal({ visible, onClose, type, summary, distribu
   };
 
   const renderDetectedEmotions = () => {
-    if (!distribution || Object.keys(distribution).length <= 1) return null;
+    if (!distribution) return null;
     
-    // Sort emotions by percentage (highest first)
-    const sorted = Object.entries(distribution).sort((a, b) => b[1] - a[1]);
-    const primary = sorted[0][0];
-    const secondary = sorted.slice(1);
+    // The winner is what the database stored (primaryMood)
+    const winner = primaryMood || Object.keys(distribution)[0];
+    const others = Object.keys(distribution).filter(name => name !== winner);
 
     return (
       <View style={styles.distributionContainer}>
         <View style={[styles.distBadge, styles.primaryBadge]}>
-          <Text style={[styles.distText, styles.primaryText]}>✨ Principal: {primary}</Text>
+          <Text style={[styles.distText, styles.primaryText]}>✨ Principal: {winner}</Text>
         </View>
-        {secondary.map(([name], index) => (
+        {others.map((name, index) => (
           <View key={index} style={styles.distBadge}>
             <Text style={styles.distText}>{name}</Text>
           </View>

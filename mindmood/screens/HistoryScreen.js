@@ -14,16 +14,33 @@ export default function HistoryScreen() {
     container: { flex: 1, backgroundColor: themeStyles.background },
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeStyles.background },
     list: { padding: 20, paddingBottom: 100 },
+    
     entryCard: { backgroundColor: themeStyles.card, padding: 22, borderRadius: 28, marginBottom: 18, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {width:0, height:6}, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 },
-    entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: themeStyles.border + '30' },
-    dateContainer: { flexDirection: 'row', alignItems: 'center' },
-    date: { color: themeStyles.secondaryText, fontSize: 13, fontWeight: '800', marginLeft: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-    emoji: { fontSize: 32 },
-    entryText: { color: themeStyles.text, fontSize: 17, lineHeight: 28, fontWeight: '500', letterSpacing: 0.2 },
+    
+    entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: themeStyles.border + '30' },
+    
+    metaData: { flex: 1 },
+    dateRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+    date: { color: themeStyles.secondaryText, fontSize: 12, fontWeight: '800', marginLeft: 6, textTransform: 'uppercase' },
+    timeRow: { flexDirection: 'row', alignItems: 'center' },
+    time: { color: themeStyles.accent, fontSize: 11, fontWeight: '900', marginLeft: 6 },
+    
+    moodContainer: { alignItems: 'flex-end' },
+    emoji: { fontSize: 26, marginBottom: 2 },
+    moodName: { fontSize: 10, fontWeight: '900', color: themeStyles.text, textTransform: 'uppercase', letterSpacing: 0.5 },
+    
+    entryText: { color: themeStyles.text, fontSize: 16, lineHeight: 26, fontWeight: '500', marginBottom: 15 },
+    
+    distributionContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    distBadge: { backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    primaryBadge: { backgroundColor: 'rgba(99, 102, 241, 0.15)', borderColor: 'rgba(99, 102, 241, 0.3)' },
+    distText: { color: '#94A3B8', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
+    primaryText: { color: '#818CF8' },
+
     emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
     emptyEmoji: { fontSize: 72, marginBottom: 24 },
     emptyText: { color: themeStyles.text, fontSize: 24, fontWeight: '900', textAlign: 'center' },
-    emptySub: { color: themeStyles.secondaryText, fontSize: 16, textAlign: 'center', marginTop: 12, fontWeight: '600', lineHeight: 24 }
+    emptySub: { color: themeStyles.secondaryText, fontSize: 16, textAlign: 'center', marginTop: 12, fontWeight: '600' }
   });
 
   useEffect(() => {
@@ -49,32 +66,59 @@ export default function HistoryScreen() {
   };
 
   const getEmoji = (mood) => {
-    if (mood === 'Excelente') return '🤩';
-    if (mood === 'Feliz') return '😊';
-    if (mood === 'Agradecido') return '🙏';
-    if (mood === 'Sorpresa') return '😲';
-    if (mood === 'Neutral') return '😐';
-    if (mood === 'Enojo') return '😠';
-    if (mood === 'Ansiedad') return '😰';
-    if (mood === 'Miedo') return '😨';
-    if (mood === 'Triste') return '😔';
-    if (mood === 'Crisis') return '🆘';
-    return '😐';
+    const map = {
+      'Excelente': '🤩', 'Feliz': '😊', 'Agradecido': '🙏', 'Sorpresa': '😲',
+      'Neutral': '😐', 'Enojo': '😠', 'Ansiedad': '😰', 'Miedo': '😨',
+      'Triste': '😔', 'Crisis': '🆘'
+    };
+    return map[mood] || '😐';
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.entryCard}>
-      <View style={styles.entryHeader}>
-        <View style={styles.dateContainer}>
-          <Ionicons name="calendar-outline" size={14} color={themeStyles.secondaryText} />
-          <Text style={styles.date}>{new Date(item.recorded_at || item.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
-        </View>
-        <Text style={styles.emoji}>{getEmoji(item.mood)}</Text>
-      </View>
-      <Text style={styles.entryText}>{item.text}</Text>
-    </View>
-  );
+  const renderItem = ({ item }) => {
+    const dateObj = new Date(item.created_at);
+    const dateStr = dateObj.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    const timeStr = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true });
+    
+    // Sort distribution if present
+    const dist = item.distribution;
+    const sortedMoods = dist ? Object.entries(dist).sort((a,b) => b[1] - a[1]) : [];
 
+    return (
+      <View style={styles.entryCard}>
+        <View style={styles.entryHeader}>
+          <View style={styles.metaData}>
+            <View style={styles.dateRow}>
+              <Ionicons name="calendar" size={14} color={themeStyles.secondaryText} />
+              <Text style={styles.date}>{dateStr}</Text>
+            </View>
+            <View style={styles.timeRow}>
+              <Ionicons name="time" size={14} color={themeStyles.accent} />
+              <Text style={styles.time}>{timeStr}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.moodContainer}>
+            <Text style={styles.emoji}>{getEmoji(item.mood)}</Text>
+            <Text style={styles.moodName}>{item.mood}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.entryText}>{item.text}</Text>
+
+        {sortedMoods.length > 0 && (
+          <View style={styles.distributionContainer}>
+            {sortedMoods.map(([name], idx) => (
+              <View key={idx} style={[styles.distBadge, name === item.mood && styles.primaryBadge]}>
+                <Text style={[styles.distText, name === item.mood && styles.primaryText]}>
+                  {name === item.mood ? `✨ ${name}` : name}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   if (loading) {
     return (
