@@ -21,8 +21,14 @@ export default function StatsScreen() {
     
     chartCard: { backgroundColor: themeStyles.card, padding: 20, borderRadius: 32, marginBottom: 20, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {height: 4, width: 0}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
     chartTitle: { fontSize: 18, fontWeight: '800', color: themeStyles.text, marginBottom: 4, textAlign: 'center' },
-    chartSub: { fontSize: 13, color: themeStyles.secondaryText, textAlign: 'center', marginBottom: 20, fontWeight: '600' },
+    chartSub: { fontSize: 13, color: themeStyles.secondaryText, textAlign: 'center', marginBottom: 15, fontWeight: '600' },
     
+    // Quick Legend for LineChart
+    miniLegend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginBottom: 10, paddingHorizontal: 10 },
+    legendItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    legendDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+    legendLabel: { fontSize: 10, fontWeight: '800', color: themeStyles.secondaryText, textTransform: 'uppercase' },
+
     insightCard: { backgroundColor: themeStyles.card, padding: 25, borderRadius: 28, marginBottom: 25, borderLeftWidth: 8, borderLeftColor: themeStyles.accent },
     insightTitle: { fontSize: 18, fontWeight: '900', color: themeStyles.text, marginBottom: 10 },
     insightText: { fontSize: 15, color: themeStyles.text, lineHeight: 22, fontWeight: '500' },
@@ -128,7 +134,11 @@ export default function StatsScreen() {
   const recentEntries = entries.slice(-8);
   const recentScores = recentEntries.map(e => e.score);
   
-  // Create color array for dots
+  // Get UNIQUE emotions present in the current LineChart to show in mini legend
+  const presentEmotions = emotionsMap.filter(emo => 
+    recentEntries.some(e => e.mood === emo.name)
+  );
+
   const dotColors = recentEntries.map(e => {
     const emotion = emotionsMap.find(emo => emo.name === e.mood);
     return emotion ? emotion.color : themeStyles.accent;
@@ -150,14 +160,25 @@ export default function StatsScreen() {
         
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>Trayectoria Personal</Text>
-          <Text style={styles.chartSub}>Cada punto tiene el color de su emoción</Text>
+          <Text style={styles.chartSub}>Pulso de tus últimos días</Text>
+          
+          {/* 📍 MINI-LEYENDA DINÁMICA */}
+          <View style={styles.miniLegend}>
+            {presentEmotions.map((emo, i) => (
+              <View key={i} style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: emo.color }]} />
+                <Text style={styles.legendLabel}>{emo.name}</Text>
+              </View>
+            ))}
+          </View>
+
           <LineChart
             data={{
               labels: recentScores.map((_, i) => `${i + 1}`),
               datasets: [{ data: recentScores }]
             }}
             width={screenWidth - 80}
-            height={220}
+            height={200}
             chartConfig={{
               backgroundColor: themeStyles.card,
               backgroundGradientFrom: themeStyles.card,
