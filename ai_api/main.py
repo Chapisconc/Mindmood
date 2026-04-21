@@ -46,18 +46,55 @@ analyzer.lexicon.update(custom_lexicon)
 
 translator = GoogleTranslator(source='es', target='en')
 
+import re
+
+MEXICAN_SLANG = {
+    r'\bchido\b': 'excelente',
+    r'\bchingon\b': 'maravilloso',
+    r'\bchingón\b': 'maravilloso',
+    r'\brifa\b': 'es el mejor',
+    r'\bperron\b': 'fantástico',
+    r'\bperrón\b': 'fantástico',
+    r'\bpadre\b': 'muy alegre',
+    r'\baguitado\b': 'deprimido',
+    r'\bagüitado\b': 'muy triste',
+    r'\bchingado\b': 'arruinado',
+    r'\bchingada\b': 'destruido',
+    r'\bmadres\b': 'terrible',
+    r'\bcabron\b': 'muy brutal',
+    r'\bcabrón\b': 'muy brutal',
+    r'\bhueva\b': 'aburrido',
+    r'\bjodido\b': 'pésimo',
+    r'\bmadreado\b': 'destrozado',
+    r'\bchafa\b': 'decepcionante',
+    r'\bculero\b': 'horrible',
+    r'\bwey\b': 'amigo',
+    r'\bguey\b': 'amigo',
+    r'\bno mames\b': 'es increíble',
+    r'\bal chile\b': 'sinceramente',
+    r'\bpoca madre\b': 'excelente'
+}
+
+def normalize_mexican_slang(text: str) -> str:
+    text_lower = text.lower()
+    for slang, standard in MEXICAN_SLANG.items():
+        text_lower = re.sub(slang, standard, text_lower)
+    return text_lower
+
 class AnalyzeRequest(BaseModel):
     text: str
 
 @app.post("/analyze")
 def analyze(data: AnalyzeRequest):
-    text = data.text
+    original_text = data.text
     
-    # Translate Spanish to English because VADER only understands English syntax natively
+    normalized_text = normalize_mexican_slang(original_text)
+    
+    # Translate normalized Spanish to English
     try:
-        translated_text = translator.translate(text)
+        translated_text = translator.translate(normalized_text)
     except Exception:
-        translated_text = text # Fallback in case of translation error
+        translated_text = normalized_text # Fallback
         
     score = analyzer.polarity_scores(translated_text)
     
