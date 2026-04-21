@@ -14,14 +14,22 @@ export default function EmotionModal({ visible, onClose, type, summary, distribu
     Linking.openURL(`tel:${number}`);
   };
 
-  const renderDistribution = () => {
+  const renderDetectedEmotions = () => {
     if (!distribution || Object.keys(distribution).length <= 1) return null;
     
+    // Sort emotions by percentage (highest first)
+    const sorted = Object.entries(distribution).sort((a, b) => b[1] - a[1]);
+    const primary = sorted[0][0];
+    const secondary = sorted.slice(1);
+
     return (
       <View style={styles.distributionContainer}>
-        {Object.entries(distribution).map(([name, percentage], index) => (
+        <View style={[styles.distBadge, styles.primaryBadge]}>
+          <Text style={[styles.distText, styles.primaryText]}>✨ Principal: {primary}</Text>
+        </View>
+        {secondary.map(([name], index) => (
           <View key={index} style={styles.distBadge}>
-            <Text style={styles.distText}>{name}: {percentage}%</Text>
+            <Text style={styles.distText}>{name}</Text>
           </View>
         ))}
       </View>
@@ -49,11 +57,11 @@ export default function EmotionModal({ visible, onClose, type, summary, distribu
 
           {/* Title */}
           <Text style={[styles.title, isCrisis ? styles.crisisTitle : styles.normalTitle]}>
-            {isCrisis ? 'No estás solo' : 'Análisis Completado'}
+            {isCrisis ? 'No estás solo' : 'Análisis Mental'}
           </Text>
 
           {/* Distribution */}
-          {!isCrisis && renderDistribution()}
+          {!isCrisis && renderDetectedEmotions()}
 
           {/* Divider */}
           <View style={[styles.divider, isCrisis ? styles.crisisDivider : styles.normalDivider]} />
@@ -196,18 +204,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   distBadge: {
-    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.25)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  primaryBadge: {
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+    borderColor: 'rgba(99, 102, 241, 0.4)',
   },
   distText: {
-    color: '#6366F1',
+    color: '#94A3B8',
     fontSize: 12,
     fontWeight: '800',
     textTransform: 'uppercase',
+  },
+  primaryText: {
+    color: '#818CF8',
   },
 
   // Divider
