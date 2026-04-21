@@ -129,6 +129,31 @@ def normalize_mexican_slang(text: str) -> str:
 class AnalyzeRequest(BaseModel):
     text: str
 
+def generate_human_summary(moods, compound_score):
+    if not moods:
+        return "Hoy noto tu energía muy tranquila y equilibrada. Gracias por compartir este momento."
+    
+    # Primary message based on most "charged" emotion or compound score
+    if compound_score >= 0.7:
+        main_msg = "¡Qué alegría! Se nota que estás teniendo un momento increíble."
+    elif compound_score <= -0.7:
+        main_msg = "Vaya, se nota que estás pasando por un momento muy pesado. Es valiente que lo pongas en palabras."
+    elif compound_score >= 0.1:
+        main_msg = "Veo mucha luz en tu mensaje hoy."
+    elif compound_score <= -0.1:
+        main_msg = "Siento que hoy las cosas están un poco difíciles."
+    else:
+        main_msg = "Gracias por abrirte y contar cómo te sientes."
+
+    if len(moods) == 1:
+        details = f" Detecté que te sientes muy {moods[0].lower()}."
+    else:
+        details = f" Detecto varios matices: pareces estar {moods[0].lower()}, pero también percibo algo de {moods[1].lower()}."
+        if len(moods) > 2:
+            details += " Tu mensaje tiene mucha profundidad emocional hoy."
+
+    return f"{main_msg}{details}"
+
 @app.post("/analyze")
 def analyze(data: AnalyzeRequest):
     original_text = data.text
@@ -136,49 +161,52 @@ def analyze(data: AnalyzeRequest):
     
     normalized_text = normalize_mexican_slang(original_text)
     
-    # Translate normalized Spanish to English
     try:
         translated_text = translator.translate(normalized_text)
     except Exception:
-        translated_text = normalized_text # Fallback
+        translated_text = normalized_text
         
     score = analyzer.polarity_scores(translated_text)
-    
     compound = score["compound"]
     requires_help = False
     
-    # Base mood from VADER
+    # Identify ALL matching moods
+    detected_moods = []
+    
+    # 1. Check Score-based moods
     if compound >= 0.5:
-        mood = "Excelente"
+        detected_moods.append("Excelente")
     elif compound >= 0.05:
-        mood = "Feliz"
+        detected_moods.append("Feliz")
     elif compound <= -0.5:
-        mood = "Crisis"
+        detected_moods.append("Crisis")
         requires_help = True
     elif compound <= -0.05:
-        mood = "Triste"
-    else:
-        mood = "Neutral"
+        detected_moods.append("Triste")
+    
+    # 2. Check Keyword-based nuances
+    for mood_name, keywords in EMOTION_KEYWORDS.items():
+        if any(word in text_lower for word in keywords):
+            if mood_name not in detected_moods:
+                detected_moods.append(mood_name)
 
-    # Specific Keyword Overrides
-    if compound < -0.05:
-        # Check for specific negative emotions
-        if any(word in text_lower for word in EMOTION_KEYWORDS['Enojo']):
-            mood = "Enojo"
-        elif any(word in text_lower for word in EMOTION_KEYWORDS['Ansiedad']):
-            mood = "Ansiedad"
-        elif any(word in text_lower for word in EMOTION_KEYWORDS['Miedo']):
-            mood = "Miedo"
-    elif compound > 0.1:
-        # Check for specific positive emotions
-        if any(word in text_lower for word in EMOTION_KEYWORDS['Agradecido']):
-            mood = "Agradecido"
-        elif any(word in text_lower for word in EMOTION_KEYWORDS['Sorpresa']):
-            mood = "Sorpresa"
+    # Determine Primary Mood (for DB storage/stats)
+    if not detected_moods:
+        primary_mood = "Neutral"
+    else:
+        # Prioritize "Crisis" if present, otherwise follow order
+        if "Crisis" in detected_moods: primary_mood = "Crisis"
+        elif "Excelente" in detected_moods: primary_mood = "Excelente"
+        elif "Enojo" in detected_moods: primary_mood = "Enojo"
+        elif "Ansiedad" in detected_moods: primary_mood = "Ansiedad"
+        else: primary_mood = detected_moods[0]
+
+    human_summary = generate_human_summary(detected_moods, compound)
         
     return {
-        "mood": mood,
+        "mood": primary_mood,
+        "all_moods": detected_moods,
+        "summary": human_summary,
         "score": compound,
-        "details": score,
         "requires_help": requires_help
     }

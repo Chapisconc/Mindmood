@@ -60,7 +60,7 @@ export default function NewEntryScreen({ navigation }) {
       }
 
       const { data: { user } } = await supabase.auth.getUser();
-      const { mood, score, requires_help } = aiData;
+      const { mood, score, requires_help, summary } = aiData;
 
       // Save Entry
       const { error: entryError } = await supabase
@@ -82,8 +82,11 @@ export default function NewEntryScreen({ navigation }) {
           [{ text: 'Entendido', onPress: () => navigation.goBack() }]
         );
       } else {
-        Alert.alert('Guardado', isOffline ? 'Guardado localmente (Modo Offline)' : `Energía detectada: ${mood}`);
-        navigation.goBack();
+        Alert.alert(
+          'Diario Guardado', 
+          isOffline ? 'Guardado localmente (Modo Offline)' : summary,
+          [{ text: 'Cerrar', onPress: () => navigation.goBack() }]
+        );
       }
       
     } catch (e) {
