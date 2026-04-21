@@ -76,7 +76,22 @@ export default function HomeScreen({ navigation }) {
     welcomeText: { fontSize: 14, color: themeStyles.secondaryText, fontWeight: '600' },
     nameText: { fontSize: 24, fontWeight: '900', color: themeStyles.text },
     profileBtn: { width: 45, height: 45, borderRadius: 22.5, backgroundColor: themeStyles.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: themeStyles.border },
-    toggleContainer: { flexDirection: 'row', alignItems: 'center' }
+    toggleContainer: { flexDirection: 'row', alignItems: 'center' },
+    streakCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: themeStyles.accent, marginHorizontal: 20, padding: 22, borderRadius: 28, marginBottom: 25, shadowColor: themeStyles.accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 15, elevation: 8 },
+    streakInfo: { flexDirection: 'row', alignItems: 'center' },
+    streakText: { fontSize: 28, fontWeight: '900', color: '#FFF' },
+    streakLabel: { fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: '700' },
+    quoteBox: { marginHorizontal: 20, backgroundColor: themeStyles.card, padding: 24, borderRadius: 24, marginBottom: 30, borderWidth: 1, borderColor: themeStyles.border },
+    quoteLabel: { fontSize: 11, fontWeight: '900', color: themeStyles.secondaryText, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+    quoteText: { fontSize: 17, color: themeStyles.text, lineHeight: 28, fontWeight: '500', fontStyle: 'italic' },
+    sectionTitle: { fontSize: 20, fontWeight: '900', color: themeStyles.text, marginHorizontal: 20, marginBottom: 16 },
+    cardsContainer: { paddingHorizontal: 20, paddingBottom: 40 },
+    card: { flexDirection: 'row', alignItems: 'center', backgroundColor: themeStyles.card, padding: 20, borderRadius: 24, marginBottom: 14, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
+    cardIconContainer: { width: 52, height: 52, borderRadius: 18, backgroundColor: themeStyles.itemBg, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+    cardIcon: { fontSize: 26 },
+    cardTextContent: { flex: 1 },
+    cardTitle: { fontSize: 17, fontWeight: '800', color: themeStyles.text, marginBottom: 3 },
+    cardDesc: { fontSize: 14, color: themeStyles.secondaryText, fontWeight: '500' }
   });
 
   if (loading && !userData) {

@@ -21,7 +21,7 @@ export default function RegisterScreen({ navigation }) {
     }
     
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
     if (error) {
       Alert.alert('Error', error.message);
     } else {

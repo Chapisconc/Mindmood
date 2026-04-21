@@ -48,7 +48,7 @@ export default function LoginScreen({ navigation }) {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) Alert.alert('Error de Inicio', error.message);
     setLoading(false);
   }
