@@ -6,6 +6,9 @@ from deep_translator import GoogleTranslator
 from functools import lru_cache
 import re
 import logging
+import json
+import emoji
+from spellchecker import SpellChecker
 from typing import List, Dict
  
 # Configurar logging para crisis
@@ -219,58 +222,29 @@ def analyze_emotional_reinforcement(text: str) -> dict:
     }
 
 # ============================================================================
-# 🔤 NORMALIZACIÓN DE JERGA MEXICANA (Compilar regex para velocidad)
+# 🔤 NORMALIZACIÓN DE JERGA MEXICANA Y CORRECTOR ORTOGRÁFICO
 # ============================================================================
  
-MEXICAN_SLANG = {
-    r'\bchido\b': 'excelente',
-    r'\bchingon\b': 'maravilloso',
-    r'\bchingón\b': 'maravilloso',
-    r'\brifa\b': 'es el mejor',
-    r'\bperron\b': 'fantástico',
-    r'\bperrón\b': 'fantástico',
-    r'\bpadre\b': 'muy alegre',
-    r'\bme late\b': 'me agrada mucho',
-    r'\ba huevo\b': 'por supuesto que sí',
-    r'\bde pelos\b': 'genial',
-    r'\ba toda madre\b': 'fantástico',
-    r'\bpoca madre\b': 'excelente',
-    r'\bmodo chill\b': 'relajado y tranquilo',
-    r'\bsuper top\b': 'excelente',
-    r'\bno manches\b': 'es increíble',
-    r'\bno mames\b': 'es increíble',
-    r'\bal chile\b': 'sinceramente',
-    r'\bestá cañon\b': 'está difícil',
-    r'\bestá cañón\b': 'está difícil',
-    
-    # Negativos
-    r'\baguitado\b': 'deprimido',
-    r'\bagüitado\b': 'muy triste',
-    r'\bchingado\b': 'arruinado',
-    r'\bchingada\b': 'destruido',
-    r'\bmadres\b': 'terrible',
-    r'\bcabron\b': 'muy brutal',
-    r'\bcabrón\b': 'muy brutal',
-    r'\bhueva\b': 'aburrido',
-    r'\bjodido\b': 'pésimo',
-    r'\bmadreado\b': 'destrozado',
-    r'\bchafa\b': 'decepcionante',
-    r'\bculero\b': 'horrible',
-    r'\bme vale\b': 'me da igual',
-    r'\bme vale madre\b': 'no me importa nada',
-    r'\bme saca de onda\b': 'me molesta mucho',
-    r'\bestoy off\b': 'no tengo ánimos',
-    r'\bme está cargando el payaso\b': 'estoy rebasado por los problemas',
-    r'\bhasta la madre\b': 'completamente harto',
-    r'\bqué oso\b': 'qué vergüenza',
-    r'\bque oso\b': 'qué vergüenza',
-    r'\bni modo\b': 'no hay de otra',
-    r'\bchale\b': 'qué mal',
-    r'\bestar de la patada\b': 'estar muy mal',
-}
+import os
+
+# Inicializar corrector ortográfico en español
+spell = SpellChecker(language='es')
+
+def load_mexican_slang():
+    """Cargar dataset de jerga desde JSON para optimizar memoria"""
+    try:
+        base_dir = os.path.dirname(__file__)
+        dataset_path = os.path.join(base_dir, "mexican_slang_dataset.json")
+        with open(dataset_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error(f"Error cargando mexican_slang_dataset.json: {e}")
+        return {}
+
+MEXICAN_SLANG = load_mexican_slang()
  
-# Compilar regex para mejorar velocidad
-compiled_slang = {re.compile(pattern): replacement for pattern, replacement in MEXICAN_SLANG.items()}
+# Compilar regex para mejorar velocidad (añadiendo bordes de palabra \b)
+compiled_slang = {re.compile(r'\b' + pattern + r'\b'): replacement for pattern, replacement in MEXICAN_SLANG.items()}
  
 # ============================================================================
 # 🧠 INTENSIFICADORES Y NEGACIONES
@@ -461,18 +435,36 @@ def analyze(data: AnalyzeRequest):
     Retorna: mood, resumen empático, score, y si requiere ayuda profesional
     """
     
-    original_text = data.text
+    # NUEVO: Eliminar todos los emojis del texto para que sea texto plano puro
+    original_text = emoji.replace_emoji(data.text, replace='')
     text_lower = original_text.lower()
     
     # Paso 1: Normalizar jerga mexicana
     normalized_text = normalize_mexican_slang(original_text)
     
+    # NUEVO: Corrección ortográfica ligera antes de traducir
+    def correct_spelling(text_to_correct: str) -> str:
+        words = text_to_correct.split()
+        corrected_words = []
+        for word in words:
+            clean_word = re.sub(r'[^\w\s]', '', word)
+            if clean_word and len(clean_word) > 2:
+                # Solo corregimos palabras que no sean parte de la jerga
+                if clean_word.lower() not in MEXICAN_SLANG:
+                    correction = spell.correction(clean_word)
+                    if correction:
+                        word = word.replace(clean_word, correction)
+            corrected_words.append(word)
+        return " ".join(corrected_words)
+        
+    corrected_text = correct_spelling(normalized_text)
+    
     # Paso 2: Traducir (con caché)
     try:
-        translated_text = translate_cached(normalized_text)
+        translated_text = translate_cached(corrected_text)
     except Exception as e:
         logger.warning(f"Translation failed, using original: {e}")
-        translated_text = normalized_text
+        translated_text = corrected_text
     
     # Paso 3: Análisis de sentimiento
     score = analyzer.polarity_scores(translated_text)
