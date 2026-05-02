@@ -37,7 +37,24 @@ export function AuthScreen() {
       }
       navigate("/home");
     } catch (err: any) {
-      setError(err.message || "Ocurrió un error. Inténtalo de nuevo.");
+      let errorMessage = "Ocurrió un error. Inténtalo de nuevo.";
+      
+      // Traducción de errores comunes de Supabase Auth
+      if (err.message.includes("Invalid login credentials")) {
+        errorMessage = "Correo o contraseña incorrectos.";
+      } else if (err.message.includes("User already registered")) {
+        errorMessage = "Este correo ya está registrado. Por favor, inicia sesión.";
+      } else if (err.message.includes("Password should be at least 6 characters")) {
+        errorMessage = "La contraseña debe tener al menos 6 caracteres.";
+      } else if (err.message.includes("Email rate limit exceeded")) {
+        errorMessage = "Has intentado registrarte demasiadas veces. Espera unos minutos.";
+      } else if (err.message.includes("Unable to validate email address: invalid format")) {
+        errorMessage = "El formato del correo electrónico no es válido.";
+      } else if (err.message.includes("Signups not allowed for this instance")) {
+        errorMessage = "El registro de nuevos usuarios está deshabilitado temporalmente.";
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
