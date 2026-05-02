@@ -177,6 +177,7 @@ EMOTION_KEYWORDS = {
         'desdicha', 'infelicidad', 'lástima', 'pena', 'sentimiento de pérdida',
         'desesperado', 'desesperada', 'desesperación', 'engaño', 'engañó', 'engañada',
         'engañado', 'traición', 'traicionó', 'infidelidad', 'infiel', 'mentira', 'mintió',
+        'cansado', 'cansada', 'agotado', 'agotada', 'pesado', 'pesada', 'harto', 'harta',
     ],
     'Agradecido': [
         'gracias', 'gratitud', 'agradecer', 'agradezco', 'agradecido', 'agradecida',
@@ -214,6 +215,7 @@ EMOTION_KEYWORDS = {
         'disfrutando', 'disfruto', 'placer', 'gozo', 'gozoso', 'gozosa',
         'sonriente', 'optimista', 'entusiasmado', 'entusiasmada', 'entusiasmo',
         'animado', 'animada', 'buen humor', 'de buenas', 'chido', 'chingón',
+        'esperanza', 'optimista', 'positivo', 'bueno', 'buena', 'mejor',
     ],
     'Excelente': [
         'excelente', 'increíble', 'maravilloso', 'maravillosa', 'fantástico', 'fantástica',
