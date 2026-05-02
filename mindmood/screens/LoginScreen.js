@@ -30,6 +30,9 @@ export default function LoginScreen({ navigation }) {
   }, []);
 
   async function checkRoleAndRedirect(userId) {
+    // Reparar entradas dañadas en segundo plano antes de entrar
+    repairDataIntegrity(userId);
+
     const { data, error } = await supabase
       .from('profiles')
       .select('role')
@@ -40,6 +43,52 @@ export default function LoginScreen({ navigation }) {
       navigation.replace('AdminDashboard');
     } else {
       navigation.replace('Home');
+    }
+  }
+
+  async function repairDataIntegrity(userId) {
+    try {
+      // Buscar entradas que quedaron en "Neutral" por error (mood=Neutral, score=0)
+      const { data: damagedEntries } = await supabase
+        .from('entries')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('mood', 'Neutral')
+        .eq('score', 0)
+        .limit(5); // Solo las últimas 5 para no saturar
+
+      if (damagedEntries && damagedEntries.length > 0) {
+        console.log(`Reparando ${damagedEntries.length} entradas...`);
+        
+        for (const entry of damagedEntries) {
+          try {
+            const response = await fetch("https://mindmood-ai.onrender.com/analyze", {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+              body: JSON.stringify({ text: entry.text })
+            });
+
+            if (response.ok) {
+              const aiData = await response.json();
+              // Si el nuevo análisis NO es neutral, lo reparamos
+              if (aiData.mood !== 'Neutral' || aiData.score !== 0) {
+                await supabase
+                  .from('entries')
+                  .update({ 
+                    mood: aiData.mood, 
+                    score: aiData.score,
+                    distribution: aiData.emotions_distribution
+                  })
+                  .eq('id', entry.id);
+              }
+            }
+          } catch (e) {
+            console.log("Fallo en re-análisis de entrada individual.");
+          }
+        }
+      }
+    } catch (err) {
+      console.log("Error en el proceso de reparación:", err);
     }
   }
 
