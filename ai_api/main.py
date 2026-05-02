@@ -175,6 +175,7 @@ EMOTION_KEYWORDS = {
         'frustración silenciosa', 'pesadumbre', 'aflicción', 'angustia emocional',
         'quebranto', 'congoja', 'dolor emocional', 'luto', 'duelo',
         'desdicha', 'infelicidad', 'lástima', 'pena', 'sentimiento de pérdida',
+        'desesperado', 'desesperada', 'desesperación',
     ],
     'Agradecido': [
         'gracias', 'gratitud', 'agradecer', 'agradezco', 'agradecido', 'agradecida',
@@ -345,14 +346,15 @@ def has_crisis_indicators(text: str) -> bool:
         if keyword in text_lower:
             return True
     
-    # Patrones adicionales de crisis
+    # Patrones adicionales de crisis con bordes de palabra estrictos
     crisis_patterns = [
-        r'no\s+(puedo|aguanto|resisto)',
-        r'(quiero|prefiero)\s+(morir|morirme)',
-        r'me\s+(corto|duele)',
-        r'(mejor|prefiero)\s+(muerto|muerta)',
-        r'no\s+hay\s+salida',
-        r'insoportable',
+        r'\bno\s+aguanto\s+más\b',
+        r'\bno\s+puedo\s+más\b',
+        r'\b(quiero|prefiero)\s+(morir|morirme)\b',
+        r'\bme\s+(quiero\s+)?matar\b',
+        r'\bsería\s+mejor\s+no\s+existir\b',
+        r'\bno\s+hay\s+salida\b',
+        r'\binsoportable\b',
     ]
     
     for pattern in crisis_patterns:
@@ -516,11 +518,8 @@ def analyze(data: AnalyzeRequest):
     compound *= multiplier
     compound += reinforcement["emoji_score"]
     
-    if detect_negation(original_text):
-        # Si hay negación, invertimos el sentimiento de forma controlada
-        compound *= -0.8  # Invertir pero reducir intensidad para evitar falsos positivos
-    
-    # Asegurar que el score se mantenga entre -1 y 1
+    # VADER ya maneja negaciones en el texto traducido, no invertimos manualmente
+    # ---------------------------------------------------
     compound = max(min(compound, 1.0), -1.0)
     # ---------------------------------------------------
     requires_help = False
@@ -534,10 +533,12 @@ def analyze(data: AnalyzeRequest):
     # Paso 5: Detectar emociones por palabras clave
     detected_moods = []
     
-    # Buscar keywords de emociones
+    # Buscar keywords de emociones con bordes de palabra estrictos para evitar falsos positivos (ej: feliz vs infeliz)
     for mood_name, keywords in EMOTION_KEYWORDS.items():
-        if any(word in text_lower for word in keywords):
-            detected_moods.append(mood_name)
+        for word in keywords:
+            if re.search(r'\b' + re.escape(word) + r'\b', text_lower):
+                detected_moods.append(mood_name)
+                break # Evitar duplicados de la misma categoría
     
     # Paso 6: Análisis basado en score
     if compound >= 0.8:

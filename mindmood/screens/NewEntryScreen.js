@@ -16,8 +16,8 @@ export default function NewEntryScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalData, setModalData] = useState({ type: 'normal', summary: '', distribution: null });
 
-  // URL of our local AI Backend
-  const API_URL = "http://192.168.1.71:8000/analyze"; 
+  // URL of our local AI Backend (Public tunnel for remote testing)
+  const API_URL = "https://cheating-uncanny-squire.ngrok-free.dev/analyze"; 
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
