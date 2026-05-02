@@ -17,7 +17,7 @@ export default function NewEntryScreen({ navigation }) {
   const [modalData, setModalData] = useState({ type: 'normal', summary: '', distribution: null });
 
   // URL of our local AI Backend
-  const API_URL = "http://192.168.1.70:8000/analyze"; 
+  const API_URL = "http://192.168.1.71:8000/analyze"; 
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -49,16 +49,23 @@ export default function NewEntryScreen({ navigation }) {
 
       if (!isOffline) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 segundos de espera
+
           const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text })
+            body: JSON.stringify({ text: text }),
+            signal: controller.signal
           });
+          
+          clearTimeout(timeoutId);
+          
           if (response.ok) {
             aiData = await response.json();
           }
         } catch (e) {
-          console.log("AI Backend unreachable, using defaults.");
+          console.log("AI Backend unreachable or timeout, using defaults.");
         }
       }
 

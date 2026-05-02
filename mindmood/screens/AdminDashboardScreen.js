@@ -85,35 +85,35 @@ export default function AdminDashboardScreen({ navigation }) {
     statValue: { fontSize: 24, fontWeight: '900', color: themeStyles.text },
     statLabel: { fontSize: 11, color: themeStyles.secondaryText, fontWeight: '800', textTransform: 'uppercase', marginTop: 4 },
     
-    crisisCard: { backgroundColor: theme === 'dark' ? '#450a0a' : '#FEE2E2', padding: 20, borderRadius: 24, borderWidth: 1, borderColor: theme === 'dark' ? '#7f1d1d' : '#EF4444', alignItems: 'center', marginBottom: 20 },
-    crisisValue: { fontSize: 36, fontWeight: '900', color: theme === 'dark' ? '#fca5a5' : '#B91C1C' },
-    crisisLabel: { fontSize: 12, fontWeight: '800', color: theme === 'dark' ? '#fca5a5' : '#B91C1C', textTransform: 'uppercase', marginTop: 4 },
+    crisisCard: { backgroundColor: theme === 'dark' ? 'rgba(127, 29, 29, 0.2)' : '#FEE2E2', padding: 20, borderRadius: 24, borderWidth: 2, borderColor: theme === 'dark' ? '#ef4444' : '#EF4444', alignItems: 'center', marginBottom: 20 },
+    crisisValue: { fontSize: 42, fontWeight: '900', color: theme === 'dark' ? '#f87171' : '#B91C1C' },
+    crisisLabel: { fontSize: 13, fontWeight: '800', color: theme === 'dark' ? '#f87171' : '#B91C1C', textTransform: 'uppercase', marginTop: 4 },
 
     searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: themeStyles.card, borderRadius: 16, paddingHorizontal: 15, marginBottom: 20, borderWidth: 1, borderColor: themeStyles.border },
     searchInput: { flex: 1, padding: 12, color: themeStyles.text, fontSize: 16 },
     
-    card: { backgroundColor: themeStyles.card, padding: 20, borderRadius: 24, marginBottom: 20, borderWidth: 1, borderColor: themeStyles.border },
-    sectionTitle: { fontSize: 20, fontWeight: '800', color: themeStyles.text, marginBottom: 15 },
+    card: { backgroundColor: themeStyles.card, padding: 20, borderRadius: 24, marginBottom: 20, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {width:0, height:10}, shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 },
+    sectionTitle: { fontSize: 22, fontWeight: '900', color: themeStyles.text, marginBottom: 15, letterSpacing: -0.5 },
     
-    alarmCard: { backgroundColor: themeStyles.card, padding: 22, borderRadius: 28, marginBottom: 18, borderWidth: 1, borderColor: themeStyles.error + '40', borderLeftWidth: 6, borderLeftColor: themeStyles.error, shadowColor: '#000', shadowOffset: {width:0, height:4}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
+    alarmCard: { backgroundColor: themeStyles.card, padding: 22, borderRadius: 28, marginBottom: 18, borderWidth: 1, borderColor: themeStyles.border, borderLeftWidth: 8, borderLeftColor: themeStyles.error, shadowColor: themeStyles.error, shadowOffset: {width:0, height:4}, shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 },
     alarmHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: themeStyles.border + '20' },
-    userMail: { color: themeStyles.text, fontWeight: '800', fontSize: 14, marginBottom: 4 },
-    alarmDate: { color: themeStyles.secondaryText, fontSize: 11, fontWeight: '700' },
-    alarmTime: { color: themeStyles.error, fontSize: 11, fontWeight: '900', marginTop: 2 },
-    moodBadge: { alignItems: 'flex-end' },
-    emoji: { fontSize: 24 },
-    moodName: { fontSize: 9, fontWeight: '900', color: themeStyles.text, textTransform: 'uppercase' },
+    userMail: { color: themeStyles.accent, fontWeight: '800', fontSize: 15, marginBottom: 4 },
+    alarmDate: { color: themeStyles.secondaryText, fontSize: 12, fontWeight: '700' },
+    alarmTime: { color: themeStyles.error, fontSize: 12, fontWeight: '900', marginTop: 2 },
+    moodBadge: { alignItems: 'flex-end', backgroundColor: themeStyles.itemBg, padding: 8, borderRadius: 12 },
+    emoji: { fontSize: 28 },
+    moodName: { fontSize: 10, fontWeight: '900', color: themeStyles.text, textTransform: 'uppercase', marginTop: 2 },
     
-    alarmText: { color: themeStyles.text, fontSize: 15, lineHeight: 24, fontStyle: 'italic', fontWeight: '500', marginBottom: 15 },
+    alarmText: { color: themeStyles.text, fontSize: 16, lineHeight: 26, fontStyle: 'italic', fontWeight: '500', marginBottom: 15, opacity: 0.9 },
 
-    distributionContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-    distBadge: { backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-    primaryBadge: { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.3)' },
-    distText: { color: '#94A3B8', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
-    primaryText: { color: '#F87171' },
+    distributionContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    distBadge: { backgroundColor: themeStyles.itemBg, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: themeStyles.border },
+    primaryBadge: { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.4)' },
+    distText: { color: themeStyles.secondaryText, fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+    primaryText: { color: '#ef4444' },
 
-    exportBtn: { backgroundColor: themeStyles.secondaryText, padding: 16, borderRadius: 18, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10, marginBottom: 40 },
-    exportBtnText: { color: themeStyles.background, fontWeight: 'bold', fontSize: 16, marginLeft: 10 }
+    exportBtn: { backgroundColor: themeStyles.accent, padding: 18, borderRadius: 22, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10, marginBottom: 50, shadowColor: themeStyles.accent, shadowOffset: {width:0, height:10}, shadowOpacity: 0.3, shadowRadius: 15, elevation: 8 },
+    exportBtnText: { color: '#FFF', fontWeight: '900', fontSize: 16, marginLeft: 10 }
   });
 
   if (loading) return <View style={[styles.container, { justifyContent: 'center' }]}><ActivityIndicator size="large" color={themeStyles.accent} /></View>;
@@ -197,7 +197,9 @@ export default function AdminDashboardScreen({ navigation }) {
             <View key={index} style={styles.alarmCard}>
               <View style={styles.alarmHeader}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.userMail} numberOfLines={1}>{item.student_email}</Text>
+                  <Text style={styles.userMail} numberOfLines={1}>
+                    {item.student_email || item.email || "Usuario Desconocido"}
+                  </Text>
                   <Text style={styles.alarmDate}>{dateObj.toLocaleDateString()}</Text>
                   <Text style={styles.alarmTime}>
                     <Ionicons name="time-outline" size={12} /> {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

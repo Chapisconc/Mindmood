@@ -17,6 +17,19 @@ logger = logging.getLogger(__name__)
  
 app = FastAPI(title="Sentiment Analyzer API", version="2.0")
  
+@app.get("/")
+def read_root():
+    return {
+        "name": "MindMood AI Sentiment Engine",
+        "status": "online",
+        "message": "Welcome to the Intelligent Diary backend. The sentiment analysis engine is ready to receive requests.",
+        "endpoints": {
+            "analysis": "/analyze (POST)",
+            "health": "/health (GET)",
+            "docs": "/docs (Swagger UI)"
+        }
+    }
+
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
@@ -125,6 +138,8 @@ EMOTION_KEYWORDS = {
         'pegar', 'grito', 'gritar', 'insulto', 'insultar',
         'humillado', 'humillación', 'burla', 'burlarse',
         'ganas de matar', 'ganas de golpear', 'coraje',
+        'odio', 'odiar', 'detesto', 'detestar', 'aborrezco',
+        'aborrecer', 'asqueado', 'asqueada', 'repulsión',
     ],
     'Ansiedad': [
         'ansioso', 'ansiosa', 'ansiedad', 'estresado', 'estresada', 'estrés',
@@ -279,11 +294,14 @@ NEGACIONES = {'no', 'ni', 'nunca', 'jamás', 'nada', 'nadie', 'tampoco', 'sin'}
 # 🔄 TRADUCCIÓN CON CACHÉ
 # ============================================================================
  
+# Reutilizar el traductor para mayor velocidad
+translator = GoogleTranslator(source='es', target='en')
+
 @lru_cache(maxsize=1000)
 def translate_cached(text: str) -> str:
     """Traducir con caché LRU para evitar llamadas repetidas"""
+    if not text.strip(): return ""
     try:
-        translator = GoogleTranslator(source='es', target='en')
         return translator.translate(text)
     except Exception as e:
         logger.error(f"Translation error: {e}")
@@ -565,8 +583,6 @@ def analyze(data: AnalyzeRequest):
             primary_mood = "Ansiedad"
         elif "Miedo" in detected_moods: 
             primary_mood = "Miedo"
-        elif compound >= 0.8: 
-            primary_mood = "Excelente"
         elif "Agradecido" in detected_moods: 
             primary_mood = "Agradecido"
         elif "Sorpresa" in detected_moods: 
@@ -575,6 +591,8 @@ def analyze(data: AnalyzeRequest):
             primary_mood = "Triste"
         elif "Feliz" in detected_moods: 
             primary_mood = "Feliz"
+        elif compound >= 0.8: 
+            primary_mood = "Excelente"
         else: 
             primary_mood = detected_moods[0] if detected_moods else "Neutral"
  

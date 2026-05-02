@@ -22,6 +22,14 @@ export default function ProfileScreen({ navigation }) {
 
   useEffect(() => {
     fetchProfile();
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('reminders', {
+        name: 'Recordatorios Diarios',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#818CF8',
+      });
+    }
   }, []);
 
   const fetchProfile = async () => {
@@ -110,14 +118,16 @@ export default function ProfileScreen({ navigation }) {
     await Notifications.cancelAllScheduledNotificationsAsync();
     
     await Notifications.scheduleNotificationAsync({
-       content: {
+      content: {
         title: "MindMood ❤️",
         body: lang === 'es' ? "¿Cómo te sientes hoy? No olvides registrar tu diario." : "How are you feeling today? Don't forget your log.",
+        sound: true,
       },
       trigger: {
         hour: date.getHours(),
         minute: date.getMinutes(),
         repeats: true,
+        channelId: 'reminders',
       },
     });
   };

@@ -21,16 +21,23 @@ export function WriteEntryScreen() {
       let aiData = { mood: "Neutral", score: 0, requires_help: false, summary: "", emotions_distribution: {}, all_moods: ["Neutral"], confidence: 0.5, crisis_level: "normal" };
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos de timeout
+
         const response = await fetch(`${API_URL}/analyze`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: entry, language: "es" }),
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
+        
         if (response.ok) {
           aiData = await response.json();
         }
       } catch (e) {
-        console.log("API de IA no disponible, usando valores por defecto.");
+        console.log("API de IA no disponible o timeout, usando valores por defecto.");
       }
 
       // 2. Guardar en Supabase
