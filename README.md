@@ -49,9 +49,11 @@ npx expo start
 ## 🛡️ Configuración de Seguridad y Base de Datos
 
 El proyecto utiliza Supabase. Asegúrate de:
+
 1. Configurar tus variables de entorno en `.env` y `mindmood_web/.env.local`.
 2. Ejecutar los scripts SQL de `supabase_setup.sql` y `migration_resolve_entries.sql` en tu Dashboard de Supabase para activar las métricas y el panel administrativo.
 
 ## 📄 Normativas Implementadas
+
 * **ISO 25010:** Calidad de producto de software.
 * **ISO 27001:** Gestión de seguridad de la información.
