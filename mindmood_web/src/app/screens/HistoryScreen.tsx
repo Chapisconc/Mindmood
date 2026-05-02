@@ -93,7 +93,7 @@ export function HistoryScreen() {
           animate={{ opacity: 1, y: 0 }}
           className="flex justify-between items-center"
         >
-          <h1 className="text-2xl font-bold">Tu Recorrido</h1>
+          <h1 className="text-2xl font-bold gradient-text">Tu Recorrido</h1>
           <span className="text-sm text-muted-foreground">
             {entries.length} {entries.length === 1 ? "entrada" : "entradas"}
           </span>

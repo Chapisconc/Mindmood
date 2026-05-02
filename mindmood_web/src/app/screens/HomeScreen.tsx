@@ -120,7 +120,7 @@ export function HomeScreen() {
           className="flex justify-between items-center"
         >
           <div>
-            <h1 className="text-2xl font-bold">¿Cómo te sientes hoy?</h1>
+            <h1 className="text-2xl font-bold gradient-text">¿Cómo te sientes hoy?</h1>
             <p className="text-muted-foreground mt-1">
               {new Date().toLocaleDateString("es-MX", {
                 weekday: "long",

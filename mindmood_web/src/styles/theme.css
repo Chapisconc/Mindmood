@@ -274,4 +274,8 @@
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
   }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-warm-coral;
+  }
 }

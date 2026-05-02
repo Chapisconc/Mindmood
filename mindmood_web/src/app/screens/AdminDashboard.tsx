@@ -45,6 +45,7 @@ interface AdminStats {
 }
 
 interface CrisisAlarm {
+  entry_id: string;
   student_email: string;
   diary_text: string;
   recorded_at: string;
@@ -87,6 +88,17 @@ export function AdminDashboard() {
   const handleRefresh = () => {
     setRefreshing(true);
     fetchAdminData();
+  };
+
+  const handleResolve = async (id: string) => {
+    try {
+      const { error } = await supabase.rpc("resolve_entry", { target_id: id });
+      if (error) throw error;
+      fetchAdminData();
+    } catch (err) {
+      console.error("Error resolving entry:", err);
+      alert("No se pudo resolver la entrada.");
+    }
   };
 
   const handleSignOut = async () => {
@@ -132,7 +144,7 @@ export function AdminDashboard() {
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Panel de Administración</h1>
+              <h1 className="text-2xl font-bold gradient-text">Panel de Administración</h1>
               <p className="text-muted-foreground text-sm">MindMood — Vista Global</p>
             </div>
           </div>
@@ -190,13 +202,23 @@ export function AdminDashboard() {
         </div>
 
         {/* Crisis Alerts */}
-        {alarms.length > 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}>
-            <Card padding="lg" className="border-2 border-red-500/30 bg-red-500/5">
-              <h3 className="font-semibold text-red-500 mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Panel de Riesgo — Últimas Alertas de Crisis
-              </h3>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}>
+          <Card padding="lg" className={alarms.length > 0 ? "border-2 border-red-500/30 bg-red-500/5" : "border border-green-500/20 bg-green-500/5"}>
+            <h3 className={`font-semibold mb-4 flex items-center gap-2 ${alarms.length > 0 ? "text-red-500" : "text-green-600"}`}>
+              {alarms.length > 0 ? (
+                <>
+                  <AlertTriangle className="w-5 h-5 animate-pulse" />
+                  Panel de Riesgo — Últimas Alertas de Crisis
+                </>
+              ) : (
+                <>
+                  <Shield className="w-5 h-5" />
+                  Estado del Sistema: Sin Alertas Críticas
+                </>
+              )}
+            </h3>
+            
+            {alarms.length > 0 ? (
               <div className="space-y-4">
                 {alarms.map((alarm, i) => (
                   <div key={i} className="p-4 bg-background rounded-xl border border-border">
@@ -212,15 +234,26 @@ export function AdminDashboard() {
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground line-clamp-2">{alarm.diary_text}</p>
-                    <span className="inline-block mt-2 px-3 py-1 bg-red-500/10 text-red-500 text-xs font-semibold rounded-full">
-                      Score: {alarm.crisis_score}
-                    </span>
+                    <div className="flex justify-between items-end mt-2">
+                      <span className="inline-block px-3 py-1 bg-red-500/10 text-red-500 text-xs font-semibold rounded-full">
+                        Score: {typeof alarm.crisis_score === 'number' ? alarm.crisis_score.toFixed(2) : '0.00'}
+                      </span>
+                      <button
+                        onClick={() => handleResolve(alarm.entry_id)}
+                        className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Check className="w-3 h-3" />
+                        Marcar como Resuelto
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
-            </Card>
-          </motion.div>
-        )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No se han detectado indicadores de riesgo en las últimas entradas. El bienestar institucional se mantiene estable.</p>
+            )}
+          </Card>
+        </motion.div>
 
         {/* Panorama Mental Global */}
         {pieData.length > 0 && (

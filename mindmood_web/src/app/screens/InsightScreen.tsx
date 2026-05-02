@@ -91,24 +91,42 @@ export function InsightScreen() {
             )}
           </div>
           <h1 className="text-3xl font-bold mb-2">Entrada Analizada</h1>
-          <p className="text-muted-foreground">
-            {analysis.summary}
-          </p>
+          {!analysis.requires_help && (
+            <p className="text-muted-foreground">
+              {analysis.summary}
+            </p>
+          )}
         </motion.div>
 
         {analysis.requires_help && (
           <Card padding="lg" className="border-2 border-red-500/50 bg-red-500/5">
-            <div className="flex gap-4 items-start">
+            <div className="flex gap-4 items-start mb-4">
               <div className="p-3 rounded-lg bg-red-500/10">
                 <AlertTriangle className="w-6 h-6 text-red-500" />
               </div>
               <div>
-                <h4 className="font-semibold text-red-500 mb-2">Alerta de Bienestar</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Detectamos que podrías estar pasando por un momento muy difícil.
-                  No estás solo/a. Considera hablar con alguien de confianza o contactar
-                  la Línea de la Vida: 800-911-2000 (México, disponible 24/7).
+                <h4 className="font-semibold text-red-500 mb-2">Alerta de Bienestar Crítica</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed italic">
+                  "{analysis.summary}"
                 </p>
+              </div>
+            </div>
+            
+            <div className="space-y-3 pt-4 border-t border-red-500/10">
+              <p className="text-xs font-bold text-red-600 uppercase tracking-wider">Números de Apoyo Inmediato (México):</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 bg-background rounded-lg border border-red-200">
+                  <p className="text-xs text-muted-foreground">Línea de la Vida</p>
+                  <p className="font-bold text-red-600">800-911-2000</p>
+                </div>
+                <div className="p-3 bg-background rounded-lg border border-red-200">
+                  <p className="text-xs text-muted-foreground">Emergencias</p>
+                  <p className="font-bold text-red-600">911</p>
+                </div>
+                <div className="p-3 bg-background rounded-lg border border-red-200">
+                  <p className="text-xs text-muted-foreground">SAPTEL (Apoyo)</p>
+                  <p className="font-bold text-red-600">55-5259-8121</p>
+                </div>
               </div>
             </div>
           </Card>
