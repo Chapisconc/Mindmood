@@ -45,6 +45,12 @@ custom_lexicon = {
     'fortunate': 2.8, 'privileged': 2.8, 'blessed': 3.2, 'inspired': 3.0,
     'motivated': 2.8, 'energized': 2.8, 'accomplished': 3.0, 'victorious': 3.2,
     
+    # 🎉 ANUNCIOS Y EVENTOS DE VIDA
+    'puppies': 2.5, 'puppy': 2.5, 'baby': 2.5, 'babies': 2.5,
+    'grandfather': 2.0, 'grandmother': 2.0, 'grandpa': 2.0, 'grandma': 2.0,
+    'dad': 1.5, 'mom': 1.5, 'father': 1.5, 'mother': 1.5,
+    'born': 2.0, 'birth': 2.0, 'pregnant': 2.5, 'expecting': 2.0,
+    
     # ❌ NEGATIVOS MODERADOS (Enojo)
     'angry': -2.8, 'furious': -3.5, 'rage': -3.5, 'frustrated': -2.5,
     'irritated': -2.0, 'annoyed': -1.8, 'resentful': -2.5, 'outraged': -3.0,
