@@ -175,7 +175,8 @@ EMOTION_KEYWORDS = {
         'frustración silenciosa', 'pesadumbre', 'aflicción', 'angustia emocional',
         'quebranto', 'congoja', 'dolor emocional', 'luto', 'duelo',
         'desdicha', 'infelicidad', 'lástima', 'pena', 'sentimiento de pérdida',
-        'desesperado', 'desesperada', 'desesperación',
+        'desesperado', 'desesperada', 'desesperación', 'engaño', 'engañó', 'engañada',
+        'engañado', 'traición', 'traicionó', 'infidelidad', 'infiel', 'mentira', 'mintió',
     ],
     'Agradecido': [
         'gracias', 'gratitud', 'agradecer', 'agradezco', 'agradecido', 'agradecida',
