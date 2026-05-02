@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../services/supabase';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function HistoryScreen() {
+export default function HistoryScreen({ navigation }) {
   const { themeStyles } = useTheme();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: themeStyles.background },
@@ -45,7 +46,11 @@ export default function HistoryScreen() {
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchHistory();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const fetchHistory = async () => {
     try {
@@ -62,7 +67,13 @@ export default function HistoryScreen() {
       console.error(error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchHistory();
   };
 
   const getEmoji = (mood) => {
@@ -146,6 +157,14 @@ export default function HistoryScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh} 
+              tintColor={themeStyles.accent}
+              colors={[themeStyles.accent]}
+            />
+          }
         />
       )}
     </SafeAreaView>
