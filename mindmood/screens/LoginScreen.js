@@ -5,7 +5,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen({ navigation }) {
-  const { themeStyles } = useTheme();
+  const { theme, themeStyles, toggleTheme, syncTheme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -49,8 +49,14 @@ export default function LoginScreen({ navigation }) {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (error) Alert.alert('Error de Inicio', error.message);
+    const { data: { user }, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) {
+      Alert.alert('Error de Inicio', error.message);
+    } else if (user) {
+      // Save the current UI theme to the user's profile in the DB
+      await supabase.from('profiles').update({ theme: theme }).eq('id', user.id);
+      await syncTheme(); // Ensure context is fully synced
+    }
     setLoading(false);
   }
 
@@ -68,13 +74,17 @@ export default function LoginScreen({ navigation }) {
     buttonMain: { backgroundColor: themeStyles.accent, padding: 18, borderRadius: 16, alignItems: 'center', marginTop: 10, shadowColor: themeStyles.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
     buttonMainText: { color: '#FFF', fontWeight: 'bold', fontSize: 18 },
     registerLink: { marginTop: 30, alignItems: 'center' },
-    registerText: { color: themeStyles.secondaryText, fontSize: 15 }
+    registerText: { color: themeStyles.secondaryText, fontSize: 15 },
+    themeToggle: { position: 'absolute', right: 0, top: 0, padding: 10, backgroundColor: themeStyles.card, borderRadius: 12, borderWidth: 1, borderColor: themeStyles.border }
   });
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
+          <TouchableOpacity style={styles.themeToggle} onPress={toggleTheme}>
+            <Ionicons name={theme === 'dark' ? "sunny-outline" : "moon-outline"} size={26} color={themeStyles.text} />
+          </TouchableOpacity>
           <View style={styles.logoContainer}>
             <Ionicons name="heart" size={50} color="#FFF" />
           </View>

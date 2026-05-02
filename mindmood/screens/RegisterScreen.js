@@ -5,7 +5,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen({ navigation }) {
-  const { themeStyles } = useTheme();
+  const { theme, themeStyles, toggleTheme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -46,13 +46,17 @@ export default function RegisterScreen({ navigation }) {
     buttonMain: { backgroundColor: themeStyles.success, padding: 18, borderRadius: 16, alignItems: 'center', marginTop: 10, shadowColor: themeStyles.success, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
     buttonMainText: { color: '#FFF', fontWeight: 'bold', fontSize: 18 },
     cancelLink: { marginTop: 30, alignItems: 'center' },
-    cancelText: { color: themeStyles.secondaryText, fontSize: 15, textDecorationLine: 'underline' }
+    cancelText: { color: themeStyles.secondaryText, fontSize: 15, textDecorationLine: 'underline' },
+    themeToggle: { position: 'absolute', right: 0, top: -40, padding: 10, backgroundColor: themeStyles.card, borderRadius: 12, borderWidth: 1, borderColor: themeStyles.border }
   });
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
+          <TouchableOpacity style={styles.themeToggle} onPress={toggleTheme}>
+            <Ionicons name={theme === 'dark' ? "sunny-outline" : "moon-outline"} size={26} color={themeStyles.text} />
+          </TouchableOpacity>
           <Text style={styles.title}>Crear Cuenta</Text>
           <Text style={styles.subtitle}>Comienza a cuidar tu salud mental hoy</Text>
         </View>

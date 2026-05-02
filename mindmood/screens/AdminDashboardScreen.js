@@ -118,18 +118,27 @@ export default function AdminDashboardScreen({ navigation }) {
 
   if (loading) return <View style={[styles.container, { justifyContent: 'center' }]}><ActivityIndicator size="large" color={themeStyles.accent} /></View>;
 
-  const chartData = stats ? [
-    { name: 'Exc', count: stats.excellent_entries, color: '#10B981', legendFontColor: themeStyles.text, legendFontSize: 10 },
-    { name: 'Fel', count: stats.happy_entries, color: '#6366F1', legendFontColor: themeStyles.text, legendFontSize: 10 },
-    { name: 'Agr', count: stats.gratitude_entries, color: '#FACC15', legendFontColor: themeStyles.text, legendFontSize: 10 },
-    { name: 'Sor', count: stats.surprise_entries, color: '#06B6D4', legendFontColor: themeStyles.text, legendFontSize: 10 },
-    { name: 'Neu', count: stats.neutral_entries, color: '#94A3B8', legendFontColor: themeStyles.text, legendFontSize: 10 },
-    { name: 'Eno', count: stats.anger_entries, color: '#F97316', legendFontColor: themeStyles.text, legendFontSize: 10 },
-    { name: 'Ans', count: stats.anxiety_entries, color: '#8B5CF6', legendFontColor: themeStyles.text, legendFontSize: 10 },
-    { name: 'Mie', count: stats.fear_entries, color: '#4B5563', legendFontColor: themeStyles.text, legendFontSize: 10 },
-    { name: 'Tri', count: stats.sad_entries, color: '#F87171', legendFontColor: themeStyles.text, legendFontSize: 10 },
-    { name: 'Cri', count: stats.crisis_entries, color: '#EF4444', legendFontColor: themeStyles.text, legendFontSize: 10 }
-  ].filter(i => i.count > 0) : [];
+  const emotionsMap = [
+    { name: 'Excelente', color: '#10B981' },
+    { name: 'Feliz', color: '#6366F1' },
+    { name: 'Agradecido', color: '#FACC15' },
+    { name: 'Sorpresa', color: '#06B6D4' },
+    { name: 'Neutral', color: '#94A3B8' },
+    { name: 'Enojo', color: '#F97316' },
+    { name: 'Ansiedad', color: '#8B5CF6' },
+    { name: 'Miedo', color: '#4B5563' },
+    { name: 'Triste', color: '#F87171' },
+    { name: 'Crisis', color: '#EF4444' },
+  ];
+
+  const chartData = stats ? emotionsMap.map(emo => {
+    const keyMap = {
+      'Excelente': 'excellent_entries', 'Feliz': 'happy_entries', 'Agradecido': 'gratitude_entries',
+      'Sorpresa': 'surprise_entries', 'Neutral': 'neutral_entries', 'Enojo': 'anger_entries',
+      'Ansiedad': 'anxiety_entries', 'Miedo': 'fear_entries', 'Triste': 'sad_entries', 'Crisis': 'crisis_entries'
+    };
+    return { name: emo.name, count: stats[keyMap[emo.name]] || 0, color: emo.color, legendFontColor: themeStyles.text, legendFontSize: 12 };
+  }).filter(i => i.count > 0) : [];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -161,19 +170,32 @@ export default function AdminDashboardScreen({ navigation }) {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Distribución poblacional</Text>
+          <Text style={styles.sectionTitle}>Panorama Poblacional</Text>
+          <Text style={{ fontSize: 13, color: themeStyles.secondaryText, marginBottom: 20, fontWeight: '600' }}>Distribución de estados de ánimo actuales</Text>
+          
           {chartData.length > 0 ? (
-            <PieChart
-              data={chartData}
-              width={screenWidth - 80}
-              height={180}
-              chartConfig={{ color: () => themeStyles.text }}
-              accessor="count"
-              backgroundColor="transparent"
-              paddingLeft="15"
-              center={[10, 0]}
-              absolute
-            />
+            <>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginBottom: 25 }}>
+                {chartData.map((emo, i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 }}>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, marginRight: 6, backgroundColor: emo.color }} />
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: themeStyles.secondaryText, textTransform: 'uppercase' }}>{emo.name}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <PieChart
+                data={chartData.map(d => ({ ...d, name: '' }))} // Remove inline names
+                width={screenWidth - 40}
+                height={200}
+                chartConfig={{ color: () => themeStyles.text }}
+                accessor="count"
+                backgroundColor="transparent"
+                paddingLeft="50"
+                center={[screenWidth / 6, 0]}
+                hasLegend={false}
+              />
+            </>
           ) : <Text style={{ color: themeStyles.secondaryText, textAlign: 'center' }}>Sin registros aún.</Text>}
         </View>
 

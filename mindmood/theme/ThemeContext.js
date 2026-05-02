@@ -17,7 +17,7 @@ export const ThemeProvider = ({ children }) => {
   const loadTheme = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('theme')
         .eq('id', session.user.id)
@@ -28,6 +28,10 @@ export const ThemeProvider = ({ children }) => {
       }
     }
     setIsLoaded(true);
+  };
+
+  const syncTheme = async () => {
+    await loadTheme();
   };
 
   const toggleTheme = async () => {
@@ -46,7 +50,7 @@ export const ThemeProvider = ({ children }) => {
   const themeStyles = themes[theme];
 
   return (
-    <ThemeContext.Provider value={{ theme, themeStyles, toggleTheme, isLoaded }}>
+    <ThemeContext.Provider value={{ theme, themeStyles, toggleTheme, syncTheme, isLoaded }}>
       {children}
     </ThemeContext.Provider>
   );
