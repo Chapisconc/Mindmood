@@ -52,6 +52,8 @@ export function AuthScreen() {
         errorMessage = "El formato del correo electrónico no es válido.";
       } else if (err.message.includes("Signups not allowed for this instance")) {
         errorMessage = "El registro de nuevos usuarios está deshabilitado temporalmente.";
+      } else if (err.message.includes("Email logins are disabled")) {
+        errorMessage = "El inicio de sesión por correo está desactivado en Supabase. Ve a Authentication -> Providers y enciende 'Email Provider'.";
       }
 
       setError(errorMessage);
