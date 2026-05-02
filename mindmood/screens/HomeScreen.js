@@ -23,6 +23,9 @@ export default function HomeScreen({ navigation }) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Ejecutar reparación de datos en segundo plano
+        repairDataIntegrity(user.id);
+
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -50,6 +53,49 @@ export default function HomeScreen({ navigation }) {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const repairDataIntegrity = async (userId) => {
+    try {
+      const { data: damagedEntries } = await supabase
+        .from('entries')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('mood', 'Neutral')
+        .eq('score', 0)
+        .limit(15);
+
+      if (damagedEntries && damagedEntries.length > 0) {
+        console.log(`[Integridad] Reparando ${damagedEntries.length} entradas en HomeScreen...`);
+        for (const entry of damagedEntries) {
+          try {
+            const response = await fetch("https://mindmood-ai.onrender.com/analyze", {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+              body: JSON.stringify({ text: entry.text })
+            });
+
+            if (response.ok) {
+              const aiData = await response.json();
+              if (aiData.mood !== 'Neutral' || aiData.score !== 0) {
+                await supabase
+                  .from('entries')
+                  .update({ 
+                    mood: aiData.mood, 
+                    score: aiData.score,
+                    distribution: aiData.emotions_distribution
+                  })
+                  .eq('id', entry.id);
+              }
+            }
+          } catch (e) {
+            console.log("Fallo en re-análisis silencioso.");
+          }
+        }
+      }
+    } catch (err) {
+      console.log("Error en reparación de HomeScreen:", err);
     }
   };
 
