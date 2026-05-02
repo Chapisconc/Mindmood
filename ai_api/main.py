@@ -51,7 +51,15 @@ custom_lexicon = {
     'dad': 1.5, 'mom': 1.5, 'father': 1.5, 'mother': 1.5,
     'born': 2.0, 'birth': 2.0, 'pregnant': 2.5, 'expecting': 2.0,
     
-    # ❌ NEGATIVOS MODERADOS (Enojo)
+    # ❌ NEGATIVOS SEVEROS Y VIOLENCIA LABORAL / FÍSICA
+    'punch': -3.5, 'hit': -3.0, 'strike': -3.0, 'slap': -3.0, 
+    'throw': -2.0, 'threw': -2.5, 'yell': -2.5, 'yelled': -2.5,
+    'scream': -2.5, 'insult': -3.0, 'insulted': -3.0, 'abuse': -3.5,
+    'boss': -0.5, 'manager': -0.5, 'toxic': -3.0, 'hostile': -3.0,
+    'sarcasm': -1.5, 'irony': -1.0, 'mock': -2.5, 'mocked': -2.5,
+    'humiliated': -3.5, 'humiliate': -3.5, 'threaten': -3.5, 'threatened': -3.5,
+    
+    # ❌ NEGATIVOS EXTREMOS (Depresión)ojo)
     'angry': -2.8, 'furious': -3.5, 'rage': -3.5, 'frustrated': -2.5,
     'irritated': -2.0, 'annoyed': -1.8, 'resentful': -2.5, 'outraged': -3.0,
     'exasperated': -2.5, 'hostile': -2.8, 'bitter': -2.5, 'offended': -2.3,
@@ -105,16 +113,18 @@ analyzer.lexicon.update(custom_lexicon)
  
 EMOTION_KEYWORDS = {
     'Enojo': [
-        'enojado', 'enojada', 'enojo', 'molesto', 'molesta', 'molestia',
-        'ira', 'rabia', 'furia', 'furioso', 'furiosa', 'enfurecido', 'enfurecida',
-        'frustrado', 'frustrada', 'frustración', 'encabronado', 'encabronada',
-        'harto', 'harta', 'irritado', 'irritada', 'irritación',
-        'indignado', 'indignada', 'indignación', 'cólera', 'colérico',
-        'exasperado', 'exasperada', 'resentido', 'resentida', 'resentimiento',
-        'hostil', 'hostilidad', 'despecho', 'malhumor', 'encoleriado',
-        'puteado', 'emputado', 'emputada', 'encachimbado', 'ofendido',
-        'ultrajado', 'vejado', 'agraviado', 'grosero', 'descontento',
-        'denigrado', 'difamado', 'injuriado', 'rebotado', 'encendido',
+        'enojado', 'enojada', 'enojo', 'molesto', 'molestia',
+        'ira', 'rabia', 'furia', 'furioso', 'enfurecido',
+        'frustrado', 'frustración', 'encabronado',
+        'harto', 'irritado', 'irritación',
+        'indignado', 'indignación', 'cólera',
+        'exasperado', 'resentido', 'resentimiento',
+        'hostil', 'hostilidad', 'malhumor',
+        'ofendido', 'ultrajado', 'agraviado', 'grosero',
+        'aventó', 'aventar', 'puñetazo', 'golpear', 'golpe',
+        'pegar', 'grito', 'gritar', 'insulto', 'insultar',
+        'humillado', 'humillación', 'burla', 'burlarse',
+        'ganas de matar', 'ganas de golpear', 'coraje',
     ],
     'Ansiedad': [
         'ansioso', 'ansiosa', 'ansiedad', 'estresado', 'estresada', 'estrés',
@@ -363,68 +373,90 @@ class AnalysisResponse(BaseModel):
 # ============================================================================
  
 def generate_human_summary(moods, compound_score, requires_help=False):
-    """Generar resumen empático y personalizado"""
-    human_terms = {
-        'Excelente': 'excelente',
-        'Feliz': 'felicidad',
-        'Agradecido': 'gratitud',
-        'Sorpresa': 'asombro',
-        'Neutral': 'tranquilidad',
-        'Triste': 'tristeza',
-        'Enojo': 'enojo',
-        'Ansiedad': 'ansiedad',
-        'Miedo': 'miedo',
-        'Crisis': 'una situación muy difícil',
-    }
- 
+    """Generar resumen empático, profundo y con recomendaciones psicológicas ricas"""
+    
     if requires_help:
         return (
-            "Noto que estás pasando por un momento muy difícil. "
-            "Tu bienestar es importante. Por favor, considera hablar con alguien "
-            "de confianza o contactar a un profesional de la salud mental. "
-            "¡No estás solo/a! 💙"
+            "Noto que estás pasando por un momento abrumador y crítico. "
+            "Es completamente válido sentir que no puedes más, pero tu bienestar es vital. "
+            "Por favor, considera hablar con un profesional, la carga compartida es más ligera. "
+            "Existen líneas de apoyo gratuitas y confidenciales. ¡No estás solo/a en esta oscuridad! 💙"
         )
  
     if not moods:
-        return "Hoy noto tu energía muy tranquila y equilibrada. Gracias por compartir este momento."
+        return "Tu entrada parece muy neutral. A veces la calma y la ausencia de picos emocionales es el mejor momento para reflexionar sobre lo que realmente valoramos en el día a día."
     
-    # Mensaje principal basado en intensidad
-    if compound_score >= 0.8:
-        main_msg = "¡Qué alegría! Se nota que estás teniendo un momento increíble."
-    elif compound_score <= -0.8:
-        main_msg = "Vaya, se nota que estás pasando por un momento muy pesado. Es valiente que lo pongas en palabras."
-    elif compound_score >= 0.2:
-        main_msg = "Veo mucha luz en tu mensaje hoy."
-    elif compound_score <= -0.2:
-        main_msg = "Siento que hoy las cosas están un poco difíciles."
+    # 1. Mensaje de empatía basado en el mood principal
+    primary = moods[0]
+    
+    # Base de datos de sugerencias ricas y profundas por emoción
+    insights = {
+        'Excelente': [
+            "Es un momento cumbre. Aprovecha esta energía expansiva para iniciar nuevos proyectos o contagiar a las personas que te rodean.",
+            "Estos son los días que recargan el alma. Intenta guardar este sentimiento en tu memoria para cuando necesites recordar lo bien que se siente estar vivo."
+        ],
+        'Feliz': [
+            "La alegría es el combustible del bienestar. ¿Qué fue exactamente lo que desencadenó esto? Cultivar más de eso es el secreto de la felicidad a largo plazo.",
+            "Una energía muy positiva. Permítete disfrutarlo sin culpas ni prisas; la felicidad genuina a veces dura solo instantes, pero su impacto es duradero."
+        ],
+        'Agradecido': [
+            "La gratitud es la emoción más poderosa para reconfigurar el cerebro. Reconocer lo bueno, incluso en las cosas pequeñas, eleva tu resiliencia ante cualquier adversidad.",
+            "Sentir agradecimiento te ancla en el presente. Has logrado ver el valor real de tu entorno hoy, un excelente ejercicio de atención plena."
+        ],
+        'Sorpresa': [
+            "Lo inesperado te sacó de la rutina. Ya sea para bien o para mal, la sorpresa nos recuerda que no tenemos el control de todo, y aprender a fluir con la incertidumbre es una gran virtud.",
+            "Una sacudida en tu día. A veces, las cosas que no planeamos terminan siendo los capítulos más interesantes de nuestra historia."
+        ],
+        'Neutral': [
+            "Hay una quietud en tus palabras. La neutralidad no es apatía; es un lienzo en blanco. Usa esta tranquilidad para observar tus pensamientos sin juzgarlos.",
+            "Un momento de equilibrio. No todo tiene que ser un pico de euforia o un valle de tristeza. El centro también es un buen lugar para estar."
+        ],
+        'Triste': [
+            "La tristeza es pesada, pero tiene un propósito: te pide hacer una pausa y procesar. No intentes reprimirla; permítete sentir, llorar si es necesario, y recuerda que la nube eventualmente pasará.",
+            "Se percibe una melancolía profunda. Ser compasivo contigo mismo/a hoy es tu única prioridad. Haz algo pequeño que te reconforte, como tomar un té caliente o escuchar tu canción favorita."
+        ],
+        'Enojo': [
+            "Percibo mucha frustración y fuego en tus palabras. El enojo es una emoción de límite: te está indicando que algo es injusto o inaceptable para ti. Usa esta energía para establecer límites sanos, no para destruir. Inhala profundamente antes de reaccionar.",
+            "Escribir sobre esta ira es el primer paso para desactivarla. Es totalmente válido sentir coraje, especialmente en situaciones de hostilidad. Intenta alejarte físicamente del estímulo antes de tomar una decisión permanente."
+        ],
+        'Ansiedad': [
+            "Tu mente parece estar corriendo en el futuro. La ansiedad se alimenta de la incertidumbre. Intenta regresar al presente: nombra 5 cosas que puedas ver, 4 que puedas tocar y concéntrate en tu respiración. Estás a salvo aquí y ahora.",
+            "La presión y el estrés están saturando tu sistema. Rompe la tarea gigante en pedacitos microscópicos. No tienes que resolver el resto de tu vida hoy, solo concéntrate en la siguiente hora."
+        ],
+        'Miedo': [
+            "El miedo paraliza, pero también intenta protegerte. Reconocer a qué le temes le quita poder. Da un paso atrás y pregúntate si la amenaza es real en este instante o si es una proyección de tu mente.",
+            "Sentir vulnerabilidad asusta. Pero la valentía no es la ausencia de miedo, es avanzar a pesar de él. Toma medidas que te devuelvan el sentido de seguridad hoy."
+        ]
+    }
+
+    import random
+    insight = random.choice(insights.get(primary, insights['Neutral']))
+    
+    # 2. Construir la narrativa
+    if compound_score <= -0.5:
+        intro = "Siento que hoy la carga es realmente pesada y la situación es difícil."
+    elif compound_score <= -0.1:
+        intro = "Percibo obstáculos emocionales en tu día de hoy."
+    elif compound_score >= 0.5:
+        intro = "¡Qué energía tan radiante transmiten tus palabras!"
+    elif compound_score >= 0.1:
+        intro = "Se nota un aire ligero y positivo en lo que describes."
     else:
-        main_msg = "Gracias por abrirte y contar cómo te sientes."
- 
-    # Filtrar moods redundantes
-    final_moods = []
-    has_specific = any(m in ['Enojo', 'Ansiedad', 'Miedo', 'Agradecido', 'Sorpresa', 'Crisis'] for m in moods)
-    
-    for m in moods:
-        if has_specific and m in ['Triste', 'Feliz', 'Excelente']:
-            continue
-        if m not in final_moods:
-            final_moods.append(m)
-    
-    if not final_moods: 
-        final_moods = moods[:2] if moods else ['Neutral']
- 
-    if len(final_moods) == 1:
-        term = human_terms.get(final_moods[0], final_moods[0].lower())
-        details = f" Percibo que hoy sientes {term}."
-    elif len(final_moods) == 2:
-        t1 = human_terms.get(final_moods[0], final_moods[0].lower())
-        t2 = human_terms.get(final_moods[1], final_moods[1].lower())
-        details = f" Detecto varios matices: pareces sentir {t1}, pero también percibo algo de {t2}."
+        intro = "Gracias por abrirte con honestidad."
+
+    # Combinación de emociones
+    if len(moods) > 1:
+        if primary in ['Enojo', 'Ansiedad'] and 'Triste' in moods:
+            blend = f" Es completamente natural que detrás de ese {primary.lower()} se esconda también tristeza."
+        elif primary in ['Feliz', 'Excelente'] and 'Agradecido' in moods:
+            blend = " La alegría combinada con gratitud es la receta perfecta para un día memorable."
+        else:
+            blend = f" Además de {primary.lower()}, noto matices de {moods[1].lower()} en tu relato."
     else:
-        moods_str = ", ".join([human_terms.get(m, m.lower()) for m in final_moods[:3]])
-        details = f" Percibo una mezcla compleja: {moods_str}."
- 
-    return f"{main_msg}{details}"
+        blend = ""
+
+    return f"{intro}{blend}\n\n💡 Reflexión: {insight}"
+
  
 # ============================================================================
 # 🚀 ENDPOINT PRINCIPAL MEJORADO
@@ -448,29 +480,12 @@ def analyze(data: AnalyzeRequest):
     # Paso 1: Normalizar jerga mexicana
     normalized_text = normalize_mexican_slang(original_text)
     
-    # NUEVO: Corrección ortográfica ligera antes de traducir
-    def correct_spelling(text_to_correct: str) -> str:
-        words = text_to_correct.split()
-        corrected_words = []
-        for word in words:
-            clean_word = re.sub(r'[^\w\s]', '', word)
-            if clean_word and len(clean_word) > 2:
-                # Solo corregimos palabras que no sean parte de la jerga
-                if clean_word.lower() not in MEXICAN_SLANG:
-                    correction = spell.correction(clean_word)
-                    if correction:
-                        word = word.replace(clean_word, correction)
-            corrected_words.append(word)
-        return " ".join(corrected_words)
-        
-    corrected_text = correct_spelling(normalized_text)
-    
     # Paso 2: Traducir (con caché)
     try:
-        translated_text = translate_cached(corrected_text)
+        translated_text = translate_cached(normalized_text)
     except Exception as e:
         logger.warning(f"Translation failed, using original: {e}")
-        translated_text = corrected_text
+        translated_text = normalized_text
     
     # Paso 3: Análisis de sentimiento
     score = analyzer.polarity_scores(translated_text)
