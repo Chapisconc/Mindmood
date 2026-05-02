@@ -38,23 +38,26 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single()
-        .then(({ data }) => {
-          setRole(data?.role || "user");
-          setChecking(false);
-        })
-        .catch(() => {
-          setRole("user");
-          setChecking(false);
-        });
-    } else {
-      setChecking(false);
+    async function checkRole() {
+      if (!user) {
+        setChecking(false);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        setRole(data?.role || "user");
+      } catch (err) {
+        console.error("Error checking role:", err);
+        setRole("user");
+      } finally {
+        setChecking(false);
+      }
     }
+    checkRole();
   }, [user]);
 
   if (loading || checking) {
@@ -77,21 +80,23 @@ function SmartHome() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single()
-        .then(({ data }) => {
-          setRole(data?.role || "user");
-          setChecking(false);
-        })
-        .catch(() => {
-          setRole("user");
-          setChecking(false);
-        });
+    async function checkRole() {
+      if (!user) return;
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        setRole(data?.role || "user");
+      } catch (err) {
+        console.error("Error checking role:", err);
+        setRole("user");
+      } finally {
+        setChecking(false);
+      }
     }
+    checkRole();
   }, [user]);
 
   if (checking) {
