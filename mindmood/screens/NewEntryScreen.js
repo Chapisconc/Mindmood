@@ -7,6 +7,7 @@ import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import EmotionModal from '../components/EmotionModal';
+import Constants from 'expo-constants';
 
 export default function NewEntryScreen({ navigation }) {
   const { themeStyles } = useTheme();
@@ -16,8 +17,13 @@ export default function NewEntryScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalData, setModalData] = useState({ type: 'normal', summary: '', distribution: null });
 
-  // URL of our local AI Backend (Public tunnel for remote testing)
-  const API_URL = "https://cheating-uncanny-squire.ngrok-free.dev/analyze"; 
+  // URLs de la IA (Local y Remota)
+  const NGROK_URL = "https://cheating-uncanny-squire.ngrok-free.dev/analyze"; 
+  
+  // Obtener IP local de la PC automáticamente desde Expo
+  const debuggerHost = Constants.expoConfig?.hostUri;
+  const localIp = debuggerHost ? debuggerHost.split(':')[0] : null;
+  const LOCAL_URL = localIp ? `http://${localIp}:8000/analyze` : null;
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -52,16 +58,36 @@ export default function NewEntryScreen({ navigation }) {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 segundos de espera
 
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text }),
-            signal: controller.signal
-          });
+          const targetUrl = LOCAL_URL || NGROK_URL;
+          let response;
+          try {
+            response = await fetch(targetUrl, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
+              },
+              body: JSON.stringify({ text: text }),
+              signal: controller.signal
+            });
+          } catch (err) {
+            const fallbackUrl = targetUrl === LOCAL_URL ? NGROK_URL : LOCAL_URL;
+            if (fallbackUrl) {
+              response = await fetch(fallbackUrl, {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'ngrok-skip-browser-warning': 'true'
+                },
+                body: JSON.stringify({ text: text }),
+                signal: controller.signal
+              });
+            }
+          }
           
           clearTimeout(timeoutId);
           
-          if (response.ok) {
+          if (response && response.ok) {
             aiData = await response.json();
           }
         } catch (e) {
