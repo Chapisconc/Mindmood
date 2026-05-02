@@ -135,6 +135,7 @@ export default function ProfileScreen({ navigation }) {
           hour: date.getHours(),
           minute: date.getMinutes(),
           repeats: true,
+          channelId: 'reminders',
         },
       });
     } catch (error) {
