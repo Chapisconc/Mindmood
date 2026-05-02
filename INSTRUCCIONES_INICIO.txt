@@ -26,22 +26,21 @@ Para que todo funcione perfecto, abre estas terminales por separado:
       npx expo start --tunnel
 
 ==========================================================================
-🌍 ACCESO REMOTO (PARA LA UNIVERSIDAD)
+🌍 ACCESO REMOTO (PRODUCCIÓN EN RENDER)
 ==========================================================================
 
-¡IMPORTANTE! Si vas a la universidad, deja tu PC encendida con esto:
+¡NOTICIA! Tu IA ahora vive en la NUBE (Render). Ya no es obligatorio que 
+tu PC esté prendida para que el análisis de sentimientos funcione.
 
-1. Inicia el túnel de la IA:
-   ngrok http 8000
+🚀 URL de Producción: https://mindmood-ai.onrender.com
 
-2. Tu URL actual configurada es:
-   👉 https://cheating-uncanny-squire.ngrok-free.dev
+¿Cuándo necesitas abrir la terminal de la IA local?
+- Solo si quieres hacer cambios en el código de la IA y probarlos antes de subir.
+- Para el uso diario y la presentación, la app ya apunta a RENDER.
 
-   Si la URL cambia al reiniciar ngrok, actualízala en:
-   - mindmood/screens/NewEntryScreen.js (Línea 20)
-   - mindmood_web/.env (Variable VITE_API_URL)
-
-3. Inicia Expo en modo túnel (Paso 3B arriba).
+¿Cómo iniciar Expo?
+1. cd mindmood
+2. npx expo start --tunnel (Recomendado para la Uni)
 
 ==========================================================================
 🧪 PRUEBAS Y VALIDACIÓN

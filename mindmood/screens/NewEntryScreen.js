@@ -17,8 +17,8 @@ export default function NewEntryScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalData, setModalData] = useState({ type: 'normal', summary: '', distribution: null });
 
-  // URLs de la IA (Local y Remota)
-  const NGROK_URL = "https://cheating-uncanny-squire.ngrok-free.dev/analyze"; 
+  // URLs de la IA (Local y Remota en Render)
+  const RENDER_URL = "https://mindmood-ai.onrender.com/analyze"; 
   
   // Obtener IP local de la PC automáticamente desde Expo
   const debuggerHost = Constants.expoConfig?.hostUri;
@@ -58,7 +58,8 @@ export default function NewEntryScreen({ navigation }) {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 segundos de espera
 
-          const targetUrl = LOCAL_URL || NGROK_URL;
+          // Intentar primero LOCAL, si falla o no existe, usar RENDER
+          const targetUrl = LOCAL_URL || RENDER_URL;
           let response;
           try {
             response = await fetch(targetUrl, {
@@ -71,7 +72,8 @@ export default function NewEntryScreen({ navigation }) {
               signal: controller.signal
             });
           } catch (err) {
-            const fallbackUrl = targetUrl === LOCAL_URL ? NGROK_URL : LOCAL_URL;
+            console.log("Reintentando con URL alternativa...");
+            const fallbackUrl = targetUrl === LOCAL_URL ? RENDER_URL : LOCAL_URL;
             if (fallbackUrl) {
               response = await fetch(fallbackUrl, {
                 method: 'POST',
