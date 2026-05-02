@@ -1,51 +1,56 @@
 ==========================================================================
-              🚀 GUÍA DE INICIO RÁPIDO - MINDMOOD 🚀
+              🚀 GUÍA MAESTRA DE INICIO - MINDMOOD 🚀
 ==========================================================================
 
-Para ejecutar el proyecto completo, abre 3 o 4 terminales por separado:
+Para que todo funcione perfecto, abre estas terminales por separado:
 
-1️⃣ TERMINAL 1: MOTOR DE INTELIGENCIA ARTIFICIAL (BACKEND)
+1️⃣ TERMINAL 1: MOTOR DE INTELIGENCIA ARTIFICIAL (IA)
    Ubicación: ai_api/
-   Comando: 
+   Comandos: 
    cd ai_api
    python -m uvicorn main:app --reload
 
-2️⃣ TERMINAL 2: APLICACIÓN WEB (REACT/VITE)
+2️⃣ TERMINAL 2: APLICACIÓN WEB (DASHBOARD)
    Ubicación: mindmood_web/
-   Comando:
+   Comandos:
    cd mindmood_web
    npm run dev
 
-3️⃣ TERMINAL 3: APLICACIÓN MÓVIL (REACT NATIVE / EXPO)
+3️⃣ TERMINAL 3: APLICACIÓN MÓVIL (EXPO)
    Ubicación: mindmood/
    
-   A) Para probar en casa (Misma red Wi-Fi):
+   A) SI ESTÁS EN CASA (Mismo Wi-Fi):
       npx expo start
    
-   B) Para probar en la UNIVERSIDAD o fuera de casa (Modo Túnel):
+   B) SI ESTÁS EN LA UNI (Modo Remoto):
       npx expo start --tunnel
 
-4️⃣ TERMINAL 4: PRUEBAS DE SENTIMIENTO (OPCIONAL)
-   Ubicación: Raíz del proyecto
-   Comando:
+==========================================================================
+🌍 ACCESO REMOTO (PARA LA UNIVERSIDAD)
+==========================================================================
+
+¡IMPORTANTE! Si vas a la universidad, deja tu PC encendida con esto:
+
+1. Inicia el túnel de la IA:
+   ngrok http 8000
+
+2. Tu URL actual configurada es:
+   👉 https://cheating-uncanny-squire.ngrok-free.dev
+
+   Si la URL cambia al reiniciar ngrok, actualízala en:
+   - mindmood/screens/NewEntryScreen.js (Línea 20)
+   - mindmood_web/.env (Variable VITE_API_URL)
+
+3. Inicia Expo en modo túnel (Paso 3B arriba).
+
+==========================================================================
+🧪 PRUEBAS Y VALIDACIÓN
+==========================================================================
+
+Para verificar que la IA detecta correctamente las 59 emociones (incluyendo 
+el fix de "infeliz" vs "feliz"), usa:
    python tests/test_sentiments.py
 
 ==========================================================================
-🌍 CÓMO USAR EN LA UNIVERSIDAD (MODO REMOTO)
-==========================================================================
-
-1. Instala ngrok (gratis) y en una terminal escribe:
-   ngrok http 8000
-
-2. Copia la URL https que te dé ngrok y pégala en:
-   - mindmood/screens/NewEntryScreen.js (Línea 20)
-   - mindmood_web/src/lib/supabase.ts (Variable API_URL)
-
-3. Inicia Expo con el comando del paso 3B:
-   npx expo start --tunnel
-
-4. ¡Listo! Tu celular se conectará a tu PC de casa desde cualquier lugar.
-
-==========================================================================
-💎 MINDMOOD - DIARIO PERSONAL INTELIGENTE 🦄
+💎 MINDMOOD - EL DIARIO INTELIGENTE DEFINITIVO 🦄🦾
 ==========================================================================
