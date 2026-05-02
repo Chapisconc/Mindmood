@@ -55,13 +55,16 @@ export default function NewEntryScreen({ navigation }) {
 
       if (!isOffline) {
         try {
+          // Render free tier can take up to 50s to wake up. We'll use 30s as a reasonable timeout.
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 segundos de espera
+          const timeoutId = setTimeout(() => controller.abort(), 30000); 
 
-          // Intentar primero LOCAL, si falla o no existe, usar RENDER
-          const targetUrl = LOCAL_URL || RENDER_URL;
+          // Prioritize Render for production stability, fallback to Local only if Render fails
+          const targetUrl = RENDER_URL;
+          
           let response;
           try {
+            console.log("Conectando a IA en Render...");
             response = await fetch(targetUrl, {
               method: 'POST',
               headers: { 
@@ -72,15 +75,11 @@ export default function NewEntryScreen({ navigation }) {
               signal: controller.signal
             });
           } catch (err) {
-            console.log("Reintentando con URL alternativa...");
-            const fallbackUrl = targetUrl === LOCAL_URL ? RENDER_URL : LOCAL_URL;
-            if (fallbackUrl) {
-              response = await fetch(fallbackUrl, {
+            console.log("Render en espera o inalcanzable, intentando Local...");
+            if (LOCAL_URL) {
+              response = await fetch(LOCAL_URL, {
                 method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'ngrok-skip-browser-warning': 'true'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text: text }),
                 signal: controller.signal
               });

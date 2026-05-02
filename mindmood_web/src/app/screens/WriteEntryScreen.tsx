@@ -22,7 +22,7 @@ export function WriteEntryScreen() {
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos de timeout
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos para Render
 
         const response = await fetch(`${API_URL}/analyze`, {
           method: "POST",
