@@ -10,6 +10,7 @@ import {
   Loader2,
   Brain,
   RefreshCw,
+  Check,
 } from "lucide-react";
 import { Card } from "../components/Card";
 import { supabase } from "../../lib/supabase";
@@ -223,7 +224,9 @@ export function AdminDashboard() {
                 {alarms.map((alarm, i) => (
                   <div key={i} className="p-4 bg-background rounded-xl border border-border">
                     <div className="flex justify-between items-start mb-2">
-                      <span className="font-medium text-sm">{alarm.student_email}</span>
+                      <span className="font-medium text-sm text-primary">
+                        {alarm.student_email || (alarm as any).email || "Usuario Desconocido"}
+                      </span>
                       <span className="text-xs text-muted-foreground">
                         {new Date(alarm.recorded_at).toLocaleDateString("es-MX", {
                           day: "numeric",

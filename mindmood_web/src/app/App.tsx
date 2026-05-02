@@ -47,6 +47,10 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
         .then(({ data }) => {
           setRole(data?.role || "user");
           setChecking(false);
+        })
+        .catch(() => {
+          setRole("user");
+          setChecking(false);
         });
     } else {
       setChecking(false);
@@ -81,6 +85,10 @@ function SmartHome() {
         .single()
         .then(({ data }) => {
           setRole(data?.role || "user");
+          setChecking(false);
+        })
+        .catch(() => {
+          setRole("user");
           setChecking(false);
         });
     }
