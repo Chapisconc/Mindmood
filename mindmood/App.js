@@ -1,5 +1,8 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { LogBox } from 'react-native';
+
+LogBox.ignoreLogs(['expo-notifications']);
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import LoginScreen from './screens/LoginScreen';
@@ -15,7 +18,17 @@ import { ThemeProvider } from './theme/ThemeContext';
 import { I18nProvider } from './i18n/I18nContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import * as Notifications from 'expo-notifications';
+
 const Stack = createNativeStackNavigator();
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function App() {
   return (

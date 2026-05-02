@@ -103,33 +103,43 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const scheduleNotification = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') {
-      setNotice({
-        visible: true,
-        title: 'Permiso denegado',
-        message: 'No pudimos activar los recordatorios.',
-        icon: 'notifications-off',
-        color: '#F97316'
-      });
-      return;
-    }
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      
+      if (finalStatus !== 'granted') {
+        setNotice({
+          visible: true,
+          title: 'Permiso denegado',
+          message: 'No pudimos activar los recordatorios.',
+          icon: 'notifications-off',
+          color: '#F97316'
+        });
+        return;
+      }
 
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "MindMood ❤️",
-        body: lang === 'es' ? "¿Cómo te sientes hoy? No olvides registrar tu diario." : "How are you feeling today? Don't forget your log.",
-        sound: true,
-      },
-      trigger: {
-        hour: date.getHours(),
-        minute: date.getMinutes(),
-        repeats: true,
-        channelId: 'reminders',
-      },
-    });
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "MindMood ❤️",
+          body: lang === 'es' ? "¿Cómo te sientes hoy? No olvides registrar tu diario." : "How are you feeling today? Don't forget your log.",
+          sound: true,
+          priority: Notifications.AndroidNotificationPriority.MAX,
+        },
+        trigger: {
+          hour: date.getHours(),
+          minute: date.getMinutes(),
+          repeats: true,
+        },
+      });
+    } catch (error) {
+      console.log("Error en notificaciones:", error);
+    }
   };
 
   const styles = StyleSheet.create({
