@@ -64,10 +64,10 @@ export default function HomeScreen({ navigation }) {
         .eq('user_id', userId)
         .eq('mood', 'Neutral')
         .eq('score', 0)
-        .limit(15);
+        .limit(10);
 
       if (damagedEntries && damagedEntries.length > 0) {
-        console.log(`[Integridad] Reparando ${damagedEntries.length} entradas en HomeScreen...`);
+        console.log(`[Integridad] Analizando ${damagedEntries.length} posibles fallos...`);
         for (const entry of damagedEntries) {
           try {
             const response = await fetch("https://mindmood-ai.onrender.com/analyze", {
@@ -78,19 +78,24 @@ export default function HomeScreen({ navigation }) {
 
             if (response.ok) {
               const aiData = await response.json();
-              if (aiData.mood !== 'Neutral' || aiData.score !== 0) {
-                await supabase
-                  .from('entries')
-                  .update({ 
-                    mood: aiData.mood, 
-                    score: aiData.score,
-                    distribution: aiData.emotions_distribution
-                  })
-                  .eq('id', entry.id);
+              // Marcamos la entrada como revisada usando un score minúsculo si sigue siendo neutral
+              const newScore = (aiData.mood === 'Neutral' && aiData.score === 0) ? 0.0001 : aiData.score;
+              
+              const { error: upError } = await supabase
+                .from('entries')
+                .update({ 
+                  mood: aiData.mood, 
+                  score: newScore,
+                  distribution: aiData.emotions_distribution
+                })
+                .eq('id', entry.id);
+              
+              if (!upError) {
+                console.log(`[Integridad] ✅ Entrada ID ${entry.id.substring(0,5)} corregida a: ${aiData.mood}`);
               }
             }
           } catch (e) {
-            console.log("Fallo en re-análisis silencioso.");
+            console.log("Error en petición de reparación individual.");
           }
         }
       }
