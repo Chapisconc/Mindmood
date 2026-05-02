@@ -62,6 +62,7 @@ export default function HistoryScreen({ navigation }) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log(`[Bóveda] Sincronizadas ${data?.length} entradas.`);
       setEntries(data || []);
     } catch (error) {
       console.error(error);
