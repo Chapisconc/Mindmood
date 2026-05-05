@@ -19,13 +19,10 @@ export default function HomeScreen({ navigation }) {
     return unsubscribe;
   }, [navigation]);
 
-  const fetchData = async () => {
+const fetchData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Ejecutar reparación de datos en segundo plano
-        repairDataIntegrity(user.id);
-
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -50,59 +47,13 @@ export default function HomeScreen({ navigation }) {
         }
       }
     } catch (error) {
-      console.error(error);
+      console.error('Home fetch fail:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const repairDataIntegrity = async (userId) => {
-    try {
-      const { data: damagedEntries } = await supabase
-        .from('entries')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('mood', 'Neutral')
-        .eq('score', 0)
-        .limit(10);
-
-      if (damagedEntries && damagedEntries.length > 0) {
-        console.log(`[Integridad] Analizando ${damagedEntries.length} posibles fallos...`);
-        for (const entry of damagedEntries) {
-          try {
-            const response = await fetch("https://mindmood-ai.onrender.com/analyze", {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-              body: JSON.stringify({ text: entry.text })
-            });
-
-            if (response.ok) {
-              const aiData = await response.json();
-              // Marcamos la entrada como revisada usando un score minúsculo si sigue siendo neutral
-              const newScore = (aiData.mood === 'Neutral' && aiData.score === 0) ? 0.0001 : aiData.score;
-              
-              const { error: upError } = await supabase
-                .from('entries')
-                .update({ 
-                  mood: aiData.mood, 
-                  score: newScore,
-                  distribution: aiData.emotions_distribution
-                })
-                .eq('id', entry.id);
-              
-              if (!upError) {
-                console.log(`[Integridad] ✅ Entrada ID ${entry.id.substring(0,5)} corregida a: ${aiData.mood}`);
-              }
-            }
-          } catch (e) {
-            console.log("Error en petición de reparación individual.");
-          }
-        }
-      }
-    } catch (err) {
-      console.log("Error en reparación de HomeScreen:", err);
-    }
-  };
+  // Función de reparación eliminada según solicitud del usuario
 
   const getDynamicQuote = () => {
     switch (lastMood) {

@@ -12,15 +12,19 @@ export const I18nProvider = ({ children }) => {
     loadLang();
   }, []);
 
-  const loadLang = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      const { data } = await supabase
-        .from('profiles')
-        .select('lang')
-        .eq('id', session.user.id)
-        .single();
-      if (data?.lang) setLang(data.lang);
+const loadLang = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('lang')
+          .eq('id', session.user.id)
+          .single();
+        if (data?.lang) setLang(data.lang);
+      }
+    } catch (e) {
+      console.log('Lang load fail:', e);
     }
   };
 

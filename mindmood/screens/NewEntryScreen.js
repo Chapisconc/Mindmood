@@ -16,22 +16,50 @@ export default function NewEntryScreen({ navigation }) {
   const [isOffline, setIsOffline] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalData, setModalData] = useState({ type: 'normal', summary: '', distribution: null });
+  const [apiStatus, setApiStatus] = useState('connecting'); // connecting, local, cloud, offline
 
   // URLs de la IA (Local y Remota en Render)
   const RENDER_URL = "https://mindmood-ai.onrender.com/analyze"; 
   
-  // Obtener IP local de la PC automáticamente desde Expo
+  // Obtener IP local detectada por Expo
   const debuggerHost = Constants.expoConfig?.hostUri;
-  const localIp = debuggerHost ? debuggerHost.split(':')[0] : null;
-  const LOCAL_URL = localIp ? `http://${localIp}:8000/analyze` : null;
+  const expoIp = debuggerHost ? debuggerHost.split(':')[0] : null;
+
+  // Lista de URLs candidatas en orden de preferencia
+  const getApiUrls = () => {
+    const urls = [];
+    if (Platform.OS === 'android') urls.push("http://10.0.2.2:8000/analyze");
+    urls.push("http://192.168.1.77:8000/analyze");
+    if (expoIp && !expoIp.includes('ngrok')) urls.push(`http://${expoIp}:8000/analyze`);
+    urls.push(RENDER_URL);
+    return [...new Set(urls)];
+  };
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       setIsOffline(!state.isConnected);
     });
+    checkApiStatus();
     loadDraft();
     return () => unsubscribe();
   }, []);
+
+  const checkApiStatus = async () => {
+    const urls = getApiUrls();
+    for (const url of urls) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(url.replace('/analyze', '/'), { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok || res.status === 404) { // 404 is fine as long as server responds
+          setApiStatus(url.includes('render.com') ? 'cloud' : 'local');
+          return;
+        }
+      } catch (e) {}
+    }
+    setApiStatus('offline');
+  };
 
   const loadDraft = async () => {
     const draft = await AsyncStorage.getItem('entry_draft');
@@ -54,18 +82,19 @@ export default function NewEntryScreen({ navigation }) {
       let aiData = { mood: 'Neutral', score: 0, requires_help: false, summary: '', emotions_distribution: null };
 
       if (!isOffline) {
-        try {
-          // Render free tier can take up to 50s to wake up. We'll use 30s as a reasonable timeout.
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000); 
+        const candidateUrls = getApiUrls();
+        let success = false;
 
-          // Prioritize Render for production stability, fallback to Local only if Render fails
-          const targetUrl = RENDER_URL;
+        for (const url of candidateUrls) {
+          if (success) break;
           
-          let response;
           try {
-            console.log("Conectando a IA en Render...");
-            response = await fetch(targetUrl, {
+            console.log(`Intentando conectar a IA: ${url}`);
+            const controller = new AbortController();
+            const isRender = url.includes('render.com');
+            const timeoutId = setTimeout(() => controller.abort(), isRender ? 30000 : 3000); 
+
+            const response = await fetch(url, {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
@@ -74,32 +103,23 @@ export default function NewEntryScreen({ navigation }) {
               body: JSON.stringify({ text: text }),
               signal: controller.signal
             });
-          } catch (err) {
-            console.log("Render en espera o inalcanzable, intentando Local...");
-            if (LOCAL_URL) {
-              response = await fetch(LOCAL_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: text }),
-                signal: controller.signal
-              });
+
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+              aiData = await response.json();
+              setApiStatus(isRender ? 'cloud' : 'local');
+              success = true;
             }
+          } catch (err) {
+            console.log(`❌ Falló conexión con ${url}`);
           }
-          
-          clearTimeout(timeoutId);
-          
-          if (response && response.ok) {
-            aiData = await response.json();
-          }
-        } catch (e) {
-          console.log("AI Backend unreachable or timeout, using defaults.");
         }
       }
 
       const { data: { user } } = await supabase.auth.getUser();
       const { mood, score, requires_help, summary, emotions_distribution } = aiData;
 
-      // Intento de guardado "Seguro"
       let { error: entryError } = await supabase
         .from('entries')
         .insert([{ 
@@ -110,26 +130,16 @@ export default function NewEntryScreen({ navigation }) {
           distribution: emotions_distribution
         }]);
       
-      // Si el error es por la columna faltante, intentamos guardar sin ella para no perder el diario
       if (entryError && entryError.message.includes('distribution')) {
-        console.log("Columna 'distribution' no detectada. Guardando versión básica...");
         const fallback = await supabase
           .from('entries')
-          .insert([{ 
-            user_id: user.id, 
-            text, 
-            mood, 
-            score 
-          }]);
+          .insert([{ user_id: user.id, text, mood, score }]);
         entryError = fallback.error;
       }
       
       if (entryError) throw entryError;
 
-      // Update Streak Logic
       await updateStreak(user.id);
-
-      // Clear Draft
       await AsyncStorage.removeItem('entry_draft');
 
       setModalData({
@@ -161,14 +171,9 @@ export default function NewEntryScreen({ navigation }) {
     if (profile?.last_entry_at) {
       const lastDate = new Date(profile.last_entry_at);
       const lastTime = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate()).getTime();
-      
       const diffDays = (today - lastTime) / (1000 * 60 * 60 * 24);
-      
-      if (diffDays === 1) {
-        newStreak = (profile.streak || 0) + 1;
-      } else if (diffDays === 0) {
-        newStreak = profile.streak || 1;
-      }
+      if (diffDays === 1) newStreak = (profile.streak || 0) + 1;
+      else if (diffDays === 0) newStreak = profile.streak || 1;
     }
 
     await supabase
@@ -177,10 +182,23 @@ export default function NewEntryScreen({ navigation }) {
       .eq('id', userId);
   };
 
+  const getStatusColor = () => {
+    switch(apiStatus) {
+      case 'local': return '#10B981';
+      case 'cloud': return '#3B82F6';
+      case 'connecting': return '#F59E0B';
+      default: return '#6B7280';
+    }
+  };
+
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: themeStyles.background },
     scroll: { padding: 25 },
-    title: { fontSize: 30, fontWeight: '900', color: themeStyles.text, marginBottom: 10, letterSpacing: -0.5 },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
+    title: { fontSize: 30, fontWeight: '900', color: themeStyles.text, letterSpacing: -0.5, flex: 1 },
+    statusIndicator: { flexDirection: 'row', alignItems: 'center', backgroundColor: themeStyles.card, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: themeStyles.border },
+    statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+    statusText: { fontSize: 10, fontWeight: 'bold', color: themeStyles.secondaryText, textTransform: 'uppercase' },
     subtitle: { fontSize: 16, color: themeStyles.secondaryText, marginBottom: 30, lineHeight: 24, fontWeight: '500' },
     textArea: { backgroundColor: themeStyles.card, color: themeStyles.text, borderRadius: 30, padding: 25, fontSize: 18, minHeight: 400, borderWidth: 1, borderColor: themeStyles.border, textAlignVertical: 'top', shadowColor: '#000', shadowOffset: {width:0, height:4}, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 },
     saveButton: { backgroundColor: themeStyles.accent, padding: 22, borderRadius: 22, alignItems: 'center', marginTop: 35, shadowColor: themeStyles.accent, shadowOffset: {width:0, height:10}, shadowOpacity: 0.4, shadowRadius: 15, elevation: 8 },
@@ -193,17 +211,25 @@ export default function NewEntryScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll}>
-          <Text style={styles.title}>Reflexión del Día</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>Reflexión del Día</Text>
+            <View style={styles.statusIndicator}>
+              <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
+              <Text style={styles.statusText}>{apiStatus}</Text>
+            </View>
+          </View>
+          
           <Text style={styles.subtitle}>Escribe libremente. Tu diario es un espacio seguro para descargar tu mente.</Text>
           
           {isOffline && (
             <View style={styles.offlineBadge}>
               <Ionicons name="cloud-offline" size={18} color={themeStyles.secondaryText} />
-              <Text style={styles.offlineText}>Modo Offline activado. Se guardará localmente.</Text>
+              <Text style={styles.offlineText}>Modo Offline activado.</Text>
             </View>
           )}
 
           <TextInput
+            testID="entry_input"
             style={styles.textArea}
             placeholder="Hoy mi mente se siente..."
             placeholderTextColor={themeStyles.secondaryText}
@@ -215,7 +241,11 @@ export default function NewEntryScreen({ navigation }) {
           {loading ? (
             <ActivityIndicator size="large" color={themeStyles.accent} style={{ marginTop: 30 }} />
           ) : (
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <TouchableOpacity 
+              testID="save_button"
+              style={styles.saveButton} 
+              onPress={handleSave}
+            >
               <Text style={styles.saveButtonText}>Guardar en la Bóveda</Text>
             </TouchableOpacity>
           )}

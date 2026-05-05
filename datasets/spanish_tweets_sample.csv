@@ -1,0 +1,21 @@
+tweet_id,tweet_text,label
+1,"no puede ser mas estupido...",0
+2,"Me encanta este producto!",2
+3,"Hoy es un día normal sin mucho que decir.",1
+4,"Estoy muy enojado con todo esto.",0
+5,"¡Qué alegría ver a mis amigos!",2
+6,"Todo mal, no aguanto más.",0
+7,"La comida estuvo buena hoy.",2
+8,"Preocupado por el futuro.",0
+9,"Feliz con mi nuevo trabajo.",2
+10,"Día aburrido en la oficina.",1
+11,"Enojado con el tráfico.",0
+12,"Alegre por el cumpleaños.",2
+13,"Triste por la noticia.",0
+14,"Ansioso antes del examen.",0
+15,"Contento con la familia.",2
+16,"Molesto con el vecino.",0
+17,"Excelente película anoche.",2
+18,"Depresión total hoy.",0
+19,"Estresado por el trabajo.",0
+20,"Gozo con la victoria.",2

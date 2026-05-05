@@ -1,0 +1,55 @@
+==========================================================================
+              🚀 GUÍA MAESTRA DE INICIO - MINDMOOD 🚀
+==========================================================================
+
+Para que todo funcione perfecto, abre estas terminales por separado:
+
+1️⃣ TERMINAL 1: MOTOR DE INTELIGENCIA ARTIFICIAL (IA)
+   Ubicación: ai_api/
+   Comandos: 
+   cd ai_api
+   python -m uvicorn main:app --reload
+
+2️⃣ TERMINAL 2: APLICACIÓN WEB (DASHBOARD)
+   Ubicación: mindmood_web/
+   Comandos:
+   cd mindmood_web
+   npm run dev
+
+3️⃣ TERMINAL 3: APLICACIÓN MÓVIL (EXPO)
+   Ubicación: mindmood/
+   
+   A) SI ESTÁS EN CASA (Mismo Wi-Fi):
+      npx expo start
+   
+   B) SI ESTÁS EN LA UNI (Modo Remoto):
+      npx expo start --tunnel
+
+==========================================================================
+🌍 ACCESO REMOTO (PRODUCCIÓN EN RENDER)
+==========================================================================
+
+¡NOTICIA! Tu IA ahora vive en la NUBE (Render). Ya no es obligatorio que 
+tu PC esté prendida para que el análisis de sentimientos funcione.
+
+🚀 URL de Producción: https://mindmood-ai.onrender.com
+
+¿Cuándo necesitas abrir la terminal de la IA local?
+- Solo si quieres hacer cambios en el código de la IA y probarlos antes de subir.
+- Para el uso diario y la presentación, la app ya apunta a RENDER.
+
+¿Cómo iniciar Expo?
+1. cd mindmood
+2. npx expo start --tunnel (Recomendado para la Uni)
+
+==========================================================================
+🧪 PRUEBAS Y VALIDACIÓN
+==========================================================================
+
+Para verificar que la IA detecta correctamente las 59 emociones (incluyendo 
+el fix de "infeliz" vs "feliz"), usa:
+   python tests/test_sentiments.py
+
+==========================================================================
+💎 MINDMOOD - EL DIARIO INTELIGENTE DEFINITIVO 🦄🦾
+==========================================================================

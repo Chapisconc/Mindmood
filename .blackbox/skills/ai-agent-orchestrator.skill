@@ -1,0 +1,7 @@
+# AI-AGENT-ORCHESTRATOR.SKILL
+# Multi-agent coordination and task orchestration for BLACKBOX
+
+DESCRIPTION = "Coordinates multiple skills/agents, task decomposition, parallel execution, result aggregation, self-healing workflows"
+
+TRIGGER_PATTERNS = [
+  "orchestrate", "multi-agent

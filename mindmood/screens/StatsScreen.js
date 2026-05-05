@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Dimensions, TouchableOpacity, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PieChart, LineChart } from 'react-native-chart-kit';
 import { supabase } from '../services/supabase';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -13,50 +14,52 @@ export default function StatsScreen() {
   const [entries, setEntries] = useState([]);
   const [filteredEntries, setFilteredEntries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState('Semana'); // 'Semana', 'Mes', 'Año'
+  const [period, setPeriod] = useState('Semana');
+  const [fadeAnim] = useState(new Animated.Value(0));
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: themeStyles.background },
     scroll: { paddingBottom: 60 },
-    header: { padding: 25, paddingBottom: 15 },
+    header: { padding: 25, paddingBottom: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    titleContainer: { flex: 1 },
     title: { fontSize: 34, fontWeight: '900', color: themeStyles.text, letterSpacing: -1 },
     subtitle: { fontSize: 16, color: themeStyles.secondaryText, fontWeight: '600', marginTop: 4 },
     
-    // Period Selector
-    periodSelector: { flexDirection: 'row', paddingHorizontal: 25, marginBottom: 20, gap: 10 },
-    periodBtn: { flex: 1, paddingVertical: 12, borderRadius: 16, backgroundColor: themeStyles.card, alignItems: 'center', borderWidth: 1, borderColor: themeStyles.border },
-    periodBtnActive: { backgroundColor: themeStyles.accent, borderColor: themeStyles.accent },
-    periodText: { fontWeight: '800', color: themeStyles.secondaryText, fontSize: 13 },
+    periodSelector: { flexDirection: 'row', paddingHorizontal: 25, marginBottom: 25, gap: 12 },
+    periodBtn: { flex: 1, paddingVertical: 14, borderRadius: 20, backgroundColor: themeStyles.card, alignItems: 'center', borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {height: 2, width: 0}, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
+    periodBtnActive: { backgroundColor: themeStyles.accent, borderColor: themeStyles.accent, shadowColor: themeStyles.accent, shadowOpacity: 0.3, shadowRadius: 10 },
+    periodText: { fontWeight: '800', color: themeStyles.secondaryText, fontSize: 14 },
     periodTextActive: { color: '#FFF' },
 
-    chartCard: { backgroundColor: themeStyles.card, marginHorizontal: 20, borderRadius: 32, marginBottom: 24, paddingVertical: 25, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {height: 10, width: 0}, shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 },
-    chartTitle: { fontSize: 20, fontWeight: '900', color: themeStyles.text, textAlign: 'center', marginBottom: 5 },
-    chartSub: { fontSize: 13, color: themeStyles.secondaryText, textAlign: 'center', marginBottom: 20, fontWeight: '600' },
+    chartCard: { marginHorizontal: 20, borderRadius: 32, marginBottom: 24, overflow: 'hidden', borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: {height: 15, width: 0}, shadowOpacity: 0.15, shadowRadius: 30, elevation: 8 },
+    gradientCard: { paddingVertical: 30, paddingHorizontal: 10 },
+    chartTitle: { fontSize: 22, fontWeight: '900', color: themeStyles.text, textAlign: 'center', marginBottom: 5 },
+    chartSub: { fontSize: 14, color: themeStyles.secondaryText, textAlign: 'center', marginBottom: 25, fontWeight: '600' },
     
-    // Mini Legend
-    miniLegend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginBottom: 20, paddingHorizontal: 20 },
-    legendItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
-    legendDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-    legendLabel: { fontSize: 10, fontWeight: '800', color: themeStyles.secondaryText, textTransform: 'uppercase' },
+    miniLegend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10, marginBottom: 25, paddingHorizontal: 20 },
+    legendItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    legendDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
+    legendLabel: { fontSize: 11, fontWeight: '800', color: themeStyles.text, textTransform: 'uppercase', letterSpacing: 0.5 },
 
-    insightCard: { backgroundColor: themeStyles.card, marginHorizontal: 20, padding: 25, borderRadius: 28, marginBottom: 24, borderLeftWidth: 8, borderLeftColor: themeStyles.accent },
-    insightTitle: { fontSize: 18, fontWeight: '900', color: themeStyles.text, marginBottom: 10 },
-    insightText: { fontSize: 15, color: themeStyles.text, lineHeight: 22, fontWeight: '500' },
-    trendBadge: { alignSelf: 'flex-start', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 12, marginTop: 15, flexDirection: 'row', alignItems: 'center' },
-    trendText: { fontWeight: '800', fontSize: 12, color: '#FFF', marginLeft: 8 },
+    insightCard: { marginHorizontal: 20, borderRadius: 32, marginBottom: 24, overflow: 'hidden', borderWidth: 1, borderColor: themeStyles.border },
+    insightGradient: { padding: 30 },
+    insightTitle: { fontSize: 20, fontWeight: '900', color: themeStyles.text, marginBottom: 12 },
+    insightText: { fontSize: 16, color: themeStyles.text, lineHeight: 24, fontWeight: '500', opacity: 0.9 },
+    trendBadge: { alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 16, marginTop: 20, flexDirection: 'row', alignItems: 'center', shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+    trendText: { fontWeight: '900', fontSize: 13, color: '#FFF', marginLeft: 10, textTransform: 'uppercase' },
 
-    glossaryTitle: { fontSize: 24, fontWeight: '900', color: themeStyles.text, marginTop: 20, marginBottom: 20, marginHorizontal: 25 },
-    glossaryContainer: { backgroundColor: themeStyles.card, marginHorizontal: 20, borderRadius: 32, padding: 25, marginBottom: 50, borderWidth: 1, borderColor: themeStyles.border },
-    emotionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-    emotionIcon: { width: 48, height: 48, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginRight: 18 },
+    glossaryTitle: { fontSize: 26, fontWeight: '900', color: themeStyles.text, marginTop: 10, marginBottom: 25, marginHorizontal: 25 },
+    glossaryContainer: { backgroundColor: themeStyles.card, marginHorizontal: 20, borderRadius: 35, padding: 30, marginBottom: 50, borderWidth: 1, borderColor: themeStyles.border },
+    emotionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 25 },
+    emotionIcon: { width: 56, height: 56, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 20, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10 },
     emotionInfo: { flex: 1 },
-    emotionName: { fontSize: 17, fontWeight: '800', color: themeStyles.text },
-    emotionDesc: { fontSize: 13, color: themeStyles.secondaryText, marginTop: 3, lineHeight: 18 },
+    emotionName: { fontSize: 18, fontWeight: '900', color: themeStyles.text },
+    emotionDesc: { fontSize: 14, color: themeStyles.secondaryText, marginTop: 5, lineHeight: 20, fontWeight: '500' },
     
     loadingContainer: { flex: 1, justifyContent: 'center', backgroundColor: themeStyles.background },
     emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40, backgroundColor: themeStyles.background },
-    emptyEmoji: { fontSize: 80, marginBottom: 20 },
-    emptyText: { fontSize: 24, fontWeight: '900', textAlign: 'center', color: themeStyles.text },
+    emptyEmoji: { fontSize: 90, marginBottom: 25 },
+    emptyText: { fontSize: 26, fontWeight: '900', textAlign: 'center', color: themeStyles.text, lineHeight: 34 },
   });
 
   const emotionsMap = [
@@ -74,6 +77,7 @@ export default function StatsScreen() {
 
   useEffect(() => {
     fetchHistory();
+    Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }).start();
   }, []);
 
   useEffect(() => {
@@ -131,9 +135,9 @@ export default function StatsScreen() {
     let color = "#94A3B8";
     let icon = "remove";
 
-    if (avg > 0.4) text = "Tu energía general es vibrante y positiva en este periodo.";
-    else if (avg > -0.1) text = "Mantienes un equilibrio emocional notable. Estás en centro.";
-    else text = "Este periodo ha sido emocionalmente exigente. Prioriza tu descanso.";
+    if (avg > 0.4) text = "Tu energía general es vibrante y positiva en este periodo. ¡Sigue así!";
+    else if (avg > -0.1) text = "Mantienes un equilibrio emocional notable. Estás en tu centro.";
+    else text = "Este periodo ha sido emocionalmente exigente. Prioriza tu descanso y autocuidado.";
 
     if (diff > 0.15) { trend = "Mejorando"; color = "#10B981"; icon = "trending-up"; }
     else if (diff < -0.15) { trend = "Bajando"; color = "#EF4444"; icon = "trending-down"; }
@@ -143,7 +147,9 @@ export default function StatsScreen() {
 
   if (loading) {
     return (
-      <ActivityIndicator size="large" color={themeStyles.accent} style={{flex: 1, backgroundColor: themeStyles.background}} />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={themeStyles.accent} />
+      </View>
     );
   }
 
@@ -151,19 +157,17 @@ export default function StatsScreen() {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyEmoji}>📊</Text>
-        <Text style={styles.emptyText}>Tu mapa emocional llegará pronto</Text>
+        <Text style={styles.emptyText}>Tu mapa emocional se construirá con tus primeras entradas.</Text>
       </View>
     );
   }
 
-  // Determine chart data (use filtered or fallback)
   const chartData = filteredEntries.length > 0 ? filteredEntries : entries;
   
-  // Format Labels based on period
   const labels = chartData.map(e => {
     const d = new Date(e.created_at);
-    if (period === 'Semana') return `${d.getDate()} / ${d.getMonth() + 1}`;
-    if (period === 'Mes') return `${d.getDate()}/${d.getMonth() + 1}`;
+    if (period === 'Semana') return `${d.getDate()}/${d.getMonth() + 1}`;
+    if (period === 'Mes') return `${d.getDate()}`;
     return `${d.getMonth() + 1}/${d.getFullYear().toString().slice(-2)}`;
   });
 
@@ -173,10 +177,8 @@ export default function StatsScreen() {
     return emotion ? emotion.color : themeStyles.accent;
   });
 
-  // Calculate dynamic width
-  // If semana, fixed to screen. If mes/año, scrollable based on points
   let calcWidth = screenWidth - 40;
-  if (period !== 'Semana' && chartData.length > 5) {
+  if (period !== 'Semana' && chartData.length > 6) {
      calcWidth = chartData.length * 60;
   }
 
@@ -195,14 +197,17 @@ export default function StatsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Estadísticas</Text>
-          <Text style={styles.subtitle}>Tu evolución histórica ({period})</Text>
-        </View>
+        <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Estadísticas</Text>
+            <Text style={styles.subtitle}>Tu evolución histórica</Text>
+          </View>
+        </Animated.View>
 
         <View style={styles.periodSelector}>
           {['Semana', 'Mes', 'Año'].map(p => (
             <TouchableOpacity 
+              testID={`period_btn_${p}`}
               key={p} 
               style={[styles.periodBtn, period === p && styles.periodBtnActive]}
               onPress={() => setPeriod(p)}
@@ -213,78 +218,91 @@ export default function StatsScreen() {
         </View>
         
         <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>Trayectoria Personal</Text>
-          <Text style={styles.chartSub}>Detalle de tus registros en este periodo</Text>
-          
-          <View style={styles.miniLegend}>
-            {emotionsMap.filter(emo => chartData.some(e => e.mood === emo.name)).map((emo, i) => (
-              <View key={i} style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: emo.color }]} />
-                <Text style={styles.legendLabel}>{emo.name}</Text>
-              </View>
-            ))}
-          </View>
+          <LinearGradient
+            colors={[themeStyles.card, themeStyles.itemBg]}
+            style={styles.gradientCard}
+          >
+            <Text style={styles.chartTitle}>Trayectoria Personal</Text>
+            <Text style={styles.chartSub}>Detalle de tus registros</Text>
+            
+            <View style={styles.miniLegend}>
+              {emotionsMap.filter(emo => chartData.some(e => e.mood === emo.name)).map((emo, i) => (
+                <View key={i} style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: emo.color }]} />
+                  <Text style={styles.legendLabel}>{emo.name}</Text>
+                </View>
+              ))}
+            </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={{ paddingHorizontal: 10 }}>
-            <LineChart
-              data={{ labels, datasets: [{ data: scores }] }}
-              width={calcWidth}
-              height={280} // Increased height
-              chartConfig={{
-                backgroundColor: themeStyles.card,
-                backgroundGradientFrom: themeStyles.card,
-                backgroundGradientTo: themeStyles.card,
-                decimalPlaces: 1,
-                color: () => themeStyles.accent,
-                labelColor: () => themeStyles.secondaryText,
-                propsForDots: { r: "7", strokeWidth: "0" },
-                formatYLabel: (y) => {
-                  const val = parseFloat(y);
-                  if (val >= 0.8) return "Cenit";
-                  if (val >= 0.3) return "Bien";
-                  if (val >= -0.1) return "Neutro";
-                  if (val >= -0.6) return "Bajo";
-                  return "Crítico";
-                }
-              }}
-              getDotColor={(_, index) => dotColors[index]}
-              bezier
-              segments={4}
-              style={{ borderRadius: 16, paddingRight: 40 }}
-            />
-          </ScrollView>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15 }}>
+              <LineChart
+                data={{ labels, datasets: [{ data: scores }] }}
+                width={calcWidth}
+                height={260}
+                chartConfig={{
+                  backgroundColor: 'transparent',
+                  backgroundGradientFrom: themeStyles.card,
+                  backgroundGradientTo: themeStyles.card,
+                  backgroundGradientFromOpacity: 0,
+                  backgroundGradientToOpacity: 0,
+                  decimalPlaces: 1,
+                  color: (opacity = 1) => `rgba(${themeStyles.accent === '#8E54E9' ? '142, 84, 233' : '99, 102, 241'}, ${opacity})`,
+                  labelColor: () => themeStyles.secondaryText,
+                  propsForDots: { r: "7", strokeWidth: "2", stroke: themeStyles.card },
+                  propsForBackgroundLines: { strokeDasharray: "", stroke: themeStyles.border, opacity: 0.3 }
+                }}
+                getDotColor={(_, index) => dotColors[index]}
+                bezier
+                segments={4}
+                style={{ borderRadius: 20, paddingRight: 40 }}
+              />
+            </ScrollView>
+          </LinearGradient>
         </View>
 
         <View style={styles.insightCard}>
-          <Text style={styles.insightTitle}>Análisis de Bienestar</Text>
-          <Text style={styles.insightText}>{insight.text}</Text>
-          <View style={[styles.trendBadge, { backgroundColor: insight.color }]}>
-            <Ionicons name={insight.icon} size={18} color="#FFF" />
-            <Text style={styles.trendText}>Tendencia {period.toLowerCase()}: {insight.trend}</Text>
-          </View>
+          <LinearGradient
+            colors={[themeStyles.accent + '15', themeStyles.card]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.insightGradient}
+          >
+            <Text style={styles.insightTitle}>Análisis de Bienestar</Text>
+            <Text style={styles.insightText}>{insight.text}</Text>
+            <View style={[styles.trendBadge, { backgroundColor: insight.color }]}>
+              <Ionicons name={insight.icon} size={20} color="#FFF" />
+              <Text style={trendTextStyle(insight.color)}>Tendencia: {insight.trend}</Text>
+            </View>
+          </LinearGradient>
         </View>
 
         <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>Panorama Mental</Text>
-          <Text style={styles.chartSub}>Distribución de estados ({period})</Text>
-          <PieChart
-            data={pieData}
-            width={screenWidth - 40}
-            height={200}
-            chartConfig={{ color: () => themeStyles.text }}
-            accessor="population"
-            backgroundColor="transparent"
-            paddingLeft="15"
-            center={[10, 0]}
-          />
+          <LinearGradient
+            colors={[themeStyles.card, themeStyles.itemBg]}
+            style={styles.gradientCard}
+          >
+            <Text style={styles.chartTitle}>Panorama Mental</Text>
+            <Text style={styles.chartSub}>Distribución de estados</Text>
+            <PieChart
+              data={pieData}
+              width={screenWidth - 40}
+              height={220}
+              chartConfig={{ color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})` }}
+              accessor="population"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              center={[10, 0]}
+              absolute
+            />
+          </LinearGradient>
         </View>
 
         <Text style={styles.glossaryTitle}>Glosario de Emociones</Text>
         <View style={styles.glossaryContainer}>
           {emotionsMap.map((emo, idx) => (
             <View key={idx} style={styles.emotionRow}>
-              <View style={[styles.emotionIcon, { backgroundColor: emo.color + '20' }]}>
-                <Ionicons name={emo.icon} size={24} color={emo.color} />
+              <View style={[styles.emotionIcon, { backgroundColor: emo.color + '15' }]}>
+                <Ionicons name={emo.icon} size={28} color={emo.color} />
               </View>
               <View style={styles.emotionInfo}>
                 <Text style={styles.emotionName}>{emo.name}</Text>
@@ -296,4 +314,8 @@ export default function StatsScreen() {
       </ScrollView>
     </SafeAreaView>
   );
+
+  function trendTextStyle(color) {
+    return { fontWeight: '900', fontSize: 13, color: '#FFF', marginLeft: 10, textTransform: 'uppercase' };
+  }
 }

@@ -1,0 +1,10 @@
+# SUPABASE-EXPERT.SKILL
+# Supabase backend expert for auth, database, realtime, storage
+
+DESCRIPTION = "Supabase auth, Postgres RLS, realtime subscriptions, storage, edge functions, JS/Python clients"
+
+TRIGGER_PATTERNS = [
+  "supabase", "auth", "rls", "postgres", "database", "realtime", "storage", "edge", "row level security"
+]
+
+CORE_FUNCTIONS

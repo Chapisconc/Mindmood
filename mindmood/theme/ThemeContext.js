@@ -14,20 +14,25 @@ export const ThemeProvider = ({ children }) => {
     loadTheme();
   }, []);
 
-  const loadTheme = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      const { data } = await supabase
-        .from('profiles')
-        .select('theme')
-        .eq('id', session.user.id)
-        .single();
-      
-      if (data?.theme) {
-        setTheme(data.theme);
+const loadTheme = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('theme')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (data?.theme) {
+          setTheme(data.theme);
+        }
       }
+    } catch (e) {
+      console.log('Theme load fail:', e);
+    } finally {
+      setIsLoaded(true);
     }
-    setIsLoaded(true);
   };
 
   const syncTheme = async () => {

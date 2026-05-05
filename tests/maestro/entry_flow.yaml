@@ -1,0 +1,11 @@
+appId: com.mindmood.app
+---
+- launchApp
+# Asumiendo que ya estamos logueados o saltamos el login para la prueba
+- tapOn: "Reflexión del Día"
+- inputText:
+    id: "entry_input"
+    text: "Hoy me siento muy bien, el asistente de IA está funcionando de maravilla."
+- tapOn: "save_button"
+- assertVisible: "Análisis de la IA"
+- tapOn: "Entendido"
