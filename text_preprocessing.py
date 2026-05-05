@@ -26,13 +26,13 @@ def translate_text(text: str) -> str:
     except Exception:
         return text
 
-def preprocess_text(text: str, normalize_slang=True, translate=True, remove_noise=True) -> str:
+def preprocess_text(text: str, normalize_slang=True, translate=False, remove_noise=True) -> str:
     """
     VADER-friendly preprocessing for Spanish text:
     - Remove emojis
     - Normalize Mexican slang
     - Remove noise (URLs, mentions, extra whitespace)
-    - Optional translation to English for VADER
+    - Optional translation to English for VADER (default: disabled to avoid external calls)
     """
     # Step 1: Remove emojis
     text = emoji.replace_emoji(text, replace='')
@@ -49,7 +49,7 @@ def preprocess_text(text: str, normalize_slang=True, translate=True, remove_nois
         text = re.sub(r'#[A-Za-z0-9_]+', '', text)  # Hashtags
         text = re.sub(r'\s+', ' ', text).strip()  # Extra whitespace
 
-    # Step 4: Translate for VADER
+    # Step 4: Translate for VADER (disabled by default)
     if translate:
         text = translate_text(text)
 

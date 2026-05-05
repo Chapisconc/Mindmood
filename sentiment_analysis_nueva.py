@@ -65,14 +65,32 @@ def analyze_sentiment(text: str) -> Dict:
     """
     Analyze sentiment using VADER on preprocessed text.
     Returns: compound, pos, neg, neu, emotions, crisis
+
+    Improvements:
+    - Do not translate by default to avoid external translation errors.
+    - If crisis keywords detected, force an extreme negative score and flag requires_help.
     """
-    processed = preprocess_text(text)
-    scores = analyzer.polarity_scores(processed)
-    
+    # Avoid automatic translation during analysis (translation can distort crisis phrases)
+    processed = preprocess_text(text, translate=False)
     text_lower = text.lower()
     emotions = detect_emotions(text_lower)
     crisis = has_crisis(text_lower)
-    
+
+    # If crisis detected, return a deterministic extreme-negative result to avoid misclassification
+    if crisis:
+        if 'Crisis' not in emotions:
+            emotions = emotions + ['Crisis']
+        return {
+            'compound': -0.99,
+            'pos': 0.0,
+            'neg': 99.9,
+            'neu': 0.1,
+            'emotions': emotions,
+            'requires_help': True,
+            'preprocessed_text': processed[:200] + '...' if len(processed) > 200 else processed
+        }
+
+    scores = analyzer.polarity_scores(processed)
     return {
         'compound': round(scores['compound'], 3),
         'pos': round(scores['pos'] * 100, 1),
