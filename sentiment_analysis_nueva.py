@@ -3,6 +3,7 @@ from text_preprocessing import preprocess_text, SLANG_DICT
 import re
 import json
 from typing import Dict, List, Tuple
+import unicodedata
 
 analyzer = SentimentIntensityAnalyzer()
 
@@ -13,17 +14,36 @@ EMOTION_KEYWORDS = {
     'Ansiedad': ['ansioso', 'estres', 'preocupado', 'panico'],
     'Feliz': ['feliz', 'alegre', 'contento', 'gozo'],
     'Excelente': ['excelente', 'increible', 'maravilloso', 'fantastico'],
-    'Crisis': ['suicidio', 'matarme', 'no aguanto', 'quiero morir']
+    'Crisis': ['suicidio', 'suicida', 'matarme', 'quiero morir', 'no quiero vivir', 'no aguanto', 'no soporto', 'terminar todo', 'acabar con todo', 'desaparecer']
 }
 
 # Custom lexicon addition (subset)
 CUSTOM_LEXICON = {
-    # Mexican slang sentiments
     'chido': 2.5, 'chingon': 3.0, 'aguitado': -2.5, 'chafa': -2.0,
-    # Crisis
-    'suicidio': -4.5, 'matarme': -4.0, 'noaguanto': -3.5
+    'suicidio': -4.5, 'suicida': -4.5, 'matarme': -4.5, 'matar': -4.0, 'quitarme': -4.5, 'morir': -4.5, 'desaparecer': -4.0, 'noquierovivir': -4.5
 }
+# Update lexicon
 analyzer.lexicon.update(CUSTOM_LEXICON)
+
+# Normalize and crisis patterns for intent detection
+CRISIS_PATTERNS = [
+    r"\bme voy a (quitarme|quitar la vida|matarme|matar)\b",
+    r"\bvoy a (quitarme|matarme|suicidarme)\b",
+    r"\b(quiero (morir|matarme|desaparecer|no vivir|no existir))\b",
+    r"\b(pienso en (quitarme la vida|morir|suicidarme))\b",
+    r"\b(terminar con mi vida|acabar con mi vida|acabar con todo)\b",
+    r"\b(no quiero vivir|ya no quiero vivir|no quiero seguir)\b",
+    r"\b(quitarme la vida|matarme|suicid)\b",
+    r"\b(kill myself|end my life|i want to die|suicide)\b"
+]
+
+def _normalize_for_detection(s: str) -> str:
+    s = s.lower()
+    s = unicodedata.normalize('NFKD', s)
+    s = ''.join(c for c in s if not unicodedata.combining(c))
+    s = re.sub(r"[^a-z0-9\s]", ' ', s)
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s
 
 # Spanish lexicon from Kaggle datasets (estupido, feliz, etc.)
 spanish_lexicon = {
@@ -54,10 +74,19 @@ def detect_emotions(text_lower: str) -> List[str]:
                 break
     return emotions if emotions else ['Neutral']
 
-def has_crisis(text_lower: str) -> bool:
-    crisis_keywords = EMOTION_KEYWORDS['Crisis']
+def has_crisis(text: str) -> bool:
+    """Detects crisis intent using regex patterns on normalized text. Falls back to keyword scan."""
+    if not text:
+        return False
+    norm = _normalize_for_detection(text)
+    # Check patterns
+    for pat in CRISIS_PATTERNS:
+        if re.search(pat, norm):
+            return True
+    # Fallback: check simple keywords (also normalized)
+    crisis_keywords = [ _normalize_for_detection(k) for k in EMOTION_KEYWORDS.get('Crisis', []) ]
     for kw in crisis_keywords:
-        if kw in text_lower:
+        if kw in norm.replace(' ', '') or re.search(r'\b' + re.escape(kw) + r'\b', norm):
             return True
     return False
 
