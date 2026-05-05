@@ -25,14 +25,9 @@ export default function NewEntryScreen({ navigation }) {
   const debuggerHost = Constants.expoConfig?.hostUri;
   const expoIp = debuggerHost ? debuggerHost.split(':')[0] : null;
 
-  // Lista de URLs candidatas en orden de preferencia
+  // Solo usar Render como endpoint (evita tratar de conectar a direcciones locales)
   const getApiUrls = () => {
-    const urls = [];
-    if (Platform.OS === 'android') urls.push("http://10.0.2.2:8000/analyze");
-    urls.push("http://192.168.1.77:8000/analyze");
-    if (expoIp && !expoIp.includes('ngrok')) urls.push(`http://${expoIp}:8000/analyze`);
-    urls.push(RENDER_URL);
-    return [...new Set(urls)];
+    return [RENDER_URL];
   };
 
   useEffect(() => {
@@ -82,38 +77,33 @@ export default function NewEntryScreen({ navigation }) {
       let aiData = { mood: 'Neutral', score: 0, requires_help: false, summary: '', emotions_distribution: null };
 
       if (!isOffline) {
-        const candidateUrls = getApiUrls();
-        let success = false;
+        const url = RENDER_URL;
+        try {
+          console.log(`Intentando conectar a IA: ${url}`);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // esperar más para Render
 
-        for (const url of candidateUrls) {
-          if (success) break;
-          
-          try {
-            console.log(`Intentando conectar a IA: ${url}`);
-            const controller = new AbortController();
-            const isRender = url.includes('render.com');
-            const timeoutId = setTimeout(() => controller.abort(), isRender ? 30000 : 3000); 
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: text }),
+            signal: controller.signal
+          });
 
-            const response = await fetch(url, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'ngrok-skip-browser-warning': 'true'
-              },
-              body: JSON.stringify({ text: text }),
-              signal: controller.signal
-            });
+          clearTimeout(timeoutId);
 
-            clearTimeout(timeoutId);
-
-            if (response.ok) {
-              aiData = await response.json();
-              setApiStatus(isRender ? 'cloud' : 'local');
-              success = true;
-            }
-          } catch (err) {
-            console.log(`❌ Falló conexión con ${url}`);
+          if (response.ok) {
+            aiData = await response.json();
+            setApiStatus('cloud');
+          } else {
+            console.log(`❌ Falló conexión con ${url} (status: ${response.status})`);
+            setApiStatus('offline');
           }
+        } catch (err) {
+          console.log(`❌ Falló conexión con ${url}`);
+          setApiStatus('offline');
         }
       }
 
