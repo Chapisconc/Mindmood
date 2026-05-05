@@ -1,7 +1,9 @@
 import requests
 import json
+import os
 
-BASE_URL = "http://127.0.0.1:8000/analyze"
+_base = os.environ.get('RENDER_URL', 'http://127.0.0.1:8000')
+BASE_URL = _base.rstrip('/') + '/analyze'
 
 test_cases = [
     # 1. ENVIDO / ODIO
