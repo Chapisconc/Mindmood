@@ -1,11 +1,17 @@
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from transformers import pipeline
 from text_preprocessing import preprocess_text, SLANG_DICT
 import re
 import json
 from typing import Dict, List, Tuple
 import unicodedata
 
-analyzer = SentimentIntensityAnalyzer()
+# Load BETO sentiment pipeline once (may be slow on import)
+sentiment_pipeline = None
+try:
+    sentiment_pipeline = pipeline('sentiment-analysis', model='finiteautomata/beto-sentiment-analysis', tokenizer='finiteautomata/beto-sentiment-analysis')
+except Exception as e:
+    sentiment_pipeline = None
+    print(f"Warning: failed to load BETO pipeline: {e}")
 
 # Load emotion keywords (subset from ai_api)
 EMOTION_KEYWORDS = {
@@ -22,8 +28,7 @@ CUSTOM_LEXICON = {
     'chido': 2.5, 'chingon': 3.0, 'aguitado': -2.5, 'chafa': -2.0,
     'suicidio': -4.5, 'suicida': -4.5, 'matarme': -4.5, 'matar': -4.0, 'quitarme': -4.5, 'morir': -4.5, 'desaparecer': -4.0, 'noquierovivir': -4.5
 }
-# Update lexicon
-analyzer.lexicon.update(CUSTOM_LEXICON)
+# Custom lexicon preserved for keyword-based checks (VADER removed)  # (no-op when using transformer pipeline)
 
 # Normalize and crisis patterns for intent detection
 CRISIS_PATTERNS = [
@@ -62,8 +67,7 @@ spanish_lexicon = {
     "increible": 2.8,
     "encanta": 2.2
 }
-analyzer.lexicon.update(spanish_lexicon)
-print("Spanish lexicon loaded from Kaggle data!")
+# Spanish lexicon preserved in file for reference. Transformer-based pipeline will rely on model embeddings.
 
 def detect_emotions(text_lower: str) -> List[str]:
     emotions = []
@@ -119,15 +123,43 @@ def analyze_sentiment(text: str) -> Dict:
             'preprocessed_text': processed[:200] + '...' if len(processed) > 200 else processed
         }
 
-    scores = analyzer.polarity_scores(processed)
+    # Use BETO transformer pipeline for sentiment when available
+    label = 'NEUTRAL'
+    score = 0.0
+    if sentiment_pipeline is not None:
+        try:
+            out = sentiment_pipeline(processed, truncation=True)
+            if isinstance(out, list) and len(out) > 0:
+                label = out[0].get('label', 'NEUTRAL')
+                score = float(out[0].get('score', 0.0))
+            # Map to approximate compound/pos/neg/neut
+            if label.upper().startswith('POS'):
+                compound = round(score, 3)
+                pos = round(score * 100, 1)
+                neg = 0.0
+            else:
+                compound = round(-score, 3)
+                neg = round(score * 100, 1)
+                pos = 0.0
+            neu = round(max(0.0, 100.0 - pos - neg), 1)
+        except Exception:
+            compound = 0.0
+            pos = neg = neu = 0.0
+    else:
+        # Fallback neutral score when pipeline not available
+        compound = 0.0
+        pos = neg = neu = 0.0
+
     return {
-        'compound': round(scores['compound'], 3),
-        'pos': round(scores['pos'] * 100, 1),
-        'neg': round(scores['neg'] * 100, 1),
-        'neu': round(scores['neu'] * 100, 1),
+        'compound': compound,
+        'pos': pos,
+        'neg': neg,
+        'neu': neu,
         'emotions': emotions,
         'requires_help': crisis,
-        'preprocessed_text': processed[:200] + '...' if len(processed) > 200 else processed
+        'preprocessed_text': processed[:200] + '...' if len(processed) > 200 else processed,
+        'label': label,
+        'confidence': score
     }
 
 # Test
