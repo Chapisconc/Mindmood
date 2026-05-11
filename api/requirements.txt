@@ -1,8 +1,0 @@
-fastapi==0.115.0
-uvicorn[standard]==0.32.0
-transformers==4.35.0
-torch==2.2.0
-nltk==3.8.1
-googletrans==4.0.0rc1
-emoji==0.7.0
-deep-translator==1.11.4

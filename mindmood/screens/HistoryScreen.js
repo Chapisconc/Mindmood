@@ -13,6 +13,12 @@ import { useTheme } from "../theme/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
 
+const EMOTION_COLORS = {
+  'Excelente': '#10B981', 'Feliz': '#6366F1', 'Agradecido': '#FACC15',
+  'Sorpresa': '#06B6D4', 'Neutral': '#94A3B8', 'Enojo': '#F97316',
+  'Ansiedad': '#8B5CF6', 'Miedo': '#4B5563', 'Triste': '#F87171', 'Crisis': '#EF4444',
+};
+
 export default function HistoryScreen({ navigation }) {
   const { themeStyles } = useTheme();
   const [entries, setEntries] = useState([]);
@@ -37,11 +43,12 @@ export default function HistoryScreen({ navigation }) {
       marginBottom: 18,
       borderWidth: 1,
       borderColor: themeStyles.border,
+      borderLeftWidth: 6,
       shadowColor: "#000",
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-      elevation: 4,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.1,
+      shadowRadius: 16,
+      elevation: 5,
     },
 
     entryHeader: {
@@ -256,8 +263,10 @@ export default function HistoryScreen({ navigation }) {
       sortedMoods = [[primaryEmotion, 100]];
     }
 
+    const emotionColor = EMOTION_COLORS[primaryEmotion] || themeStyles.accent;
+
     return (
-      <View style={styles.entryCard}>
+      <View style={[styles.entryCard, { borderLeftColor: emotionColor, shadowColor: emotionColor }]}>
         <View style={styles.entryHeader}>
           <View style={styles.metaData}>
             <View style={styles.dateRow}>

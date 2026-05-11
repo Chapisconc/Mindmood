@@ -10,7 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 const screenWidth = Dimensions.get('window').width;
 
 export default function StatsScreen() {
-  const { theme, themeStyles } = useTheme();
+  const { themeStyles } = useTheme();
   const [entries, setEntries] = useState([]);
   const [filteredEntries, setFilteredEntries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,10 +78,12 @@ export default function StatsScreen() {
   useEffect(() => {
     fetchHistory();
     Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     filterData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, period]);
 
   const fetchHistory = async () => {

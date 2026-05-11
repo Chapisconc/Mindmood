@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Switch } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Switch, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../services/supabase';
 import { useTheme } from '../theme/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+
+const EMOTION_COLORS = {
+  'Excelente': '#10B981', 'Feliz': '#6366F1', 'Agradecido': '#FACC15',
+  'Sorpresa': '#06B6D4', 'Neutral': '#94A3B8', 'Enojo': '#F97316',
+  'Ansiedad': '#8B5CF6', 'Miedo': '#4B5563', 'Triste': '#F87171', 'Crisis': '#EF4444',
+};
 
 export default function HomeScreen({ navigation }) {
   const { theme, themeStyles, toggleTheme } = useTheme();
@@ -11,15 +17,51 @@ export default function HomeScreen({ navigation }) {
   const [lastMood, setLastMood] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Animations
+  const headerFade = useRef(new Animated.Value(0)).current;
+  const streakSlide = useRef(new Animated.Value(40)).current;
+  const streakFade = useRef(new Animated.Value(0)).current;
+  const quoteSlide = useRef(new Animated.Value(40)).current;
+  const quoteFade = useRef(new Animated.Value(0)).current;
+  const cardAnims = useRef([
+    { fade: new Animated.Value(0), slide: new Animated.Value(30) },
+    { fade: new Animated.Value(0), slide: new Animated.Value(30) },
+    { fade: new Animated.Value(0), slide: new Animated.Value(30) },
+  ]).current;
+
   useEffect(() => {
     fetchData();
     const unsubscribe = navigation.addListener('focus', () => {
-      fetchData(); 
+      fetchData();
     });
     return unsubscribe;
   }, [navigation]);
 
-const fetchData = async () => {
+  useEffect(() => {
+    if (!loading && userData) {
+      // Staggered entry animation
+      Animated.sequence([
+        Animated.timing(headerFade, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.parallel([
+          Animated.timing(streakFade, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(streakSlide, { toValue: 0, duration: 400, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(quoteFade, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(quoteSlide, { toValue: 0, duration: 400, useNativeDriver: true }),
+        ]),
+        ...cardAnims.map((anim, i) =>
+          Animated.parallel([
+            Animated.timing(anim.fade, { toValue: 1, duration: 300, delay: i * 80, useNativeDriver: true }),
+            Animated.timing(anim.slide, { toValue: 0, duration: 300, delay: i * 80, useNativeDriver: true }),
+          ])
+        ),
+      ]).start();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, userData]);
+
+  const fetchData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -28,7 +70,7 @@ const fetchData = async () => {
           .select('*')
           .eq('id', user.id)
           .single();
-        
+
         setUserData({
           email: user.email,
           displayName: profile?.display_name || user.email.split('@')[0],
@@ -41,7 +83,7 @@ const fetchData = async () => {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(1);
-          
+
         if (lastEntry && lastEntry.length > 0) {
           setLastMood(lastEntry[0].mood);
         }
@@ -52,8 +94,6 @@ const fetchData = async () => {
       setLoading(false);
     }
   };
-
-  // Función de reparación eliminada según solicitud del usuario
 
   const getDynamicQuote = () => {
     switch (lastMood) {
@@ -71,25 +111,27 @@ const fetchData = async () => {
     }
   };
 
+  const moodColor = EMOTION_COLORS[lastMood] || themeStyles.accent;
+
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: themeStyles.background },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 20, marginBottom: 20 },
     welcomeContainer: { flex: 1, marginLeft: 15 },
     welcomeText: { fontSize: 14, color: themeStyles.secondaryText, fontWeight: '600' },
-    nameText: { fontSize: 24, fontWeight: '900', color: themeStyles.text },
-    profileBtn: { width: 45, height: 45, borderRadius: 22.5, backgroundColor: themeStyles.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: themeStyles.border },
+    nameText: { fontSize: 26, fontWeight: '900', color: themeStyles.text, letterSpacing: -0.5 },
+    profileBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: themeStyles.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4 },
     toggleContainer: { flexDirection: 'row', alignItems: 'center' },
-    streakCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: themeStyles.accent, marginHorizontal: 20, padding: 22, borderRadius: 28, marginBottom: 25, shadowColor: themeStyles.accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 15, elevation: 8 },
+    streakCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: moodColor, marginHorizontal: 20, padding: 24, borderRadius: 28, marginBottom: 25, shadowColor: moodColor, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 20, elevation: 10 },
     streakInfo: { flexDirection: 'row', alignItems: 'center' },
-    streakText: { fontSize: 28, fontWeight: '900', color: '#FFF' },
-    streakLabel: { fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: '700' },
-    quoteBox: { marginHorizontal: 20, backgroundColor: themeStyles.card, padding: 24, borderRadius: 24, marginBottom: 30, borderWidth: 1, borderColor: themeStyles.border },
-    quoteLabel: { fontSize: 11, fontWeight: '900', color: themeStyles.secondaryText, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+    streakText: { fontSize: 30, fontWeight: '900', color: '#FFF' },
+    streakLabel: { fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: '700' },
+    quoteBox: { marginHorizontal: 20, backgroundColor: themeStyles.card, padding: 26, borderRadius: 26, marginBottom: 30, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 4 },
+    quoteLabel: { fontSize: 11, fontWeight: '900', color: themeStyles.secondaryText, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10 },
     quoteText: { fontSize: 17, color: themeStyles.text, lineHeight: 28, fontWeight: '500', fontStyle: 'italic' },
-    sectionTitle: { fontSize: 20, fontWeight: '900', color: themeStyles.text, marginHorizontal: 20, marginBottom: 16 },
+    sectionTitle: { fontSize: 20, fontWeight: '900', color: themeStyles.text, marginHorizontal: 20, marginBottom: 16, letterSpacing: -0.3 },
     cardsContainer: { paddingHorizontal: 20, paddingBottom: 40 },
-    card: { flexDirection: 'row', alignItems: 'center', backgroundColor: themeStyles.card, padding: 20, borderRadius: 24, marginBottom: 14, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
-    cardIconContainer: { width: 52, height: 52, borderRadius: 18, backgroundColor: themeStyles.itemBg, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+    card: { flexDirection: 'row', alignItems: 'center', backgroundColor: themeStyles.card, padding: 20, borderRadius: 24, marginBottom: 14, borderWidth: 1, borderColor: themeStyles.border, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.07, shadowRadius: 14, elevation: 4 },
+    cardIconContainer: { width: 54, height: 54, borderRadius: 20, backgroundColor: themeStyles.itemBg, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
     cardIcon: { fontSize: 26 },
     cardTextContent: { flex: 1 },
     cardTitle: { fontSize: 17, fontWeight: '800', color: themeStyles.text, marginBottom: 3 },
@@ -104,20 +146,26 @@ const fetchData = async () => {
     );
   }
 
+  const actionCards = [
+    { icon: '✍️', title: 'Nueva Memoria', desc: 'Descarga tu mente ahora', screen: 'NewEntry', trailing: <Ionicons name="add-circle" size={32} color={themeStyles.accent} /> },
+    { icon: '📖', title: 'Mi Bóveda', desc: 'Explora tus reflexiones', screen: 'History', trailing: <Ionicons name="chevron-forward" size={24} color={themeStyles.secondaryText} /> },
+    { icon: '📈', title: 'Mis Métricas', desc: 'Análisis de tu energía vital', screen: 'Stats', trailing: <Ionicons name="chevron-forward" size={24} color={themeStyles.secondaryText} /> },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, { opacity: headerFade }]}>
           <View style={styles.toggleContainer}>
-             <Ionicons name={theme === 'dark' ? "moon" : "sunny"} size={20} color={themeStyles.secondaryText} style={{marginRight: 8}} />
-             <Switch 
-                value={theme === 'dark'} 
-                onValueChange={toggleTheme}
-                trackColor={{ false: "#CBD5E1", true: "#818CF8" }}
-                thumbColor={theme === 'dark' ? "#6366F1" : "#F4F3F4"}
-             />
+            <Ionicons name={theme === 'dark' ? "moon" : "sunny"} size={20} color={themeStyles.secondaryText} style={{ marginRight: 8 }} />
+            <Switch
+              value={theme === 'dark'}
+              onValueChange={toggleTheme}
+              trackColor={{ false: "#CBD5E1", true: "#818CF8" }}
+              thumbColor={theme === 'dark' ? "#6366F1" : "#F4F3F4"}
+            />
           </View>
-          
+
           <View style={styles.welcomeContainer}>
             <Text style={styles.welcomeText}>¡Hola!</Text>
             <Text style={styles.nameText} numberOfLines={1}>{userData?.displayName}</Text>
@@ -126,58 +174,44 @@ const fetchData = async () => {
           <TouchableOpacity style={styles.profileBtn} onPress={() => navigation.navigate('Profile')}>
             <Ionicons name="person-outline" size={22} color={themeStyles.text} />
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
-        <View style={styles.streakCard}>
-          <View style={styles.streakInfo}>
-            <Ionicons name="flame" size={32} color="#FFF" />
-            <View style={{ marginLeft: 12 }}>
-              <Text style={styles.streakText}>{userData?.streak} días</Text>
-              <Text style={styles.streakLabel}>Racha actual</Text>
+        <Animated.View style={{ opacity: streakFade, transform: [{ translateY: streakSlide }] }}>
+          <View style={styles.streakCard}>
+            <View style={styles.streakInfo}>
+              <Ionicons name="flame" size={34} color="#FFF" />
+              <View style={{ marginLeft: 14 }}>
+                <Text style={styles.streakText}>{userData?.streak} días</Text>
+                <Text style={styles.streakLabel}>Racha actual</Text>
+              </View>
             </View>
+            <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.6)" />
           </View>
-          <Ionicons name="chevron-forward" size={24} color="rgba(255,255,255,0.6)" />
-        </View>
-        
-        <View style={styles.quoteBox}>
-          <Text style={styles.quoteLabel}>Tu luz hoy</Text>
-          <Text style={styles.quoteText}>"{getDynamicQuote()}"</Text>
-        </View>
-        
+        </Animated.View>
+
+        <Animated.View style={{ opacity: quoteFade, transform: [{ translateY: quoteSlide }] }}>
+          <View style={styles.quoteBox}>
+            <Text style={styles.quoteLabel}>Tu luz hoy</Text>
+            <Text style={styles.quoteText}>&quot;{getDynamicQuote()}&quot;</Text>
+          </View>
+        </Animated.View>
+
         <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
         <View style={styles.cardsContainer}>
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('NewEntry')}>
-            <View style={styles.cardIconContainer}>
-              <Text style={styles.cardIcon}>✍️</Text>
-            </View>
-            <View style={styles.cardTextContent}>
-              <Text style={styles.cardTitle}>Nueva Memoria</Text>
-              <Text style={styles.cardDesc}>Descarga tu mente ahora</Text>
-            </View>
-            <Ionicons name="add-circle" size={32} color={themeStyles.accent} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('History')}>
-            <View style={styles.cardIconContainer}>
-              <Text style={styles.cardIcon}>📖</Text>
-            </View>
-            <View style={styles.cardTextContent}>
-              <Text style={styles.cardTitle}>Mi Bóveda</Text>
-              <Text style={styles.cardDesc}>Explora tus reflexiones</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={themeStyles.secondaryText} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('Stats')}>
-            <View style={styles.cardIconContainer}>
-              <Text style={styles.cardIcon}>📈</Text>
-            </View>
-            <View style={styles.cardTextContent}>
-              <Text style={styles.cardTitle}>Mis Métricas</Text>
-              <Text style={styles.cardDesc}>Análisis de tu energía vital</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={themeStyles.secondaryText} />
-          </TouchableOpacity>
+          {actionCards.map((card, i) => (
+            <Animated.View key={i} style={{ opacity: cardAnims[i].fade, transform: [{ translateY: cardAnims[i].slide }] }}>
+              <TouchableOpacity style={styles.card} onPress={() => navigation.navigate(card.screen)}>
+                <View style={styles.cardIconContainer}>
+                  <Text style={styles.cardIcon}>{card.icon}</Text>
+                </View>
+                <View style={styles.cardTextContent}>
+                  <Text style={styles.cardTitle}>{card.title}</Text>
+                  <Text style={styles.cardDesc}>{card.desc}</Text>
+                </View>
+                {card.trailing}
+              </TouchableOpacity>
+            </Animated.View>
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>

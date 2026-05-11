@@ -233,7 +233,7 @@ export default function AdminDashboardScreen({ navigation }) {
                 </View>
               </View>
               
-              <Text style={styles.alarmText}>"{item.diary_text}"</Text>
+              <Text style={styles.alarmText}>&quot;{item.diary_text}&quot;</Text>
 
               <View style={styles.distributionContainer}>
                 {sortedMoods.map(([name], idx) => (

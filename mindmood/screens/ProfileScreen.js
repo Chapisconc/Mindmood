@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Switch, Platform } from 'react-native';
 import { supabase } from '../services/supabase';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n/I18nContext';
 import * as Notifications from 'expo-notifications';
-import { Ionicons } from '@expo/vector-icons';
+
 import DateTimePicker from '@react-native-community/datetimepicker';
 import NoticeModal from '../components/NoticeModal';
 
@@ -12,7 +12,7 @@ export default function ProfileScreen({ navigation }) {
   const { themeStyles } = useTheme();
   const { lang, t, toggleLang } = useTranslation();
   const [displayName, setDisplayName] = useState('');
-  const [loading, setLoading] = useState(true);
+
   const [saving, setSaving] = useState(false);
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -49,7 +49,7 @@ export default function ProfileScreen({ navigation }) {
     } catch (error) {
       console.error(error);
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   };
 

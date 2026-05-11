@@ -1,8 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, validator
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from fastapi.middleware.cors import CORSMiddleware
-from deep_translator import GoogleTranslator
+from transformers import pipeline
 from functools import lru_cache
 import re
 import logging
@@ -39,86 +38,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
  
-analyzer = SentimentIntensityAnalyzer()
- 
-# ============================================================================
-# 🔧 LEXICÓN PERSONALIZADO MEJORADO
-# ============================================================================
- 
-custom_lexicon = {
-    # ✅ EXTREMOS POSITIVOS
-    'marry': 3.5, 'wedding': 3.5, 'passed': 2.5, 'approve': 2.0, 
-    'achieved': 3.0, 'proposal': 3.0, 'love': 3.5, 'amazing': 3.0,
-    'fantastic': 3.0, 'excellent': 3.0, 'beautiful': 2.5, 'blessed': 3.0,
-    'wonderful': 3.5, 'proud': 2.8, 'success': 3.0, 'healed': 3.0,
-    'graduated': 3.5, 'promoted': 3.0, 'won': 2.8, 'kiss': 2.0,
-    'grateful': 3.0, 'thankful': 2.8, 'joyful': 3.0, 'euphoric': 3.5,
-    'thrilled': 3.2, 'delighted': 3.0, 'ecstatic': 3.5, 'celebration': 2.5,
-    'triumph': 3.2, 'honored': 3.0, 'exhilarated': 3.5, 'relieved': 2.5,
-    'fortunate': 2.8, 'privileged': 2.8, 'blessed': 3.2, 'inspired': 3.0,
-    'motivated': 2.8, 'energized': 2.8, 'accomplished': 3.0, 'victorious': 3.2,
-    
-    # 🎉 ANUNCIOS Y EVENTOS DE VIDA
-    'puppies': 2.5, 'puppy': 2.5, 'baby': 2.5, 'babies': 2.5,
-    'grandfather': 2.0, 'grandmother': 2.0, 'grandpa': 2.0, 'grandma': 2.0,
-    'dad': 1.5, 'mom': 1.5, 'father': 1.5, 'mother': 1.5,
-    'born': 2.0, 'birth': 2.0, 'pregnant': 2.5, 'expecting': 2.0,
-    
-    # ❌ NEGATIVOS SEVEROS Y VIOLENCIA LABORAL / FÍSICA
-    'punch': -3.5, 'hit': -3.0, 'strike': -3.0, 'slap': -3.0, 
-    'throw': -2.0, 'threw': -2.5, 'yell': -2.5, 'yelled': -2.5,
-    'scream': -2.5, 'insult': -3.0, 'insulted': -3.0, 'abuse': -3.5,
-    'boss': -0.5, 'manager': -0.5, 'toxic': -3.0, 'hostile': -3.0,
-    'sarcasm': -1.5, 'irony': -1.0, 'mock': -2.5, 'mocked': -2.5,
-    'humiliated': -3.5, 'humiliate': -3.5, 'threaten': -3.5, 'threatened': -3.5,
-    
-    # ❌ NEGATIVOS EXTREMOS (Depresión)ojo)
-    'angry': -2.8, 'furious': -3.5, 'rage': -3.5, 'frustrated': -2.5,
-    'irritated': -2.0, 'annoyed': -1.8, 'resentful': -2.5, 'outraged': -3.0,
-    'exasperated': -2.5, 'hostile': -2.8, 'bitter': -2.5, 'offended': -2.3,
-    'insulted': -2.5, 'violated': -3.0, 'disrespected': -2.8, 'aggravated': -2.3,
-    'provoked': -2.5, 'incensed': -3.2, 'livid': -3.5, 'seething': -3.0,
-    
-    # 💀 EXTREMOS NEGATIVOS (CRISIS/SALUD MENTAL) - PRIORIDAD MÁXIMA
-    'depressed': -4.0, 'suicide': -4.5, 'suicidal': -4.5, 'kill': -4.0, 
-    'die': -3.8, 'hopeless': -3.5, 'worthless': -3.5, 'anxious': -3.0, 
-    'panic': -3.2, 'terrible': -3.0, 'hate': -3.2, 'worst': -3.0, 
-    'pain': -3.0, 'hurt': -2.8, 'crying': -2.5, 'lonely': -2.8, 
-    'abandoned': -3.0, 'disaster': -2.5, 'failure': -3.0, 'quit': -2.0, 
-    'overwhelmed': -2.5, 'afraid': -2.5, 'terrified': -3.5, 'scared': -2.5, 
-    'dread': -3.0, 'grief': -3.5, 'miserable': -3.5, 'suffering': -3.0, 
-    'agony': -3.5, 'despair': -4.0, 'helpless': -3.5, 'trapped': -3.2,
-    'broken': -3.0, 'shattered': -3.2, 'destroyed': -3.5, 'ruined': -3.0,
-    'damned': -3.5, 'cursed': -3.2, 'doomed': -3.5, 'forsaken': -3.5,
-    'self-harm': -4.5, 'cut': -4.0, 'bleed': -3.8, 'numb': -2.8,
-    'empty': -2.8, 'void': -3.0, 'meaningless': -3.5, 'pointless': -3.2,
-    'useless': -3.5, 'burden': -3.0, 'pathetic': -3.2, 'disgusting': -3.0,
-    
-    # 🇲🇽 JERGA MEXICANA POSITIVA
-    'chido': 2.5, 'chingon': 3.5, 'chingón': 3.5, 'rifa': 2.0, 
-    'perron': 3.0, 'perrón': 3.0, 'padre': 2.0, 'vergas': 3.0,
-    'verga': 3.0, 'chingoneria': 3.0, 'fregon': 2.5, 'fregón': 2.5,
-    'neta': 2.0, 'de pelos': 2.5, 'a toda madre': 3.0, 'poca madre': 3.0,
-    'me late': 2.5, 'a huevo': 2.5, 'órale': 2.0, 'zaz': 2.0,
-    'no manches': 2.0, 'no mames': 1.8, 'buena onda': 2.5, 'onda positiva': 2.5,
-    'salvado': 2.5, 'salvada': 2.5, 'qué alivio': 2.5, 'menos mal': 2.0,
-    'divino': 3.0, 'genial': 2.8, 'espectacular': 3.0, 'sensacional': 3.0,
-    
-    # 🇲🇽 JERGA MEXICANA NEGATIVA
-    'aguitado': -2.5, 'agüitado': -2.5, 'chingado': -3.0, 'chingada': -3.5,
-    'madres': -2.0, 'cabron': -2.5, 'cabrón': -2.5, 'hueva': -1.5,
-    'jodido': -3.0, 'madreado': -2.5, 'pedorro': -2.0, 'weva': -1.5,
-    'chafa': -2.0, 'culero': -3.5, 'verguiza': -3.0, 'putazo': -2.5,
-    'me saca de onda': -3.0, 'me saca de pedo': -3.0, 'me vale': -1.5,
-    'me vale madre': -2.0, 'hasta la madre': -3.0, 'qué oso': -2.5,
-    'que oso': -2.5, 'chale': -2.0, 'nomás': -1.0, 'ni modo': -1.0,
-    'está cañón': -2.0, 'está canón': -2.0, 'me cae gordo': -2.5,
-    'dar asco': -3.0, 'está gacho': -2.5, 'gacho': -2.5, 'naco': -1.5,
-    'toxic': -2.5, 'me tira': -2.0, 'me pone furico': -3.0, 'encachimbado': -2.5,
-    'emputecido': -3.0, 'rebotado': -2.5, 'cargado': -2.0,
-}
- 
-analyzer.lexicon.update(custom_lexicon)
+logger.info("Cargando modelo robertuito-sentiment-analysis. Esto puede tomar unos segundos...")
+sentiment_pipeline = pipeline(
+    "sentiment-analysis",
+    model="pysentimiento/robertuito-sentiment-analysis",
+    tokenizer="pysentimiento/robertuito-sentiment-analysis",
+    device=-1
+)
+logger.info("Modelo cargado exitosamente.")
  
 # ============================================================================
 # 📚 PALABRAS CLAVE EMOCIONALES EXPANDIDAS
@@ -294,22 +221,7 @@ INTENSIFICADORES = {
  
 NEGACIONES = {'no', 'ni', 'nunca', 'jamás', 'nada', 'nadie', 'tampoco', 'sin'}
  
-# ============================================================================
-# 🔄 TRADUCCIÓN CON CACHÉ
-# ============================================================================
- 
-# Reutilizar el traductor para mayor velocidad
-translator = GoogleTranslator(source='es', target='en')
 
-@lru_cache(maxsize=1000)
-def translate_cached(text: str) -> str:
-    """Traducir con caché LRU para evitar llamadas repetidas"""
-    if not text.strip(): return ""
-    try:
-        return translator.translate(text)
-    except Exception as e:
-        logger.error(f"Translation error: {e}")
-        return text
  
 # ============================================================================
 # 🛠️ FUNCIONES DE ANÁLISIS MEJORADAS
@@ -503,25 +415,30 @@ def analyze(data: AnalyzeRequest):
     # Paso 1: Normalizar jerga mexicana
     normalized_text = normalize_mexican_slang(original_text)
     
-    # Paso 2: Traducir (con caché)
+    # Paso 2: Análisis de sentimiento nativo con modelo de HuggingFace
     try:
-        translated_text = translate_cached(normalized_text)
+        # truncamos a 1500 caracteres por precaución, aunque el modelo debería manejar bien.
+        hf_result = sentiment_pipeline(normalized_text[:1500])[0]
+        label = hf_result['label']  # 'POS', 'NEG', 'NEU'
+        hf_score = hf_result['score'] # 0 a 1
+        
+        if label == 'POS':
+            base_compound = hf_score * 0.9 
+        elif label == 'NEG':
+            base_compound = -hf_score * 0.9
+        else: # NEU
+            base_compound = 0.0
     except Exception as e:
-        logger.warning(f"Translation failed, using original: {e}")
-        translated_text = normalized_text
+        logger.error(f"Error en HuggingFace pipeline: {e}")
+        base_compound = 0.0
     
-    # Paso 3: Análisis de sentimiento
-    score = analyzer.polarity_scores(translated_text)
-    compound = score["compound"]
-    
-    # --- MEJORA: Aplicar Intensificadores, Negaciones y Refuerzo (Caps/Emojis) ---
+    # --- MEJORA: Aplicar Intensificadores y Refuerzo (Caps/Emojis) ---
     reinforcement = analyze_emotional_reinforcement(original_text)
     multiplier = get_intensifier_multiplier(original_text) * reinforcement["multiplier"]
     
-    compound *= multiplier
+    compound = base_compound * multiplier
     compound += reinforcement["emoji_score"]
     
-    # VADER ya maneja negaciones en el texto traducido, no invertimos manualmente
     # ---------------------------------------------------
     compound = max(min(compound, 1.0), -1.0)
     # ---------------------------------------------------
