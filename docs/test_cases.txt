@@ -1,0 +1,99 @@
+=====================================================================
+          MINDMOOD: DIARIO INTELIGENTE - PLAN DE PRUEBAS
+=====================================================================
+Autor: Antigravity AI
+Fecha: 11 de Mayo de 2026
+Objetivo: Validar la integridad, seguridad y UX del sistema.
+
+---------------------------------------------------------------------
+1. CASOS DE PRUEBA MODULARES (UNIT TESTS)
+---------------------------------------------------------------------
+Propósito: Validar funciones aisladas del sistema de diseño y lógica.
+
+CP-MOD-01: Mapeo de Sistema EDS (emotions.js)
+- Entrada: Llamar a getEmotionByName('Crisis').
+- Resultado Esperado: Retorna objeto con color hexadecimal de error, icono de alerta y score -1.
+
+CP-MOD-02: Formateo de Ejes (StatsScreen.js)
+- Entrada: Pasar el valor 0.5 a la función renderYAxisLabels.
+- Resultado Esperado: Retorna la cadena "Bie" (Bien) o "F" (Feliz) según la escala visual.
+
+CP-MOD-03: Cambio de Tema Dinámico (ThemeContext.js)
+- Entrada: Alternar el estado de 'light' a 'dark'.
+- Resultado Esperado: El objeto themeStyles debe actualizar todas sus variables (background, card, text) a los valores del modo oscuro.
+
+CP-MOD-04: Lógica de Procesamiento de Estadísticas (useMemo)
+- Entrada: Arreglo de entradas vacío [].
+- Resultado Esperado: processedStats debe retornar null o un objeto con conteos en cero, sin romper el renderizado.
+
+CP-MOD-05: Validador de Longitud de Texto (NewEntryScreen.js)
+- Entrada: Texto de 2001 caracteres.
+- Resultado Esperado: La función saveDraft debe truncar el texto o impedir el guardado según el límite MAX_CHARS.
+
+---------------------------------------------------------------------
+2. CASOS DE PRUEBA DE INTEGRACIÓN (INTEGRATION TESTS)
+---------------------------------------------------------------------
+Propósito: Validar la comunicación entre módulos y servicios externos.
+
+CP-INT-01: Persistencia de Entrada (App -> Supabase)
+- Entrada: Usuario guarda una nueva entrada con sentimiento "Feliz".
+- Resultado Esperado: Registro exitoso en la tabla 'entries' con el ID del usuario actual y timestamp correcto.
+
+CP-INT-02: Sincronización de Perfil (Auth -> Profiles)
+- Entrada: Registro de nuevo usuario.
+- Resultado Esperado: Trigger de Supabase crea automáticamente una fila en la tabla 'profiles' con rol 'user'.
+
+CP-INT-03: Consumo de RPC Administrativo (Admin -> Database)
+- Entrada: Admin solicita get_admin_alarms().
+- Resultado Esperado: Retorno de una tabla que une 'entries' y 'profiles', mostrando el email del alumno y el texto del diario.
+
+CP-INT-04: Actualización de Estado de Caso (Admin -> Update)
+- Entrada: Admin cambia el estado de una alerta de 'active' a 'working'.
+- Resultado Esperado: Petición .update() en Supabase retorna éxito y el campo 'status' cambia en la DB.
+
+CP-INT-05: Recuperación de Historial Semanal (Stats -> DB)
+- Entrada: Petición de registros con filtro gte(created_at, lastWeek).
+- Resultado Esperado: Solo se recuperan las entradas de los últimos 7 días para alimentar las gráficas.
+
+---------------------------------------------------------------------
+3. CASOS DE PRUEBA DE SISTEMA (SYSTEM / E2E TESTS)
+---------------------------------------------------------------------
+Propósito: Validar flujos de trabajo completos de extremo a extremo.
+
+CP-SIS-01: Ciclo de Vida de Alerta de Crisis (Flujo Crítico)
+- Pasos: 
+  1. Usuario escribe "Me siento muy mal, ya no quiero seguir".
+  2. IA detecta 'Crisis'.
+  3. Admin recibe alerta en el Panel.
+  4. Admin cambia estado a "En Proceso".
+- Resultado Esperado: El flujo se completa sin errores y el estado persiste para el Admin.
+
+CP-SIS-02: Consistencia Visual Multi-Modo (UI/UX)
+- Pasos:
+  1. Abrir Estadísticas en Modo Claro.
+  2. Cambiar a Modo Oscuro desde Perfil.
+  3. Regresar a Estadísticas.
+- Resultado Esperado: Las gráficas y tarjetas deben adaptar sus colores inmediatamente sin recargar la app.
+
+CP-SIS-03: Seguridad de Roles (RBAC)
+- Pasos:
+  1. Login con cuenta de rol 'user'.
+  2. Intentar navegar manualmente a la ruta de Admin.
+- Resultado Esperado: El sistema debe redirigir al Home o denegar el acceso mediante las políticas RLS de Supabase.
+
+CP-SIS-04: Robustez en Modo Offline
+- Pasos:
+  1. Desactivar internet.
+  2. Escribir entrada de diario.
+  3. Cerrar y abrir la app.
+- Resultado Esperado: El borrador (Draft) debe estar disponible gracias al guardado en AsyncStorage.
+
+CP-SIS-05: Integridad de Reportes Exportables
+- Pasos:
+  1. Admin hace clic en "Exportar Reporte Mensual".
+  2. Seleccionar compartir vía Email.
+- Resultado Esperado: Se genera un cuerpo de texto coherente que incluye el conteo de usuarios y la lista de alertas activas.
+
+=====================================================================
+FIN DEL DOCUMENTO
+=====================================================================

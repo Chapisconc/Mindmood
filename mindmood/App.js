@@ -11,6 +11,7 @@ import HistoryScreen from './screens/HistoryScreen';
 import StatsScreen from './screens/StatsScreen';
 import AdminDashboardScreen from './screens/AdminDashboardScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import InboxScreen from './screens/InboxScreen';
 
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { I18nProvider } from './i18n/I18nContext';
@@ -67,6 +68,7 @@ function AppNavigator() {
         <Stack.Screen name="History" component={HistoryScreen} options={{ title: '📖 Historial' }} />
         <Stack.Screen name="Stats" component={StatsScreen} options={{ title: '📈 Estadísticas' }} />
         <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: '⚙️ Perfil' }} />
+        <Stack.Screen name="Inbox" component={InboxScreen} options={{ title: '📩 Mensajes' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -45,7 +45,15 @@ sentiment_pipeline = pipeline(
     tokenizer="pysentimiento/robertuito-sentiment-analysis",
     device=-1
 )
-logger.info("Modelo cargado exitosamente.")
+logger.info("Cargando modelo robertuito-emotion-analysis para análisis detallado...")
+emotion_pipeline = pipeline(
+    "text-classification",
+    model="pysentimiento/robertuito-emotion-analysis",
+    tokenizer="pysentimiento/robertuito-emotion-analysis",
+    return_all_scores=True,
+    device=-1
+)
+logger.info("Modelos cargados exitosamente.")
  
 # ============================================================================
 # 📚 PALABRAS CLAVE EMOCIONALES EXPANDIDAS
@@ -65,8 +73,11 @@ EMOTION_KEYWORDS = {
         'pegar', 'grito', 'gritar', 'insulto', 'insultar',
         'humillado', 'humillación', 'burla', 'burlarse',
         'ganas de matar', 'ganas de golpear', 'coraje',
-        'odio', 'odiar', 'detesto', 'detestar', 'aborrezco',
-        'aborrecer', 'asqueado', 'asqueada', 'repulsión',
+        'aborrecer', 'caga', 'cagar', 'me caga', 'pinche', 'chingada', 'encabronado', 'encabronada',
+    ],
+    'Asco': [
+        'asco', 'asqueado', 'asqueada', 'asqueroso', 'asquerosa', 'repulsión', 'repugnante', 'guácala', 'fuchi',
+        'nauseas', 'náuseas', 'vomitivo', 'desagradable', 'fuchi', 'puaj', 'repulsion', 'guacala',
     ],
     'Ansiedad': [
         'ansioso', 'ansiosa', 'ansiedad', 'estresado', 'estresada', 'estrés',
@@ -105,10 +116,11 @@ EMOTION_KEYWORDS = {
         'desesperado', 'desesperada', 'desesperación', 'engaño', 'engañó', 'engañada',
         'engañado', 'traición', 'traicionó', 'infidelidad', 'infiel', 'mentira', 'mintió',
         'cansado', 'cansada', 'agotado', 'agotada', 'pesado', 'pesada', 'harto', 'harta',
+        'duele', 'dolor', 'soledad', 'solo', 'sola', 'extraño', 'extrañar',
     ],
     'Agradecido': [
-        'gracias', 'gratitud', 'agradecer', 'agradezco', 'agradecido', 'agradecida',
-        'agradecidos', 'agradecidas', 'benedición', 'bendecido', 'bendecida',
+        'gracias', 'agradecido', 'agradecida', 'gratitud', 'bendecido', 'bendecida',
+        'reconozco', 'valorar', 'valoro', 'afortunadamente', 'agradecidos', 'agradecidas', 'benedición',
         'afortunado', 'afortunada', 'privilegiado', 'privilegiada', 'dichoso', 'dichosa',
         'reconocido', 'reconocida', 'valorado', 'valorada', 'aprecio',
         'profundamente agradecido', 'de corazón', 'eternamente agradecido',
@@ -128,14 +140,16 @@ EMOTION_KEYWORDS = {
     'Crisis': [  # 💀 NUEVO: Categoría de crisis/suicidio
         'suicida', 'suicidio', 'matarme', 'acabar con esto', 'no aguanto', 'no puedo más',
         'no hay salida', 'estoy jodido', 'estoy jodida', 'completamente perdido',
-        'completamente perdida', 'inútil', 'inutilidad', 'despedida', 'adiós',
+        'completamente perdida', 'inútil', 'inutilidad', 'despedida', 'adiós', 'despido',
         'ya no quiero vivir', 'no quiero existir', 'mejor muerto', 'mejor muerta',
-        'me corto', 'me quiero hacer daño', 'autolesión', 'masoquismo',
+        'me corto', 'me quiero hacer daño', 'autolesión', 'masoquismo', 'cortarme',
         'me quiero morir', 'quiero morir', 'prefiero estar muerto', 'prefiero estar muerta',
-        'no tengo valor', 'me odio', 'odio mi vida', 'detesto existir',
+        'no tengo valor', 'me odio', 'odio mi vida', 'detesto existir', 'me cansé de todo',
         'insoportable', 'insoportablemente', 'no resisto más', 'me ahoga todo',
         'quiero desaparecer', 'quiero dejar de existir', 'maldigo mi existencia',
-        'quisiera no haber nacido', 'me arrepiento de vivir', 'maldición',
+        'quisiera no haber nacido', 'me arrepiento de vivir', 'maldición', 'vete a la mierda todo',
+        'me voy de este mundo', 'me voy para siempre', 'los voy a extrañar', 'perdón por todo',
+        'último mensaje', 'mi última voluntad', 'ya no estaré', 'para cuando leas esto',
     ],
     'Feliz': [
         'feliz', 'felicidad', 'alegre', 'alegría', 'contento', 'contenta',
@@ -143,6 +157,7 @@ EMOTION_KEYWORDS = {
         'sonriente', 'optimista', 'entusiasmado', 'entusiasmada', 'entusiasmo',
         'animado', 'animada', 'buen humor', 'de buenas', 'chido', 'chingón',
         'esperanza', 'optimista', 'positivo', 'bueno', 'buena', 'mejor',
+        'amo', 'amar', 'adoro', 'adorar', 'me encanta', 'encanta', 'te quiero', 'quiero mucho',
     ],
     'Excelente': [
         'excelente', 'increíble', 'maravilloso', 'maravillosa', 'fantástico', 'fantástica',
@@ -151,7 +166,18 @@ EMOTION_KEYWORDS = {
         'sublime', 'insuperable', 'lo mejor', 'brillante', 'magnífico', 'magnífica',
     ]
 }
- 
+
+# Normalizar acentos en las palabras clave para búsqueda rápida
+import unicodedata
+def _quick_remove_accents(input_str):
+    nfkd_form = unicodedata.normalize('NFKD', str(input_str))
+    return "".join([c for c in nfkd_form if not unicodedata.combining(c)])
+
+EMOTION_KEYWORDS = {
+    cat: [ _quick_remove_accents(kw.lower()) for kw in kws ] 
+    for cat, kws in EMOTION_KEYWORDS.items()
+}
+
 # ============================================================================
 # 🎭 REFUERZO EMOCIONAL (Emojis y Gritos)
 # ============================================================================
@@ -252,16 +278,49 @@ def normalize_mexican_slang(text: str) -> str:
     return text
  
 def has_crisis_indicators(text: str) -> bool:
-    """Detectar indicadores de crisis"""
+    """Detectar indicadores de crisis con normalización y tolerancia a errores (Spellcheck)"""
+    import unicodedata
+    def remove_accents(input_str):
+        nfkd_form = unicodedata.normalize('NFKD', input_str.lower())
+        return "".join([c for c in nfkd_form if not unicodedata.combining(c)])
+    
     text_lower = text.lower()
+    text_no_accents = remove_accents(text_lower)
     crisis_keywords = EMOTION_KEYWORDS.get('Crisis', [])
     
-    # Buscar palabras clave de crisis
+    # 1. Búsqueda directa (Rápida)
     for keyword in crisis_keywords:
-        if keyword in text_lower:
+        if keyword in text_no_accents:
             return True
+            
+    # 2. Tolerancia a errores ortográficos (Solo si no se detectó nada aún)
+    # Analizamos palabra por palabra para detectar typos en palabras críticas
+    words = text_no_accents.split()
+    critical_stems = ['matar', 'suicidio', 'suicida', 'morir', 'morirme', 'matarme', 'adios', 'despedida']
     
-    # Patrones adicionales de crisis con bordes de palabra estrictos
+    for word in words:
+        if len(word) < 4: continue # Evitar falsos positivos en palabras cortas
+        # Si la palabra es muy parecida a un stem crítico (ej. "maatr" -> "matar")
+        if word in critical_stems:
+            return True
+        
+        # Uso del corrector para palabras sospechosas
+        try:
+            # Opción A: Corrector ortográfico estándar
+            corrected = spell.correction(word)
+            if corrected and remove_accents(corrected) in critical_stems:
+                return True
+            
+            # Opción B: Similitud de caracteres (Fuzzy matching)
+            # Si la palabra tiene un error de una letra (maatr -> matar)
+            from difflib import SequenceMatcher
+            for stem in critical_stems:
+                if SequenceMatcher(None, word, stem).ratio() > 0.8:
+                    return True
+        except:
+            pass
+    
+    # 3. Patrones adicionales de crisis (Regex)
     crisis_patterns = [
         r'\bno\s+aguanto\s+más\b',
         r'\bno\s+puedo\s+más\b',
@@ -270,6 +329,13 @@ def has_crisis_indicators(text: str) -> bool:
         r'\bsería\s+mejor\s+no\s+existir\b',
         r'\bno\s+hay\s+salida\b',
         r'\binsoportable\b',
+        r'\bme\s+despido\b',
+        r'\bme\s+voy\s+para\s+siempre\b',
+        r'\badiós\s+a\s+todos\b',
+        r'\bya\s+no\s+estaré\b',
+        r'\bmi\s+último\s+mensaje\b',
+        r'\bme\s+canse\s+de\s+vivir\b',
+        r'\bmatarme\b',
     ]
     
     for pattern in crisis_patterns:
@@ -412,6 +478,14 @@ def analyze(data: AnalyzeRequest):
     original_text = emoji.replace_emoji(data.text, replace='')
     text_lower = original_text.lower()
     
+    # NUEVO: Normalizar acentos para búsqueda de palabras clave
+    import unicodedata
+    def remove_accents(input_str):
+        nfkd_form = unicodedata.normalize('NFKD', input_str)
+        return "".join([c for c in nfkd_form if not unicodedata.combining(c)])
+    
+    text_no_accents = remove_accents(text_lower)
+    
     # Paso 1: Normalizar jerga mexicana
     normalized_text = normalize_mexican_slang(original_text)
     
@@ -448,52 +522,88 @@ def analyze(data: AnalyzeRequest):
     if has_crisis_indicators(text_lower):
         requires_help = True
         crisis_level = "critical"
+        compound = -0.95 # Fuerza un score muy bajo para crisis
         logger.warning(f"CRISIS DETECTED: {original_text[:100]}...")
     
-    # Paso 5: Detectar emociones por palabras clave
+    # Paso 5: Análisis avanzado de Emociones (HuggingFace)
+    emotion_map = {
+        'joy': 'Feliz',
+        'sadness': 'Triste',
+        'anger': 'Enojo',
+        'surprise': 'Sorpresa',
+        'disgust': 'Asco',
+        'fear': 'Miedo',
+        'others': 'Neutral'
+    }
+    
+    distribution = {}
     detected_moods = []
     
-    # Buscar keywords de emociones con bordes de palabra estrictos para evitar falsos positivos (ej: feliz vs infeliz)
-    for mood_name, keywords in EMOTION_KEYWORDS.items():
-        for word in keywords:
-            if re.search(r'\b' + re.escape(word) + r'\b', text_lower):
-                detected_moods.append(mood_name)
-                break # Evitar duplicados de la misma categoría
+    try:
+        # Extraer todas las puntuaciones
+        emotion_results = emotion_pipeline(normalized_text[:1500])[0]
+        
+        # Mapear a porcentajes
+        for item in emotion_results:
+            es_label = emotion_map.get(item['label'], 'Neutral')
+            percentage = round(item['score'] * 100, 1)
+            
+            # Sumar si ya existe (ej. others -> Neutral, si mapeáramos otra cosa a Neutral)
+            if es_label in distribution:
+                distribution[es_label] += percentage
+            else:
+                distribution[es_label] = percentage
+                
+            # Agregar a detected_moods si es significativo (> 15%)
+            if percentage > 15.0 and es_label != 'Neutral':
+                detected_moods.append(es_label)
+                
+    except Exception as e:
+        logger.error(f"Error en HuggingFace emotion pipeline: {e}")
+        distribution = {"Indeterminado": 100.0}
+        
+    # Limpiar posibles errores de redondeo en distribución
+    distribution = {k: round(v, 1) for k, v in distribution.items() if v > 0.5} # Filtramos los muy bajos
     
-    # Paso 6: Análisis basado en score
-    if compound >= 0.8:
-        detected_moods.append("Excelente")
-    elif compound >= 0.1:
-        detected_moods.append("Feliz")
-    elif compound <= -0.9:  # Umbral estricto para crisis genérica
-        if not any(m in ["Enojo", "Tristeza", "Ansiedad", "Miedo"] for m in detected_moods):
+    # NUEVO: Refuerzo por Palabras Clave para Multi-Emociones
+    # Si el usuario escribe palabras de una emoción, nos aseguramos de que aparezca
+    for category, keywords in EMOTION_KEYWORDS.items():
+        if any(kw in text_no_accents for kw in keywords):
+            if category not in detected_moods:
+                detected_moods.append(category)
+            # Asegurar que tenga al menos un 20% en la distribución
+            distribution[category] = max(distribution.get(category, 0), 20.0)
+    
+    # Re-normalizar la distribución para que sume 100% después del refuerzo
+    total_dist = sum(distribution.values())
+    if total_dist > 0:
+        distribution = {k: round((v / total_dist) * 100, 1) for k, v in distribution.items()}
+    
+    # Añadir Crisis si los indicadores de alerta saltaron
+    if requires_help:
+        if "Crisis" not in detected_moods:
             detected_moods.append("Crisis")
-            requires_help = True
-            crisis_level = "critical"
-    elif compound <= -0.1:
-        detected_moods.append("Triste")
-    
-    # Paso 7: Determinar distribución de emociones
-    distribution = {}
-    if not detected_moods:
-        distribution = {"Neutral": 100.0}
-    else:
-        # Contar ocurrencias para dar peso (basado en cuántas palabras de cada tipo hay)
-        total_found = len(detected_moods)
-        for m in set(detected_moods):
-            count = detected_moods.count(m)
-            distribution[m] = round((count / total_found) * 100, 1)
+        distribution = {"Crisis": 100.0} # Prioridad máxima
+    # Añadir Excelente si el score es súper positivo
+    elif compound >= 0.8 and "Feliz" in detected_moods:
+        detected_moods.append("Excelente")
+        distribution["Excelente"] = distribution.pop("Feliz", 0) # Promovemos Feliz a Excelente
 
     # Paso 8: Determinar mood primario (Priorizando emociones específicas)
     if not detected_moods:
-        primary_mood = "Neutral"
+        # Si el score es muy neutro y no hay emociones detectadas, es Indeterminado (o Neutral si el score es exactamente 0)
+        if abs(compound) < 0.1:
+            primary_mood = "Indeterminado"
+        else:
+            primary_mood = "Neutral"
         crisis_level = "normal"
     else:
         # Prioridad basada en severidad
-        # Solo marcamos Crisis si fue detectada por indicadores reales o score extremo
         if requires_help or "Crisis" in detected_moods:
             primary_mood = "Crisis"
             crisis_level = "critical"
+        elif compound >= 0.85: # Prioridad máxima a felicidad extrema
+            primary_mood = "Excelente"
         elif "Enojo" in detected_moods: 
             primary_mood = "Enojo"
             # Si el enojo fue lo que bajó el score pero NO hay palabras de crisis reales, quitamos la alerta
@@ -508,6 +618,8 @@ def analyze(data: AnalyzeRequest):
             primary_mood = "Agradecido"
         elif "Sorpresa" in detected_moods: 
             primary_mood = "Sorpresa"
+        elif "Asco" in detected_moods: 
+            primary_mood = "Asco"
         elif "Triste" in detected_moods: 
             primary_mood = "Triste"
         elif "Feliz" in detected_moods: 

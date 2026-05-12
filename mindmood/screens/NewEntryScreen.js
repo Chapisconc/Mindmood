@@ -26,14 +26,14 @@ export default function NewEntryScreen({ navigation }) {
   const slideAnim = useRef(new Animated.Value(30)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
 
-  // URLs de la IA (Local y Remota en Render)
+  // URLs de la IA - Prioridad: ngrok (tu PC pública) → local → Render (nube)
+  const NGROK_URL = "https://cheating-uncanny-squire.ngrok-free.dev/analyze";
   const RENDER_URL = "https://mindmood-ai.onrender.com/analyze";
 
-  // Detectar IP local del servidor Expo para fallback
   const getApiUrls = () => {
     const debuggerHost = Constants.expoConfig?.hostUri;
     const localIp = debuggerHost ? debuggerHost.split(':')[0] : null;
-    const urls = [];
+    const urls = [NGROK_URL];
     if (localIp) {
       urls.push(`http://${localIp}:8000/analyze`);
     }
@@ -77,7 +77,8 @@ export default function NewEntryScreen({ navigation }) {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
-        const res = await fetch(url.replace('/analyze', '/'), { signal: controller.signal });
+        const headers = url.includes('ngrok') ? { 'ngrok-skip-browser-warning': 'true' } : {};
+        const res = await fetch(url.replace('/analyze', '/'), { signal: controller.signal, headers });
         clearTimeout(timeoutId);
         if (res.ok || res.status === 404) {
           setApiStatus(url.includes('render.com') ? 'cloud' : 'local');
@@ -130,7 +131,10 @@ export default function NewEntryScreen({ navigation }) {
 
             const response = await fetch(url, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                ...(url.includes('ngrok') ? { 'ngrok-skip-browser-warning': 'true' } : {}),
+              },
               body: JSON.stringify({ text: text }),
               signal: controller.signal
             });

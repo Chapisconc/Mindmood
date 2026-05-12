@@ -17,6 +17,7 @@ const EMOTION_COLORS = {
   'Excelente': '#10B981', 'Feliz': '#6366F1', 'Agradecido': '#FACC15',
   'Sorpresa': '#06B6D4', 'Neutral': '#94A3B8', 'Enojo': '#F97316',
   'Ansiedad': '#8B5CF6', 'Miedo': '#4B5563', 'Triste': '#F87171', 'Crisis': '#EF4444',
+  'Asco': '#84CC16'
 };
 
 export default function HistoryScreen({ navigation }) {
@@ -231,8 +232,9 @@ export default function HistoryScreen({ navigation }) {
       Enojo: "😠",
       Ansiedad: "😰",
       Miedo: "😨",
-      Triste: "😔",
+      Triste: "😢",
       Crisis: "🆘",
+      Asco: "🤢",
     };
     return map[mood] || "😐";
   };

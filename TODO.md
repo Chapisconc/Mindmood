@@ -1,19 +1,10 @@
-# App Fix Complete ✅
+# TODO.md
 
-**Errores arreglados:**
+## Identificar y corregir warning de React: claves duplicadas
 
-- HistoryScreen.js: Eliminados window.addEventListener (crash TypeError), NetInfo listener funcionando.
-- LoginScreen.js: Comentado repairDataIntegrity (ReferenceError).
-
-**Estado:**
-
-- RN app sin crashes (notifications warning = Expo Go limit, usa dev build si molesta).
-- API live: https://mindmood-ai.onrender.com/analyze
-- Sync 59 entradas OK.
-
-**Finalizar:**
-
-1. Supabase DB schema (TODO_fixed.md).
-2. npx maestro test .maestro/login.yaml
-
-¡Diario inteligente arreglado y corriendo!
+- [ ] Revisar componentes donde se usan `key` basadas en `index`/valores no únicos.
+- [ ] Cambiar `key={i}` / `key={index}` por claves derivadas de datos únicos (ej. nombre/label/id).
+- [ ] Corregir duplicidad en `StatsScreen` y `EmotionModal` donde `key` usa `item.emotionName` o `index`.
+- [ ] Corregir en `AdminDashboardScreen` el uso de `key={i}` en listas de alarmas usando `item.id`/`entry_id` como key.
+- [ ] Corregir en `RadarChart` uso de `key={i}` en mapeos (según sea necesario).
+- [ ] Ejecutar tests/lint (si aplica) o build para verificar que el warning desaparece.
