@@ -117,101 +117,112 @@ export default function LoginScreen({ navigation }) {
   }
 
   const gradientColors = theme === 'dark'
-    ? [themeStyles.background, '#0C0F1D', themeStyles.background]
-    : [themeStyles.background, '#EEF0FF', themeStyles.background];
+    ? ['#0B0F19', '#151B2B', '#0B0F19']
+    : ['#F8FAFC', '#EEF2FF', '#F8FAFC'];
 
   const styles = StyleSheet.create({
     container: { flex: 1 },
-    scroll: { flexGrow: 1, justifyContent: "center", padding: 24 },
-    header: { alignItems: "center", marginBottom: 36 },
+    scroll: { flexGrow: 1, justifyContent: "center", padding: 28 },
+    header: { alignItems: "center", marginBottom: 40 },
     logoContainer: {
-      width: 110,
-      height: 110,
-      borderRadius: 55,
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: themeStyles.card,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 24,
+      borderWidth: 2,
+      borderColor: themeStyles.border,
+      shadowColor: themeStyles.shadow,
+      shadowOffset: { width: 0, height: 16 },
+      shadowOpacity: 1,
+      shadowRadius: 32,
+      elevation: 16,
+    },
+    logoIconWrapper: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
       backgroundColor: themeStyles.accent,
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: 22,
-      shadowColor: themeStyles.accent,
-      shadowOffset: { width: 0, height: 14 },
-      shadowOpacity: 0.45,
-      shadowRadius: 28,
-      elevation: 14,
     },
     logoText: {
-      fontSize: 38,
+      fontSize: 32,
       fontWeight: "900",
       color: themeStyles.text,
-      letterSpacing: 1.5,
+      letterSpacing: -1,
+      marginBottom: 8,
     },
     subtitle: {
-      fontSize: 16,
+      fontSize: 15,
       color: themeStyles.secondaryText,
-      marginTop: 8,
       textAlign: "center",
       fontWeight: '600',
+      maxWidth: 280,
     },
     card: {
       backgroundColor: themeStyles.card,
-      padding: 26,
-      borderRadius: 28,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 14 },
-      shadowOpacity: 0.12,
-      shadowRadius: 28,
-      elevation: 8,
+      padding: 30,
+      borderRadius: 32,
+      shadowColor: themeStyles.shadow,
+      shadowOffset: { width: 0, height: 16 },
+      shadowOpacity: 1,
+      shadowRadius: 32,
+      elevation: 10,
       borderWidth: 1,
       borderColor: themeStyles.border,
     },
     label: {
       color: themeStyles.text,
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: "800",
-      marginBottom: 8,
-      marginLeft: 4,
+      marginBottom: 10,
+      marginLeft: 6,
       textTransform: 'uppercase',
-      letterSpacing: 0.5,
+      letterSpacing: 1,
     },
     inputContainer: {
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: themeStyles.background,
-      borderRadius: 18,
-      marginBottom: 20,
+      borderRadius: 16,
+      marginBottom: 18,
       borderWidth: 1.5,
       borderColor: themeStyles.border,
-      paddingHorizontal: 15,
+      paddingHorizontal: 16,
+      paddingVertical: 4,
     },
-    input: { flex: 1, padding: 16, color: themeStyles.text, fontSize: 16 },
+    input: { flex: 1, padding: 14, color: themeStyles.text, fontSize: 16 },
     buttonMain: {
-      backgroundColor: themeStyles.accent,
-      padding: 19,
+      padding: 20,
       borderRadius: 18,
       alignItems: "center",
-      marginTop: 12,
-      shadowColor: themeStyles.accent,
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.4,
-      shadowRadius: 16,
-      elevation: 8,
+      marginTop: 16,
+      shadowColor: themeStyles.shadow,
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 1,
+      shadowRadius: 20,
+      elevation: 10,
     },
-    buttonMainText: { color: "#FFF", fontWeight: "900", fontSize: 18, letterSpacing: 0.8 },
-    registerLink: { marginTop: 30, alignItems: "center" },
+    buttonMainText: { color: "#FFF", fontWeight: "900", fontSize: 17, letterSpacing: 0.5 },
+    registerLink: { marginTop: 32, alignItems: "center" },
     registerText: { color: themeStyles.secondaryText, fontSize: 15 },
     themeToggle: {
       position: "absolute",
-      right: 0,
-      top: 0,
+      right: 20,
+      top: 20,
       padding: 12,
       backgroundColor: themeStyles.card,
-      borderRadius: 16,
+      borderRadius: 18,
       borderWidth: 1,
       borderColor: themeStyles.border,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
-      elevation: 4,
+      shadowColor: themeStyles.shadow,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 1,
+      shadowRadius: 12,
+      elevation: 6,
     },
   });
 
@@ -226,12 +237,14 @@ export default function LoginScreen({ navigation }) {
             <TouchableOpacity style={styles.themeToggle} onPress={toggleTheme}>
               <Ionicons
                 name={theme === "dark" ? "sunny-outline" : "moon-outline"}
-                size={26}
+                size={24}
                 color={themeStyles.text}
               />
             </TouchableOpacity>
             <View style={styles.logoContainer}>
-              <Ionicons name="heart" size={52} color="#FFF" />
+              <View style={styles.logoIconWrapper}>
+                <Ionicons name="heart" size={40} color="#FFF" />
+              </View>
             </View>
             <Text style={styles.logoText}>MindMood</Text>
             <Text style={styles.subtitle}>Tu espacio seguro de salud mental</Text>
@@ -289,15 +302,22 @@ export default function LoginScreen({ navigation }) {
                 />
               ) : (
                 <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                  <TouchableOpacity
+                  <LinearGradient
+                    colors={themeStyles.accentGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
                     style={styles.buttonMain}
-                    onPress={signInWithEmail}
-                    onPressIn={onPressIn}
-                    onPressOut={onPressOut}
-                    activeOpacity={0.9}
                   >
-                    <Text style={styles.buttonMainText}>Entrar</Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={signInWithEmail}
+                      onPressIn={onPressIn}
+                      onPressOut={onPressOut}
+                      activeOpacity={0.9}
+                      style={{ width: '100%', alignItems: 'center' }}
+                    >
+                      <Text style={styles.buttonMainText}>Entrar</Text>
+                    </TouchableOpacity>
+                  </LinearGradient>
                 </Animated.View>
               )}
             </View>

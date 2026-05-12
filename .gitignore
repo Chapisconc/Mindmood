@@ -1,28 +1,77 @@
-# Dependencias Node/React Native
+```
+# Dependencies
 node_modules/
-npm-debug.log
-yarn-error.log
 
-# Expo
-.expo/
-mindmood/.expo/
-
-# Dependencias Python
-__pycache__/
-*.py[cod]
-*$py.class
+# Environment
 .env
+.env.local
 .env.*
-.venv/
-venv/
-ENV/
 
-# Archivos de SO / Editor
+# Logs
+*.log
+
+# Build artifacts
+dist/
+build/
+target/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git/modules/
 .DS_Store
+Thumbs.db
+
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
+dist/
+build/
+*.min.js
+*.min.css
+coverage/
+.nyc_output
+.npm
+.yarn
+.pnp.*
+.pnp.js
+
+# IDE
 .vscode/
 .idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+.directory
+*.nib
+.vagrant/
+.Vagrantfile
+.svn/
+.hg/
+.git/
+```
