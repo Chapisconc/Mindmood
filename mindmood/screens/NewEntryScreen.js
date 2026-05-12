@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import EmotionModal from '../components/EmotionModal';
 import Constants from 'expo-constants';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const MAX_CHARS = 2000;
 
@@ -246,23 +247,23 @@ export default function NewEntryScreen({ navigation }) {
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: themeStyles.background },
-    scroll: { padding: 25 },
-    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
-    title: { fontSize: 30, fontWeight: '900', color: themeStyles.text, letterSpacing: -0.5, flex: 1 },
-    statusIndicator: { flexDirection: 'row', alignItems: 'center', backgroundColor: themeStyles.card, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: themeStyles.border, shadowColor: getStatusColor(), shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 3 },
-    statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-    statusText: { fontSize: 11, fontWeight: '900', color: themeStyles.secondaryText, textTransform: 'uppercase', letterSpacing: 0.5 },
-    subtitle: { fontSize: 16, color: themeStyles.secondaryText, marginBottom: 25, lineHeight: 24, fontWeight: '500' },
-    textAreaWrapper: { marginBottom: 8 },
-    textArea: { backgroundColor: themeStyles.card, color: themeStyles.text, borderRadius: 28, padding: 25, fontSize: 17, minHeight: 350, borderWidth: 1.5, borderColor: themeStyles.border, textAlignVertical: 'top', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 4, lineHeight: 28 },
-    charCountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 8, marginTop: 10 },
-    charCountText: { fontSize: 12, fontWeight: '800' },
-    progressBarBg: { flex: 1, height: 4, backgroundColor: themeStyles.border, borderRadius: 2, marginLeft: 12 },
-    progressBarFill: { height: 4, borderRadius: 2 },
-    saveButton: { padding: 22, borderRadius: 22, alignItems: 'center', marginTop: 30, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.4, shadowRadius: 18, elevation: 10 },
-    saveButtonText: { color: '#FFF', fontWeight: '900', fontSize: 18, letterSpacing: 1, textTransform: 'uppercase' },
-    offlineBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(239, 68, 68, 0.08)', padding: 14, borderRadius: 18, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)' },
-    offlineText: { color: '#EF4444', fontSize: 14, marginLeft: 10, fontWeight: '700' }
+    scroll: { padding: 28 },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
+    title: { fontSize: 32, fontWeight: '900', color: themeStyles.text, letterSpacing: -0.8, flex: 1 },
+    statusIndicator: { flexDirection: 'row', alignItems: 'center', backgroundColor: themeStyles.card, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 22, borderWidth: 1, borderColor: themeStyles.border, shadowColor: getStatusColor(), shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
+    statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
+    statusText: { fontSize: 11, fontWeight: '900', color: themeStyles.secondaryText, textTransform: 'uppercase', letterSpacing: 0.8 },
+    subtitle: { fontSize: 16, color: themeStyles.secondaryText, marginBottom: 28, lineHeight: 26, fontWeight: '500' },
+    textAreaWrapper: { marginBottom: 10 },
+    textArea: { backgroundColor: themeStyles.card, color: themeStyles.text, borderRadius: 30, padding: 28, fontSize: 17, minHeight: 380, borderWidth: 1.5, borderColor: themeStyles.border, textAlignVertical: 'top', shadowColor: themeStyles.shadow, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 1, shadowRadius: 20, elevation: 8, lineHeight: 30 },
+    charCountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 10, marginTop: 12 },
+    charCountText: { fontSize: 13, fontWeight: '800' },
+    progressBarBg: { flex: 1, height: 5, backgroundColor: themeStyles.border, borderRadius: 3, marginLeft: 14 },
+    progressBarFill: { height: 5, borderRadius: 3 },
+    saveButton: { padding: 24, borderRadius: 26, alignItems: 'center', marginTop: 32, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.5, shadowRadius: 22, elevation: 12 },
+    saveButtonText: { color: '#FFF', fontWeight: '900', fontSize: 17, letterSpacing: 1.2, textTransform: 'uppercase' },
+    offlineBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: 16, borderRadius: 20, marginBottom: 22, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.25)' },
+    offlineText: { color: '#EF4444', fontSize: 14, marginLeft: 12, fontWeight: '700' }
   });
 
   return (
@@ -313,16 +314,23 @@ export default function NewEntryScreen({ navigation }) {
               </View>
             ) : (
               <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                <TouchableOpacity
-                  testID="save_button"
-                  style={[styles.saveButton, { backgroundColor: themeStyles.accent, shadowColor: themeStyles.accent }]}
-                  onPress={handleSave}
-                  onPressIn={onPressIn}
-                  onPressOut={onPressOut}
-                  activeOpacity={0.9}
+                <LinearGradient
+                  colors={themeStyles.accentGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.saveButton}
                 >
-                  <Text style={styles.saveButtonText}>✦ Guardar en la Bóveda</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    testID="save_button"
+                    onPress={handleSave}
+                    onPressIn={onPressIn}
+                    onPressOut={onPressOut}
+                    activeOpacity={0.9}
+                    style={{ width: '100%', alignItems: 'center' }}
+                  >
+                    <Text style={styles.saveButtonText}>✦ Guardar en la Bóveda</Text>
+                  </TouchableOpacity>
+                </LinearGradient>
               </Animated.View>
             )}
           </Animated.View>

@@ -17,6 +17,7 @@ import { contactService } from "../services/contactService";
 import StreakModal from "../components/StreakModal";
 import StreakCalendarModal from "../components/StreakCalendarModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
 
 const EMOTION_COLORS = {
   Excelente: "#10B981",
@@ -203,82 +204,83 @@ export default function HomeScreen({ navigation }) {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingHorizontal: 20,
-      // Sube/abajo mínimamente para no chocar con la barra superior (dark/light)
-      paddingTop: 28,
-      marginBottom: 16,
+      paddingHorizontal: 24,
+      paddingTop: 32,
+      marginBottom: 20,
     },
-    welcomeContainer: { flex: 1, marginLeft: 15 },
+    welcomeContainer: { flex: 1, marginLeft: 16 },
     welcomeText: {
-      fontSize: 14,
+      fontSize: 15,
       color: themeStyles.secondaryText,
-      fontWeight: "600",
+      fontWeight: "700",
+      letterSpacing: 0.3,
     },
     nameText: {
-      fontSize: 26,
+      fontSize: 28,
       fontWeight: "900",
       color: themeStyles.text,
-      letterSpacing: -0.5,
+      letterSpacing: -0.8,
     },
     profileBtn: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
+      width: 52,
+      height: 52,
+      borderRadius: 26,
       backgroundColor: themeStyles.card,
       justifyContent: "center",
       alignItems: "center",
-      borderWidth: 1.5,
+      borderWidth: 1,
       borderColor: themeStyles.border,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      elevation: 4,
+      shadowColor: themeStyles.shadow,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 1,
+      shadowRadius: 12,
+      elevation: 6,
     },
     toggleContainer: { flexDirection: "row", alignItems: "center" },
     streakCard: {
+      marginHorizontal: 20,
+      padding: 2,
+      borderRadius: 30,
+      marginBottom: 28,
+      overflow: 'hidden',
+    },
+    streakInner: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       backgroundColor: moodColor,
-      marginHorizontal: 20,
-      padding: 24,
+      padding: 26,
       borderRadius: 28,
-      marginBottom: 25,
-      shadowColor: moodColor,
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.4,
-      shadowRadius: 20,
-      elevation: 10,
     },
     streakInfo: { flexDirection: "row", alignItems: "center" },
-    streakText: { fontSize: 30, fontWeight: "900", color: "#FFF" },
+    streakText: { fontSize: 32, fontWeight: "900", color: "#FFF", letterSpacing: -0.5 },
     streakLabel: {
       fontSize: 13,
-      color: "rgba(255,255,255,0.85)",
+      color: "rgba(255,255,255,0.9)",
       fontWeight: "700",
+      marginTop: 2,
     },
     quoteBox: {
       marginHorizontal: 20,
       backgroundColor: themeStyles.card,
-      padding: 26,
-      borderRadius: 26,
-      marginBottom: 30,
+      padding: 28,
+      borderRadius: 28,
+      marginBottom: 32,
       borderWidth: 1,
       borderColor: themeStyles.border,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.06,
-      shadowRadius: 12,
-      elevation: 4,
+      shadowColor: themeStyles.shadow,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 1,
+      shadowRadius: 20,
+      elevation: 6,
     },
     quoteLabel: {
       fontSize: 11,
       fontWeight: "900",
-      color: themeStyles.secondaryText,
+      color: themeStyles.accent,
       textTransform: "uppercase",
-      letterSpacing: 1.5,
-      marginBottom: 10,
+      letterSpacing: 2,
+      marginBottom: 12,
     },
     quoteText: {
       fontSize: 17,
@@ -291,42 +293,43 @@ export default function HomeScreen({ navigation }) {
       fontSize: 20,
       fontWeight: "900",
       color: themeStyles.text,
-      marginHorizontal: 20,
-      marginBottom: 16,
-      letterSpacing: -0.3,
+      marginHorizontal: 24,
+      marginBottom: 18,
+      letterSpacing: -0.5,
     },
     cardsContainer: { paddingHorizontal: 20, paddingBottom: 40 },
     card: {
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: themeStyles.card,
-      padding: 20,
-      borderRadius: 24,
-      marginBottom: 14,
+      padding: 22,
+      borderRadius: 26,
+      marginBottom: 16,
       borderWidth: 1,
       borderColor: themeStyles.border,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.07,
-      shadowRadius: 14,
-      elevation: 4,
+      shadowColor: themeStyles.shadow,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 1,
+      shadowRadius: 18,
+      elevation: 6,
     },
     cardIconContainer: {
-      width: 54,
-      height: 54,
-      borderRadius: 20,
-      backgroundColor: themeStyles.itemBg,
+      width: 58,
+      height: 58,
+      borderRadius: 22,
+      backgroundColor: themeStyles.softAccent,
       justifyContent: "center",
       alignItems: "center",
-      marginRight: 16,
+      marginRight: 18,
     },
-    cardIcon: { fontSize: 26 },
+    cardIcon: { fontSize: 28 },
     cardTextContent: { flex: 1 },
     cardTitle: {
       fontSize: 17,
       fontWeight: "800",
       color: themeStyles.text,
-      marginBottom: 3,
+      marginBottom: 4,
+      letterSpacing: -0.2,
     },
     cardDesc: {
       fontSize: 14,
@@ -463,24 +466,31 @@ export default function HomeScreen({ navigation }) {
             transform: [{ translateY: streakSlide }],
           }}
         >
-          <TouchableOpacity
+          <LinearGradient
+            colors={themeStyles.accentGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.streakCard}
-            onPress={() => setShowStreakCalendar(true)}
-            activeOpacity={0.9}
           >
-            <View style={styles.streakInfo}>
-              <Ionicons name="flame" size={34} color="#FFF" />
-              <View style={{ marginLeft: 14 }}>
-                <Text style={styles.streakText}>{userData?.streak} días</Text>
-                <Text style={styles.streakLabel}>Racha actual</Text>
+            <TouchableOpacity
+              style={styles.streakInner}
+              onPress={() => setShowStreakCalendar(true)}
+              activeOpacity={0.9}
+            >
+              <View style={styles.streakInfo}>
+                <Ionicons name="flame" size={34} color="#FFF" />
+                <View style={{ marginLeft: 14 }}>
+                  <Text style={styles.streakText}>{userData?.streak} días</Text>
+                  <Text style={styles.streakLabel}>Racha actual</Text>
+                </View>
               </View>
-            </View>
-            <Ionicons
-              name="calendar-outline"
-              size={24}
-              color="rgba(255,255,255,0.8)"
-            />
-          </TouchableOpacity>
+              <Ionicons
+                name="calendar-outline"
+                size={24}
+                color="rgba(255,255,255,0.8)"
+              />
+            </TouchableOpacity>
+          </LinearGradient>
         </Animated.View>
 
         <Animated.View
