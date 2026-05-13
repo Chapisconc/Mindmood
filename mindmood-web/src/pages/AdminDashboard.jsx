@@ -36,7 +36,9 @@ const STATUS_LABELS = {
 export default function AdminDashboard() {
   const { theme, toggleTheme } = useTheme();
   const [admin, setAdmin] = useState(null);
-  const [stats, setStats] = useState(null);
+  const [moodStats, setMoodStats] = useState({});
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalEntries, setTotalEntries] = useState(0);
   const [alarms, setAlarms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,11 +55,25 @@ export default function AdminDashboard() {
 
   const fetchAdminData = async () => {
     try {
-      const [{ data: statsData }, { data: alarmsData }] = await Promise.all([
-        supabase.rpc("get_admin_stats"),
+      const [
+        { data: entriesData },
+        { data: alarmsData },
+        { data: statsData },
+      ] = await Promise.all([
+        supabase.from("entries").select("mood, status"),
         supabase.rpc("get_admin_alarms"),
+        supabase.rpc("get_admin_stats"),
       ]);
-      if (statsData) setStats(statsData[0]);
+
+      setTotalUsers(statsData?.[0]?.total_users || 0);
+      setTotalEntries(entriesData?.length || 0);
+
+      const moodCounts = {};
+      (entriesData || []).forEach(e => {
+        const m = e.mood || "Indeterminado";
+        moodCounts[m] = (moodCounts[m] || 0) + 1;
+      });
+      setMoodStats(moodCounts);
 
       let combined = alarmsData || [];
 
@@ -66,19 +82,12 @@ export default function AdminDashboard() {
         .select("id, user_id, text, mood, score, status, created_at")
         .eq("mood", "Crisis")
         .eq("status", "resolved")
-        .order("created_at", { ascending: false })
         .limit(50);
 
       if (resolvedRaw && resolvedRaw.length > 0) {
-        const userIds = [...new Set(resolvedRaw.map(e => e.user_id))];
-        const { data: resolvedProfiles } = userIds.length > 0
-          ? await supabase.from("profiles").select("id, email").in("id", userIds)
-          : { data: [] };
-        const profileMap = Object.fromEntries((resolvedProfiles || []).map(p => [p.id, p.email]));
-
         const resolvedMapped = resolvedRaw.map(e => ({
           id: e.id, entry_id: e.id, user_id: e.user_id,
-          email: profileMap[e.user_id] || "", student_email: profileMap[e.user_id] || "",
+          email: "", student_email: "ID: " + e.user_id?.toString().slice(0, 8),
           diary_text: e.text, mood: e.mood, score: e.score,
           status: "resolved", recorded_at: e.created_at,
           contact_request_id: null, contact_status: null,
@@ -138,7 +147,8 @@ export default function AdminDashboard() {
     );
   }
 
-  const totalEntries = stats?.total_entries || 0;
+  const crisisCount = moodStats["Crisis"] || 0;
+  const totalEntriesNum = totalEntries;
 
   const keyMap = {
     Excelente: "excellent_entries", Feliz: "happy_entries",
@@ -151,17 +161,19 @@ export default function AdminDashboard() {
 
   const radarData = EMOTIONS_MAP.slice(0, 11).map(emo => ({
     subject: emo.name,
-    A: stats ? stats[keyMap[emo.name]] || 0 : 0,
+    A: moodStats[emo.name] || 0,
   }));
   const maxRadar = Math.max(...radarData.map(d => d.A), 10);
 
   const emotionDistData = EMOTIONS_MAP.slice(0, 11).map(emo => ({
     name: emo.name,
-    value: stats ? stats[keyMap[emo.name]] || 0 : 0,
+    value: moodStats[emo.name] || 0,
     color: MOOD_COLORS[emo.name] || "#64748B",
   })).filter(d => d.value > 0);
 
-  const crisisCount = stats?.crisis_entries || 0;
+  const topMood = EMOTIONS_MAP.slice(0, 11).reduce((best, emo) =>
+    (moodStats[emo.name] || 0) > (moodStats[best.name] || 0) ? emo : best
+  , EMOTIONS_MAP[0]);
 
   const matchesSearch = (item) => {
     const q = searchQuery.toLowerCase();
@@ -289,10 +301,10 @@ export default function AdminDashboard() {
       </header>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Users} label="Usuarios" value={stats?.total_users || 0} color="text-indigo-500" />
-        <StatCard icon={FileText} label="Entradas" value={totalEntries} color="text-fuchsia-500" />
+        <StatCard icon={Users} label="Usuarios" value={totalUsers} color="text-indigo-500" />
+        <StatCard icon={FileText} label="Entradas" value={totalEntriesNum} color="text-fuchsia-500" />
         <StatCard icon={AlertTriangle} label="Crisis" value={crisisCount} color="text-rose-500" />
-        <StatCard icon={Activity} label="Salud" value={totalEntries > 0 ? `${Math.round(((totalEntries - crisisCount) / totalEntries) * 100)}%` : "100%"} color="text-emerald-500" />
+        <StatCard icon={Activity} label="Sentimiento Global" value={topMood.name || "Neutral"} color={topMood.color || "text-slate-500"} />
       </div>
 
       <div className={`${CARD}`}>
