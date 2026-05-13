@@ -1,11 +1,13 @@
 -- ============================================================================
--- MINDFUL DIARY (MindMood) — SCHEMA COMPLETO
+-- MINDFUL DIARY (MindMood) — SCHEMA COMPLETO (CORREGIDO)
 -- Copia y pega TODO este archivo en el SQL Editor de Supabase.
 -- ============================================================================
 
 -- ============================================================================
--- 0. LIMPIEZA
+-- 0. LIMPIEZA INICIAL (DROP IF EXISTS)
 -- ============================================================================
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 DROP FUNCTION IF EXISTS public.get_admin_stats();
 DROP FUNCTION IF EXISTS public.get_admin_alarms();
 DROP FUNCTION IF EXISTS public.get_user_streak(uuid);
@@ -18,8 +20,7 @@ DROP FUNCTION IF EXISTS public.admin_update_contact_info(text, text, text, boole
 DROP FUNCTION IF EXISTS public.get_contact_info_for_user(uuid);
 DROP FUNCTION IF EXISTS public.is_admin() CASCADE;
 DROP FUNCTION IF EXISTS public.has_accepted_contact(uuid, uuid) CASCADE;
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP FUNCTION IF EXISTS public.get_daily_entries(integer);
 
 -- ============================================================================
 -- 1. TIPOS ENUM
@@ -35,9 +36,8 @@ BEGIN
 END $$;
 
 -- ============================================================================
--- 2. FUNCIONES AUXILIARES (antes de las tablas para evitar dependencias circulares)
+-- 2. FUNCIONES AUXILIARES
 -- ============================================================================
-
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER
@@ -66,26 +66,20 @@ $$;
 -- 3. TABLA: PROFILES
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id              UUID PRIMARY KEY REFERENCES auth.users,
-  email           TEXT,
-  display_name    TEXT,
-  role            TEXT DEFAULT 'user' NOT NULL,
-  streak          INT DEFAULT 0 NOT NULL,
-  last_entry_at   TIMESTAMPTZ,
-  theme           TEXT DEFAULT 'dark' NOT NULL,
-  lang            TEXT DEFAULT 'es' NOT NULL,
-  created_at      TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
-  contact_email   TEXT,
-  contact_phone   TEXT,
-  contact_name    TEXT,
+  id                UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
+  email             TEXT,
+  display_name      TEXT,
+  role              TEXT DEFAULT 'user' NOT NULL,
+  streak            INT DEFAULT 0 NOT NULL,
+  last_entry_at     TIMESTAMPTZ,
+  theme             TEXT DEFAULT 'dark' NOT NULL,
+  lang              TEXT DEFAULT 'es' NOT NULL,
+  created_at        TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  contact_email     TEXT,
+  contact_phone     TEXT,
+  contact_name      TEXT,
   contact_is_active BOOLEAN DEFAULT true
 );
-
--- Add columns to existing profiles table (created before these columns were added)
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS contact_email TEXT;
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS contact_phone TEXT;
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS contact_name TEXT;
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS contact_is_active BOOLEAN DEFAULT true;
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
@@ -103,17 +97,27 @@ CREATE POLICY "Users can update their own profile" ON public.profiles
 
 DROP POLICY IF EXISTS "Users can view admin contact for accepted requests" ON public.profiles;
 CREATE POLICY "Users can view admin contact for accepted requests" ON public.profiles
-  FOR SELECT USING (public.has_accepted_contact(auth.uid(), id));
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.contact_requests cr
+      WHERE cr.status = 'accepted'
+        AND (
+            (cr.user_id = auth.uid() AND cr.admin_id = profiles.id) OR
+            (cr.admin_id = auth.uid() AND cr.user_id = profiles.id)
+        )
+    )
+  );
 
 -- ============================================================================
 -- 4. TABLA: ENTRIES
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS public.entries (
   id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id         UUID REFERENCES auth.users NOT NULL,
+  user_id         UUID REFERENCES auth.users ON DELETE CASCADE NOT NULL,
   text            TEXT NOT NULL,
   mood            TEXT NOT NULL,
   score           NUMERIC NOT NULL,
+  selected_moods  JSONB DEFAULT '[]'::jsonb,
   distribution    JSONB DEFAULT NULL,
   requires_help   BOOLEAN DEFAULT false,
   status          TEXT DEFAULT 'active'
@@ -121,9 +125,6 @@ CREATE TABLE IF NOT EXISTS public.entries (
   created_at      TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at      TIMESTAMPTZ DEFAULT now()
 );
-
--- Add requires_help column to existing entries table
-ALTER TABLE public.entries ADD COLUMN IF NOT EXISTS requires_help BOOLEAN DEFAULT false;
 
 ALTER TABLE public.entries ENABLE ROW LEVEL SECURITY;
 
@@ -166,9 +167,6 @@ CREATE TABLE IF NOT EXISTS public.contact_requests (
   updated_at      TIMESTAMPTZ DEFAULT now()
 );
 
--- Add entry_id column to existing contact_requests table
-ALTER TABLE public.contact_requests ADD COLUMN IF NOT EXISTS entry_id UUID REFERENCES public.entries(id) ON DELETE SET NULL;
-
 ALTER TABLE public.contact_requests ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can view own requests" ON public.contact_requests;
@@ -191,7 +189,7 @@ CREATE INDEX IF NOT EXISTS idx_contact_requests_user ON public.contact_requests 
 CREATE INDEX IF NOT EXISTS idx_contact_requests_admin ON public.contact_requests (admin_id, created_at DESC);
 
 -- ============================================================================
--- 6. TRIGGER: CREAR PERFIL AUTOMÁTICAMENTE AL REGISTRARSE
+-- 6. TRIGGER: CREAR PERFIL AL REGISTRARSE
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
@@ -212,6 +210,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- En PostgreSQL no existe "CREATE TRIGGER IF NOT EXISTS". 
+-- Por eso lo eliminamos arriba en la sección 0 antes de crearlo aquí.
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
@@ -298,12 +298,12 @@ BEGIN
     e.status                    AS status,
     e.created_at                AS recorded_at,
     cr.id                       AS contact_request_id,
-    cr.status::text             AS contact_status
+    cr.status::text              AS contact_status
   FROM public.entries e
   JOIN public.profiles p ON p.id = e.user_id
   LEFT JOIN LATERAL (
     SELECT cr_sub.id, cr_sub.status FROM public.contact_requests cr_sub
-    WHERE cr_sub.user_id = e.user_id
+    WHERE cr_sub.entry_id = e.id
     ORDER BY cr_sub.created_at DESC
     LIMIT 1
   ) cr ON true
@@ -341,19 +341,19 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================================
--- 10. FUNCIÓN: CALCULAR RACHA DE UN USUARIO
+-- 10. FUNCIÓN: CALCULAR RACHA
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.get_user_streak(target_user_id UUID)
 RETURNS INTEGER AS $$
 DECLARE
   streak      INTEGER := 0;
-  curr_date   DATE := CURRENT_DATE;
+  curr_date    DATE := CURRENT_DATE;
   entry_date  DATE;
   caller_role text;
 BEGIN
   SELECT p.role INTO caller_role FROM public.profiles p WHERE p.id = auth.uid();
   IF auth.uid() != target_user_id AND (caller_role IS NULL OR caller_role != 'admin') THEN
-    RAISE EXCEPTION 'Acceso denegado: no puedes consultar la racha de otro usuario.';
+    RAISE EXCEPTION 'Acceso denegado.';
   END IF;
 
   LOOP
@@ -423,7 +423,7 @@ BEGIN
   SELECT p.role INTO caller_role FROM public.profiles p WHERE p.id = caller_id;
 
   IF caller_role IS NULL OR caller_role != 'admin' THEN
-    RAISE EXCEPTION 'Acceso denegado: solo administradores pueden iniciar contacto.';
+    RAISE EXCEPTION 'Acceso denegado: solo administradores.';
   END IF;
 
   INSERT INTO public.contact_requests (user_id, admin_id, entry_id, initiator, message, status, admin_response)
@@ -442,7 +442,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================================
--- 13. FUNCIÓN: USUARIO ACEPTA CONTACTO (retorna info del admin)
+-- 13. FUNCIÓN: USUARIO ACEPTA CONTACTO
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.accept_cris_entry_and_show_contact(request_id UUID)
 RETURNS JSON AS $$
@@ -461,7 +461,7 @@ BEGIN
   END IF;
 
   IF auth.uid() != v_user_id THEN
-    RAISE EXCEPTION 'Acceso denegado: esta solicitud no te pertenece.';
+    RAISE EXCEPTION 'Acceso denegado.';
   END IF;
 
   UPDATE public.contact_requests
@@ -482,7 +482,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================================
--- 14. FUNCIÓN: USUARIO RECHAZA CONTACTO (cierra la crisis)
+-- 14. FUNCIÓN: USUARIO RECHAZA CONTACTO
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.reject_cris_entry(request_id UUID)
 RETURNS JSON AS $$
@@ -493,26 +493,13 @@ BEGIN
   SELECT user_id, entry_id INTO v_user_id, v_entry_id
   FROM public.contact_requests WHERE id = request_id;
 
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Solicitud no encontrada.';
-  END IF;
+  IF NOT FOUND THEN RAISE EXCEPTION 'No encontrada.'; END IF;
+  IF auth.uid() != v_user_id THEN RAISE EXCEPTION 'Acceso denegado.'; END IF;
 
-  IF auth.uid() != v_user_id THEN
-    RAISE EXCEPTION 'Acceso denegado: esta solicitud no te pertenece.';
-  END IF;
-
-  UPDATE public.contact_requests
-  SET status = 'rejected', updated_at = now()
-  WHERE id = request_id;
+  UPDATE public.contact_requests SET status = 'rejected', updated_at = now() WHERE id = request_id;
 
   IF v_entry_id IS NOT NULL THEN
-    UPDATE public.entries
-    SET status = 'resolved', updated_at = now()
-    WHERE id = v_entry_id;
-  ELSE
-    UPDATE public.entries
-    SET status = 'resolved', updated_at = now()
-    WHERE user_id = v_user_id AND mood = 'Crisis' AND status IN ('active', 'working');
+    UPDATE public.entries SET status = 'resolved', updated_at = now() WHERE id = v_entry_id;
   END IF;
 
   RETURN json_build_object('success', true);
@@ -520,7 +507,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================================
--- 15. FUNCIÓN: ADMIN ACTUALIZA SU INFORMACIÓN DE CONTACTO
+-- 15. FUNCIÓN: ADMIN ACTUALIZA INFO CONTACTO
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.admin_update_contact_info(
   new_email TEXT DEFAULT NULL,
@@ -531,24 +518,15 @@ CREATE OR REPLACE FUNCTION public.admin_update_contact_info(
 RETURNS JSON AS $$
 DECLARE
   caller_id uuid;
-  caller_role text;
 BEGIN
   caller_id := auth.uid();
-
-  IF caller_id IS NULL THEN
-    RAISE EXCEPTION 'No autenticado.';
-  END IF;
-
-  SELECT p.role INTO caller_role FROM public.profiles p WHERE p.id = caller_id;
-  IF caller_role IS NULL OR caller_role != 'admin' THEN
-    RAISE EXCEPTION 'Acceso denegado: solo administradores.';
-  END IF;
+  IF NOT public.is_admin() THEN RAISE EXCEPTION 'Acceso denegado.'; END IF;
 
   UPDATE public.profiles SET
-    contact_email    = COALESCE(admin_update_contact_info.new_email, profiles.contact_email),
-    contact_phone    = COALESCE(admin_update_contact_info.new_phone, profiles.contact_phone),
-    contact_name     = COALESCE(admin_update_contact_info.new_name, profiles.contact_name),
-    contact_is_active = COALESCE(admin_update_contact_info.is_active, profiles.contact_is_active)
+    contact_email    = COALESCE(new_email, contact_email),
+    contact_phone    = COALESCE(new_phone, contact_phone),
+    contact_name     = COALESCE(new_name, contact_name),
+    contact_is_active = COALESCE(is_active, contact_is_active)
   WHERE id = caller_id;
 
   RETURN json_build_object('success', true);
@@ -556,7 +534,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================================
--- 16. FUNCIÓN: OBTENER INFO DE CONTACTO PARA USUARIO
+-- 16. FUNCIÓN: OBTENER INFO CONTACTO
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.get_contact_info_for_user(request_id UUID)
 RETURNS JSON AS $$
@@ -568,24 +546,14 @@ DECLARE
   v_contact_phone text;
   v_contact_name text;
 BEGIN
-  SELECT user_id, admin_id, status::text
-  INTO v_user_id, v_admin_id, v_status
+  SELECT user_id, admin_id, status::text INTO v_user_id, v_admin_id, v_status
   FROM public.contact_requests WHERE id = request_id;
 
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Solicitud no encontrada.';
+  IF NOT FOUND OR auth.uid() != v_user_id OR v_status != 'accepted' THEN
+    RAISE EXCEPTION 'Solicitud no válida o no aceptada.';
   END IF;
 
-  IF auth.uid() != v_user_id THEN
-    RAISE EXCEPTION 'Acceso denegado.';
-  END IF;
-
-  IF v_status != 'accepted' THEN
-    RAISE EXCEPTION 'La solicitud no ha sido aceptada aún.';
-  END IF;
-
-  SELECT contact_email, contact_phone, contact_name
-  INTO v_contact_email, v_contact_phone, v_contact_name
+  SELECT contact_email, contact_phone, contact_name INTO v_contact_email, v_contact_phone, v_contact_name
   FROM public.profiles WHERE id = v_admin_id;
 
   RETURN json_build_object(
@@ -595,3 +563,22 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================================
+-- 17. FUNCIÓN: ENTRADAS POR DÍA
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.get_daily_entries(days integer DEFAULT 7)
+RETURNS TABLE (date text, total_entries bigint, crisis_entries bigint)
+LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  WITH date_series AS (
+    SELECT to_char(generate_series(CURRENT_DATE - (days - 1), CURRENT_DATE, '1 day'::interval), 'YYYY-MM-DD') AS day
+  )
+  SELECT
+    ds.day,
+    COUNT(e.id)::bigint AS total_entries,
+    COUNT(e.id) FILTER (WHERE e.mood = 'Crisis')::bigint AS crisis_entries
+  FROM date_series ds
+  LEFT JOIN entries e ON to_char(e.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') = ds.day
+  GROUP BY ds.day
+  ORDER BY ds.day;
+$$;

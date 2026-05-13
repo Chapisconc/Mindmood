@@ -397,6 +397,8 @@ class AnalyzeRequest(BaseModel):
     text: str = Field(..., min_length=3, max_length=2000, 
                       description="Texto a analizar (3-2000 caracteres)")
     language: str = Field(default="es", description="Idioma del texto")
+    selected_moods: List[str] = Field(default=[],
+                      description="Emociones que el usuario seleccionó manualmente")
     
     @validator('text')
     def text_not_empty(cls, v):
@@ -413,6 +415,7 @@ class AnalysisResponse(BaseModel):
     summary: str
     requires_help: bool
     crisis_level: str
+    selected_moods: List[str]
  
 # ============================================================================
 # 🎯 GENERACIÓN DE RESUMEN MEJORADA
@@ -654,6 +657,21 @@ def analyze(data: AnalyzeRequest):
         detected_moods.append("Excelente")
         distribution["Excelente"] = distribution.pop("Feliz", 0) # Promovemos Feliz a Excelente
 
+    # Paso 6: Mezclar con emociones seleccionadas por el usuario (boost + complemento)
+    if data.selected_moods and len(data.selected_moods) > 0:
+        SELECTED_BOOST = 1.5
+        SELECTED_BASE = 20.0
+        for mood in data.selected_moods:
+            if mood in distribution:
+                distribution[mood] *= SELECTED_BOOST
+            else:
+                distribution[mood] = SELECTED_BASE
+            if mood not in detected_moods:
+                detected_moods.append(mood)
+        total_dist = sum(distribution.values())
+        if total_dist > 0:
+            distribution = {k: round((v / total_dist) * 100, 1) for k, v in distribution.items()}
+    
     # Limitar a máximo 3 emociones para evitar ruido visual
     # Mantener Crisis/Excelente siempre, luego ordenar por distribución
     if len(detected_moods) > 3:
@@ -731,7 +749,8 @@ def analyze(data: AnalyzeRequest):
         score=round(compound, 3),
         requires_help=requires_help,
         confidence=confidence,
-        crisis_level=crisis_level
+        crisis_level=crisis_level,
+        selected_moods=data.selected_moods or []
     )
  
 # ============================================================================

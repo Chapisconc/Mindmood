@@ -10,6 +10,19 @@ import EmotionModal from "../components/EmotionModal";
 import AppButton from "../components/AppButton";
 
 const MAX_CHARS = 2000;
+const MOODS = [
+  { name: "Excelente", color: "#10B981" },
+  { name: "Feliz", color: "#EC4899" },
+  { name: "Agradecido", color: "#FBBF24" },
+  { name: "Sorpresa", color: "#06B6D4" },
+  { name: "Neutral", color: "#A78BFA" },
+  { name: "Enojo", color: "#F97316" },
+  { name: "Ansiedad", color: "#8B5CF6" },
+  { name: "Miedo", color: "#7C3AED" },
+  { name: "Triste", color: "#F43F5E" },
+  { name: "Asco", color: "#84CC16" },
+  { name: "Crisis", color: "#EF4444" },
+];
 
 export default function NewEntry() {
   const navigate = useNavigate();
@@ -21,6 +34,7 @@ export default function NewEntry() {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalData, setModalData] = useState({ type: "normal", summary: "", distribution: null });
   const [apiStatus, setApiStatus] = useState("connecting");
+  const [selectedMoods, setSelectedMoods] = useState([]);
 
   const TUNNEL_URL = (import.meta.env.VITE_API_TUNNEL_URL || import.meta.env.VITE_API_NGROK_URL || "") + "/analyze";
   const LOCAL_URL = import.meta.env.VITE_API_LOCAL_URL
@@ -100,7 +114,7 @@ export default function NewEntry() {
                 ...(url.includes("ngrok") ? { "ngrok-skip-browser-warning": "true" } : {}),
                 ...(url.includes("trycloudflare") ? { "cf-access-token": "" } : {}),
               },
-              body: JSON.stringify({ text }),
+              body: JSON.stringify({ text, selected_moods: selectedMoods }),
               signal: controller.signal,
             });
             clearTimeout(timeoutId);
@@ -117,12 +131,14 @@ export default function NewEntry() {
       const { data: { user } } = await supabase.auth.getUser();
       const { mood, score, requires_help, summary, emotions_distribution } = aiData;
 
+      const finalSelectedMoods = aiData.selected_moods || selectedMoods;
+
       let { error: entryError } = await supabase.from("entries").insert([
-        { user_id: user.id, text, mood, score, distribution: emotions_distribution },
+        { user_id: user.id, text, mood, score, distribution: emotions_distribution, selected_moods: finalSelectedMoods },
       ]);
 
       if (entryError && entryError.message?.includes("distribution")) {
-        const fallback = await supabase.from("entries").insert([{ user_id: user.id, text, mood, score }]);
+        const fallback = await supabase.from("entries").insert([{ user_id: user.id, text, mood, score, selected_moods: finalSelectedMoods }]);
         entryError = fallback.error;
       }
       if (entryError) throw entryError;
@@ -135,6 +151,7 @@ export default function NewEntry() {
         summary: isOffline ? "Guardado localmente (Modo Offline)" : summary,
         distribution: emotions_distribution,
         primaryMood: mood,
+        selectedMoods: aiData.selected_moods || selectedMoods,
       });
       setModalVisible(true);
     } catch (e) {
@@ -269,6 +286,38 @@ export default function NewEntry() {
             </div>
           </div>
 
+          <div className="mb-5 mt-7">
+            <p className="text-[13px] font-bold mb-3" style={{ color: themeStyles.secondaryText }}>
+              ¿Qué emociones identificas? <span className="font-normal opacity-60">(toca las que resuenen)</span>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {MOODS.map((m) => {
+                const isSelected = selectedMoods.includes(m.name);
+                return (
+                  <button
+                    key={m.name}
+                    onClick={() => {
+                      setSelectedMoods((prev) =>
+                        prev.includes(m.name)
+                          ? prev.filter((x) => x !== m.name)
+                          : [...prev, m.name]
+                      );
+                    }}
+                    style={{
+                      backgroundColor: isSelected ? m.color : "transparent",
+                      borderColor: m.color,
+                      color: isSelected ? "#FFF" : m.color,
+                    }}
+                    className="px-4 py-2 rounded-full text-[13px] font-bold border cursor-pointer transition-all duration-200 active:scale-95"
+                    type="button"
+                  >
+                    {m.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {loading ? (
             <div className="mt-8 flex flex-col items-center">
               <div
@@ -304,6 +353,7 @@ export default function NewEntry() {
         summary={modalData.summary}
         distribution={modalData.distribution}
         primaryMood={modalData.primaryMood}
+        selectedMoods={modalData.selectedMoods}
       />
     </div>
   );

@@ -92,7 +92,7 @@ function getPhrase(mood) {
   return list[dayOfYear % list.length];
 }
 
-export default function EmotionModal({ visible, onClose, type, summary, distribution, primaryMood }) {
+export default function EmotionModal({ visible, onClose, type, summary, distribution, primaryMood, selectedMoods }) {
   const { themeStyles } = useTheme();
   const isCrisis = type === "crisis";
   const config = MOOD_CONFIGS[primaryMood] || MOOD_CONFIGS.Neutral;
@@ -156,6 +156,31 @@ export default function EmotionModal({ visible, onClose, type, summary, distribu
         >
           {phrase}
         </p>
+
+        {selectedMoods?.length > 0 && (
+          <div className="w-full mb-4">
+            <p className="text-xs font-black uppercase tracking-wider mb-2.5" style={{ color: "rgba(255,255,255,0.5)" }}>
+              Tus emociones
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {selectedMoods.map((m) => {
+                const cfg = MOOD_CONFIGS[m];
+                return (
+                  <span
+                    key={m}
+                    style={{
+                      backgroundColor: cfg?.border || config.border,
+                      color: "#FFF",
+                    }}
+                    className="px-3 py-1.5 rounded-full text-[12px] font-extrabold"
+                  >
+                    {m}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {total > 0 && (
           <div className="w-full mb-6 space-y-2.5">

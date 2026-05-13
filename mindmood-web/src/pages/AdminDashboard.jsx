@@ -169,9 +169,13 @@ export default function AdminDashboard() {
     );
   }
 
+  const glass = { backgroundColor: themeStyles.glassBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: themeStyles.border };
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: themeStyles.background }}>
-      <div className="max-w-4xl mx-auto pb-20">
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: themeStyles.background }}>
+      <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-[120px] opacity-[0.05]" style={{ backgroundColor: themeStyles.accent }} />
+      <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-[120px] opacity-[0.04]" style={{ backgroundColor: themeStyles.glow }} />
+      <div className="max-w-4xl mx-auto pb-20 relative z-10">
         <div className="flex items-center justify-between px-5 pt-6 pb-4">
           <div className="flex items-center gap-3">
             <button
@@ -199,7 +203,7 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, x: -15 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex-1 rounded-3xl p-5 border relative overflow-hidden"
-            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+            style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
           >
             <div className="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl" style={{ backgroundColor: "#10B98120" }} />
             <Users size={22} color="#10B981" />
@@ -211,7 +215,7 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
             className="flex-1 rounded-3xl p-5 border relative overflow-hidden"
-            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+            style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
           >
             <div className="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl" style={{ backgroundColor: "#EC489920" }} />
             <BookOpen size={22} color="#EC4899" />
@@ -221,7 +225,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="mx-5 p-5 rounded-3xl border mb-4"
-          style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+          style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
         >
           <div className="flex items-center justify-between mb-4">
             <p className="text-base font-black" style={{ color: themeStyles.text }}>Distribución Emocional</p>
@@ -292,7 +296,7 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex-1 rounded-3xl p-4 border"
-            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+            style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
           >
             <p className="text-xs font-black mb-2" style={{ color: themeStyles.secondaryText }}>Crisis vs Normal</p>
             {crisisPie.length > 0 ? (
@@ -325,7 +329,7 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             className="flex-1 rounded-3xl p-4 border"
-            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+            style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
           >
             <p className="text-xs font-black mb-2" style={{ color: themeStyles.secondaryText }}>Estado Alarmas</p>
             {alarmStatusData.length > 0 ? (
@@ -360,7 +364,7 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
             className="mx-5 mb-4 p-5 rounded-3xl border"
-            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+            style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
           >
             <p className="text-base font-black mb-4" style={{ color: themeStyles.text }}>Barras por Emoción</p>
             <div style={{ width: "100%", height: 200 }}>
@@ -389,7 +393,7 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="mx-5 mb-4 p-5 rounded-3xl border"
-            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+            style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
           >
             <p className="text-base font-black mb-3" style={{ color: themeStyles.text }}>Usuarios con más Crisis</p>
             {crisisLeaders.map((u, i) => (
@@ -429,7 +433,7 @@ export default function AdminDashboard() {
         <div className="px-5 mb-4">
           <div
             className="flex items-center gap-3 p-4 rounded-2xl border"
-            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+            style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
           >
             <Search size={18} color={themeStyles.glow} />
             <input
@@ -471,7 +475,7 @@ export default function AdminDashboard() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ delay: i * 0.03 }}
                 className="mx-5 mb-3 p-4 rounded-2xl border"
-                style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+                style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
               >
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex-1 min-w-0">

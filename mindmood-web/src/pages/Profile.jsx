@@ -110,9 +110,12 @@ export default function Profile() {
     }
   };
 
+  const glass = { backgroundColor: themeStyles.glassBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: themeStyles.border };
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: themeStyles.background }}>
-      <div className="max-w-lg mx-auto pb-16 px-5">
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: themeStyles.background }}>
+      <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full blur-[100px] opacity-[0.06]" style={{ backgroundColor: themeStyles.accent }} />
+      <div className="max-w-lg mx-auto pb-16 px-5 relative z-10">
         <button
           onClick={() => navigate("/home")}
           className="bg-transparent border-none cursor-pointer pt-8 pb-2 flex items-center gap-2"
@@ -128,7 +131,7 @@ export default function Profile() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="p-5 rounded-[26px] mb-5 border"
-            style={{ backgroundColor: themeStyles.card, borderColor: "#EC489940" }}
+            style={{ ...glass, borderColor: "#EC489940", boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
           >
             <p className="text-sm font-black uppercase tracking-[1px] mb-4" style={{ color: "#EC4899" }}>
               🔐 Perfil de Administrador
@@ -213,7 +216,7 @@ export default function Profile() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="p-5 rounded-[26px] mb-5 border"
-          style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+          style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
         >
           <label className="text-xs font-extrabold mb-3 ml-1 block uppercase tracking-[1px]" style={{ color: themeStyles.secondaryText }}>
             {t("displayName")}
@@ -232,7 +235,7 @@ export default function Profile() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="p-5 rounded-[26px] mb-5 border"
-          style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+          style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
         >
           <label className="text-xs font-extrabold mb-3 ml-1 block uppercase tracking-[1px]" style={{ color: themeStyles.secondaryText }}>
             {t("languageSection")}
@@ -268,7 +271,7 @@ export default function Profile() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="p-5 rounded-[26px] mb-5 border"
-          style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+          style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
         >
           <label className="text-xs font-extrabold mb-3 ml-1 block uppercase tracking-[1px]" style={{ color: themeStyles.secondaryText }}>
             {t("dailyReminder")}

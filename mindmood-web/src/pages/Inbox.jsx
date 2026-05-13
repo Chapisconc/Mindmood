@@ -67,9 +67,12 @@ export default function Inbox() {
     );
   }
 
+  const glass = { backgroundColor: themeStyles.glassBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: themeStyles.border };
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: themeStyles.background }}>
-      <div className="max-w-lg mx-auto pb-16">
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: themeStyles.background }}>
+      <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full blur-[100px] opacity-[0.06]" style={{ backgroundColor: themeStyles.accent }} />
+      <div className="max-w-lg mx-auto pb-16 relative z-10">
         <button
           onClick={() => navigate("/home")}
           className="bg-transparent border-none cursor-pointer px-6 pt-8 pb-2 flex items-center gap-2"
@@ -113,8 +116,9 @@ export default function Inbox() {
                   transition={{ duration: 0.3, delay: i * 0.05 }}
                   className="p-5 rounded-[26px] mb-4 border-[1.5px] cursor-pointer"
                   style={{
-                    backgroundColor: themeStyles.card,
+                    ...glass,
                     borderColor: isAccepted ? "#10B981" : themeStyles.border,
+                    boxShadow: `0 8px 24px ${themeStyles.shadow}`,
                   }}
                   onClick={() => handleAction(item)}
                 >

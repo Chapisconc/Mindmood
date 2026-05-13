@@ -90,9 +90,12 @@ export default function History() {
     );
   }
 
+  const glass = { backgroundColor: themeStyles.glassBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: themeStyles.border };
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: themeStyles.background }}>
-      <div className="max-w-lg mx-auto pb-10">
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: themeStyles.background }}>
+      <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full blur-[100px] opacity-[0.06]" style={{ backgroundColor: themeStyles.accent }} />
+      <div className="max-w-lg mx-auto pb-10 relative z-10">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
           <button
             onClick={() => navigate("/home")}
@@ -136,9 +139,8 @@ export default function History() {
                   style={{
                     borderLeftColor: emotionColor,
                     borderLeftWidth: 4,
-                    backgroundColor: themeStyles.card,
-                    borderColor: themeStyles.border,
-                    boxShadow: `0 10px 20px ${themeStyles.shadow}`,
+                    ...glass,
+                    boxShadow: `0 8px 24px ${themeStyles.shadow}`,
                   }}
                 >
                   <div className="flex justify-between items-start mb-4 pb-3"

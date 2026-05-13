@@ -98,8 +98,8 @@ export default function Login() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-10"
         >
-          <div className="flex justify-center mb-4">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: themeStyles.card }}>
+            <div className="flex justify-center mb-4">
+              <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: themeStyles.glassBg, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
               <Heart size={40} color="#EC4899" />
             </div>
           </div>
@@ -130,7 +130,9 @@ export default function Login() {
               placeholder="Correo electrónico"
               className="w-full h-14 pl-12 pr-4 rounded-2xl border text-base font-medium outline-none"
               style={{
-                backgroundColor: themeStyles.card,
+                backgroundColor: themeStyles.glassBg,
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
                 borderColor: themeStyles.border,
                 color: themeStyles.text,
               }}
@@ -150,7 +152,9 @@ export default function Login() {
               placeholder="Contraseña"
               className="w-full h-14 pl-12 pr-14 rounded-2xl border text-base font-medium outline-none"
               style={{
-                backgroundColor: themeStyles.card,
+                backgroundColor: themeStyles.glassBg,
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
                 borderColor: themeStyles.border,
                 color: themeStyles.text,
               }}

@@ -58,9 +58,12 @@ export default function Stats() {
 
   const pieColors = ["#EC4899", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#F97316", "#84CC16", "#7C3AED", "#F43F5E"];
 
+  const glass = { backgroundColor: themeStyles.glassBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: themeStyles.border };
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: themeStyles.background }}>
-      <div className="max-w-lg mx-auto pb-20">
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: themeStyles.background }}>
+      <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full blur-[100px] opacity-[0.06]" style={{ backgroundColor: themeStyles.accent }} />
+      <div className="max-w-lg mx-auto pb-20 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -89,8 +92,8 @@ export default function Stats() {
               transition={{ delay: 0.1 }}
               className="flex-1 rounded-3xl p-5 border relative overflow-hidden"
               style={{
-                backgroundColor: themeStyles.card,
-                borderColor: themeStyles.border,
+                ...glass,
+                boxShadow: `0 8px 24px ${themeStyles.shadow}`,
               }}
             >
               <div
@@ -111,8 +114,8 @@ export default function Stats() {
               transition={{ delay: 0.15 }}
               className="flex-1 rounded-3xl p-5 border relative overflow-hidden"
               style={{
-                backgroundColor: themeStyles.card,
-                borderColor: themeStyles.border,
+                ...glass,
+                boxShadow: `0 8px 24px ${themeStyles.shadow}`,
               }}
             >
               <div
@@ -136,8 +139,8 @@ export default function Stats() {
               transition={{ delay: 0.2 }}
               className="mx-6 p-5 rounded-3xl border mb-4"
               style={{
-                backgroundColor: themeStyles.card,
-                borderColor: themeStyles.border,
+                ...glass,
+                boxShadow: `0 8px 24px ${themeStyles.shadow}`,
               }}
             >
               <div className="flex items-center justify-between mb-4">
@@ -187,7 +190,7 @@ export default function Stats() {
           )}
 
           <div className="mx-6 p-5 rounded-3xl border mb-4"
-            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+            style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
           >
             <p className="text-base font-black mb-4" style={{ color: themeStyles.text }}>
               Balance Emocional
@@ -203,7 +206,7 @@ export default function Stats() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               className="flex-1 p-5 rounded-3xl border"
-              style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+              style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
             >
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-black" style={{ color: themeStyles.text }}>
@@ -267,7 +270,7 @@ export default function Stats() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
               className="flex-1 p-5 rounded-3xl border"
-              style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+              style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
             >
               <p className="text-sm font-black mb-4" style={{ color: themeStyles.text }}>
                 Estados
@@ -300,7 +303,7 @@ export default function Stats() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-md rounded-4xl p-6 border"
-            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+            style={{ backgroundColor: themeStyles.glassBg, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderColor: themeStyles.border, boxShadow: `0 16px 48px ${themeStyles.shadow}` }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-4 mb-4" style={{ borderBottom: `1px solid ${themeStyles.border}` }}>

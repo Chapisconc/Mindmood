@@ -91,9 +91,11 @@ export default function Register() {
           <div
             className="p-[26px] rounded-[28px] border"
             style={{
-              backgroundColor: themeStyles.card,
+              backgroundColor: themeStyles.glassBg,
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
               borderColor: themeStyles.border,
-              boxShadow: `0 12px 24px ${themeStyles.shadow}`,
+              boxShadow: `0 12px 32px ${themeStyles.shadow}`,
             }}
           >
             {error && (
