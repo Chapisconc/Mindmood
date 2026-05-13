@@ -165,14 +165,14 @@ export default function Layout() {
 
   if (!user) return <Navigate to="/" replace />;
 
-  const isAdmin = profile?.role === "admin";
-  const wrapperClass = isAdmin ? "lg:ml-0" : (sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]");
+  const isAdminRoute = currentPath === "/admin-dashboard";
+  const wrapperClass = isAdminRoute ? "lg:ml-0" : (sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]");
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950">
-      {!isAdmin && <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} currentPath={currentPath} navigate={navigate} />}
+      {!isAdminRoute && <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} currentPath={currentPath} navigate={navigate} />}
 
-      <div className={`transition-all duration-200 ${wrapperClass}`} style={{ paddingBottom: isAdmin ? "0px" : "80px" }}>
+      <div className={`transition-all duration-200 ${wrapperClass}`} style={{ paddingBottom: isAdminRoute ? "0px" : "80px" }}>
         <div className="max-w-6xl mx-auto">
           <AnimatePresence mode="wait">
             <motion.div key={currentPath} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
