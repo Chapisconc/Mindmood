@@ -1,0 +1,133 @@
+====================================================
+  MINDTMOOD - GUIA DE DESPLIEGUE COMPLETA
+====================================================
+
+Requiere:
+  - Node.js 18+
+  - Cuenta en Vercel (gratis): https://vercel.com/signup
+  - Cuenta en GitHub (ya tienes)
+  - cloudflared: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+
+
+===================
+ 1. FRONTEND (Vercel)
+===================
+
+1a. Instalar Vercel CLI (si no lo tienes):
+  npm install -g vercel
+
+1b. Hacer login (abre el navegador):
+  vercel login
+
+  Selecciona "Continue with GitHub", autoriza, y vuelve a la terminal.
+
+1c. Desplegar:
+  cd mindmood-web
+  vercel --prod
+
+  Te preguntara:
+  - "Set up and deploy"? → Y
+  - "Which scope"? → (selecciona tu usuario)
+  - "Link to existing project"? → N
+  - "Project name"? → mindmood-web (ENTER)
+  - "In which directory"? → . (ENTER)
+  - "Override settings"? → N
+
+1d. Agregar variables de entorno en Vercel:
+  Ve a https://vercel.com → Dashboard → mindmood-web → Settings → Environment Variables
+
+  Agrega estas 3 variables (Production):
+  - VITE_SUPABASE_URL = https://zeqbaahbmrkqcfzkylxf.supabase.co
+  - VITE_SUPABASE_ANON_KEY = (la que tienes en tu .env local)
+  - VITE_API_LOCAL_URL = http://127.0.0.1:8000
+
+  (VITE_API_TUNNEL_URL la agregaras despues de iniciar el tunel)
+
+1e. Redeploy:
+  En el dashboard de Vercel → Deployments → ⋮ → Redeploy
+  O desde terminal:
+  vercel --prod
+
+1f. Para updates futuros:
+  git push (automatico si conectaste GitHub)
+  O manual: cd mindmood-web && vercel --prod
+
+  Si conectaste GitHub a Vercel, cada push a main redeploya automaticamente.
+
+
+===================
+ 2. BACKEND (Local + Tunel)
+===================
+
+2a. Preparar entorno:
+  cd ai_api
+  python -m venv venv
+  .\venv\Scripts\activate
+  pip install -r requirements.txt
+
+2b. Crear ai_api/.env:
+  SUPABASE_URL=https://zeqbaahbmrkqcfzkylxf.supabase.co
+  SUPABASE_KEY=<tu-service-role-key>
+  CORS_ORIGINS=https://mindmood-web.vercel.app,http://localhost:5173
+
+2c. Iniciar API + Tunel (un solo comando):
+  .\start_local.ps1
+
+2d. La terminal mostrara algo como:
+  2025-xx-xxT00:00:00Z INF Tunnel server started
+  https://mindmood-api.trycloudflare.com
+
+  COPIA ESA URL (termina en trycloudflare.com).
+
+2e. Agregar la URL a Vercel:
+  Ve a https://vercel.com → mindmood-web → Settings → Environment Variables
+  Agrega:
+  - VITE_API_TUNNEL_URL = https://mindmood-api.trycloudflare.com
+
+2f. Redeploy en Vercel:
+  vercel --prod
+
+  Ahora la web en Vercel llamara a tu API local via el tunel.
+
+
+===================
+ 3. VERIFICACION
+===================
+
+3a. Abre https://mindmood-web.vercel.app
+3b. Inicia sesion
+3c. Escribe una entrada → "Guardar en la Boveda"
+3d. Deberia mostrar "⚡ Local" (verde) si detecta el tunel
+3e. Si sale "⛔ Offline", algo fallo con el tunel
+
+
+===================
+ 4. MANTENIMIENTO
+===================
+
+- El tunel cloudflared debe estar corriendo cada vez que uses la app
+- Cuando cierres cloudflared (Ctrl+C), la app seguira funcionando en Vercel
+  pero mostrara "Offline" y no podra analizar emociones
+- Las entradas SIN analisis se guardaran con mood="Neutral" y score=0
+- Si cambias la URL del tunel (cada vez que reinicias cloudflared),
+  actualiza VITE_API_TUNNEL_URL en Vercel y redeploya
+
+
+===================
+ 5. SOLUCION DE PROBLEMAS
+===================
+
+Error: "no token": API no esta corriendo o el tunel no funciona
+  → Revisa que start_local.ps1 este activo
+  → Verifica la URL del tunel en Vercel
+
+Error CORS: "has been blocked by CORS policy"
+  → Agrega tu dominio de Vercel en ai_api/main.py → ALLOWED_ORIGINS
+  → O usa la variable de entorno CORS_ORIGINS
+
+Error 429: demasiadas solicitudes
+  → Espera 1 minuto (rate limit: 10 por minuto)
+
+Error 500 en /analyze:
+  → Revisa la terminal del API por errores
+  → El modelo de HuggingFace necesita ~2GB RAM
