@@ -15,6 +15,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const timeoutRef = useRef(null);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -34,14 +35,16 @@ export default function Login() {
     }
     setError("");
     setLoading(true);
-    
+    loadingRef.current = true;
+
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-      if (loading) {
+      if (loadingRef.current) {
         setLoading(false);
+        loadingRef.current = false;
         setError("Tiempo de espera agotado. Intenta de nuevo.");
       }
-    }, 10000);
+    }, 15000);
 
     try {
       const {
@@ -54,33 +57,31 @@ export default function Login() {
 
       if (signInError) {
         setError(signInError.message);
-        setLoading(false);
         return;
       }
 
       if (!user) {
         setError("Usuario no encontrado");
-        setLoading(false);
         return;
       }
 
+      supabase.from("profiles").update({ theme }).eq("id", user.id).then().catch(() => {});
+
+      let role = user.user_metadata?.role;
       try {
-        await supabase.from("profiles").update({ theme: theme }).eq("id", user.id);
+        const result = await Promise.race([
+          supabase.from("profiles").select("role").eq("id", user.id).single(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
+        ]);
+        if (result?.data?.role) role = result.data.role;
       } catch (_) {}
 
-      try {
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-        if (profile?.role === "admin") {
-          navigate("/admin-dashboard");
-        } else {
-          navigate("/home");
-        }
-      } catch (_) {
-        navigate("/home");
-      }
+      if (role === "admin") navigate("/admin-dashboard");
+      else navigate("/home");
     } catch (err) {
-      setError(err.message || "Error al iniciar sesión");
+      setError(err?.message || "Error al iniciar sesión");
     } finally {
+      loadingRef.current = false;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setLoading(false);
     }
