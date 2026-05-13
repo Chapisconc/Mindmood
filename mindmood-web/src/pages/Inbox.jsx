@@ -19,23 +19,15 @@ export default function Inbox() {
     setLoading(true);
     const { data, error } = await contactService.getMyRequests();
     if (!error) setRequests(data || []);
-    else if (import.meta.env.DEV) console.error("[Inbox] Fetch Error:", error);
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
+  useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
   const handleAccept = async (requestId) => {
     const { data, error } = await contactService.acceptCrisEntry(requestId);
     if (!error && data) {
-      setContactModal({
-        visible: true,
-        name: data.admin_name || "Contacto Profesional",
-        email: data.admin_email || "",
-        phone: data.admin_phone || "",
-      });
+      setContactModal({ visible: true, name: data.admin_name || "Contacto Profesional", email: data.admin_email || "", phone: data.admin_phone || "" });
       fetchRequests();
     }
   };
@@ -50,156 +42,88 @@ export default function Inbox() {
   const handleAction = (item) => {
     if (item.status === "accepted") {
       const admin = item.admin || {};
-      setContactModal({
-        visible: true,
-        name: admin.contact_name || "Contacto Profesional",
-        email: admin.contact_email || admin.email || "",
-        phone: admin.contact_phone || "",
-      });
+      setContactModal({ visible: true, name: admin.contact_name || "Contacto Profesional", email: admin.contact_email || admin.email || "", phone: admin.contact_phone || "" });
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: themeStyles.background }}>
-        <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: `${themeStyles.accent}40`, borderTopColor: themeStyles.accent }} />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full" />
       </div>
     );
   }
 
-  const glass = { backgroundColor: themeStyles.glassBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: themeStyles.border };
-
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: themeStyles.background }}>
-      <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full blur-[100px] opacity-[0.06]" style={{ backgroundColor: themeStyles.accent }} />
-      <div className="max-w-lg mx-auto pb-16 relative z-10">
-        <button
-          onClick={() => navigate("/home")}
-          className="bg-transparent border-none cursor-pointer px-6 pt-8 pb-2 flex items-center gap-2"
-        >
-          <ArrowLeft size={24} color={themeStyles.secondaryText} />
-          <span className="text-sm font-bold" style={{ color: themeStyles.secondaryText }}>Volver</span>
-        </button>
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 relative overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-500/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 lg:px-12 py-6 lg:py-12 relative z-10 pb-24">
+        <header className="flex items-center gap-4 mb-10">
+          <button onClick={() => navigate("/home")} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors dark:text-white">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-3xl font-black dark:text-white">Bandeja</h1>
+        </header>
 
         {requests.length === 0 ? (
-          <div className="flex flex-col items-center mt-20 px-6">
-            <Bell size={68} color={themeStyles.glow} />
-            <p className="mt-5 text-[17px] font-semibold text-center" style={{ color: themeStyles.secondaryText }}>
-              No tienes mensajes aún.
-            </p>
-            <button
-              onClick={async () => {
-                if (user) {
-                  await contactService.requestContact(user.id);
-                  fetchRequests();
-                }
-              }}
-              className="mt-8 px-8 py-4 rounded-[22px] text-white text-base font-extrabold cursor-pointer border-none"
-              style={{ backgroundColor: themeStyles.accent }}
-            >
+          <div className="flex flex-col items-center mt-20">
+            <Bell size={68} className="text-slate-300 dark:text-slate-600" />
+            <p className="mt-5 text-lg font-semibold text-slate-400">No tienes mensajes aún.</p>
+            <button onClick={async () => { if (user) { await contactService.requestContact(user.id); fetchRequests(); } }}
+              className="mt-8 px-8 py-4 rounded-[22px] text-white text-base font-extrabold cursor-pointer border-none bg-indigo-500 hover:bg-indigo-600 transition-colors">
               Solicitar Contacto
             </button>
           </div>
         ) : (
-          <div className="px-5 pt-4">
+          <div className="grid gap-4 max-w-2xl">
             {requests.map((item, i) => {
               const isAccepted = item.status === "accepted";
               const isPending = item.status === "pending";
               const isRejected = item.status === "rejected";
               const admin = item.admin || {};
-
               return (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: i * 0.05 }}
-                  className="p-5 rounded-[26px] mb-4 border-[1.5px] cursor-pointer"
-                  style={{
-                    ...glass,
-                    borderColor: isAccepted ? "#10B981" : themeStyles.border,
-                    boxShadow: `0 8px 24px ${themeStyles.shadow}`,
-                  }}
+                <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                  className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 cursor-pointer relative overflow-hidden"
                   onClick={() => handleAction(item)}
+                  style={{ borderColor: isAccepted ? "#10B981" : undefined }}
                 >
-                  <div className="flex justify-between items-center mb-3">
-                    <div
-                      className="px-3 py-1.5 rounded-xl text-[11px] font-black"
-                      style={{
-                        backgroundColor: isAccepted ? "#10B98120" : isPending ? "#F59E0B20" : "#EF444420",
-                        color: isAccepted ? "#10B981" : isPending ? "#F59E0B" : "#EF4444",
-                      }}
-                    >
+                  <div className="flex justify-between items-center mb-4">
+                    <div className={`px-3 py-1.5 rounded-xl text-[11px] font-black ${isAccepted ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" : isPending ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" : "bg-red-100 dark:bg-red-900/30 text-red-600"}`}>
                       {isAccepted ? "ACEPTADO" : isPending ? "PENDIENTE" : "RECHAZADO"}
                     </div>
-                    <span className="text-[13px]" style={{ color: themeStyles.secondaryText }}>
-                      {new Date(item.created_at).toLocaleDateString()}
-                    </span>
+                    <span className="text-[13px] text-slate-400">{new Date(item.created_at).toLocaleDateString()}</span>
                   </div>
 
-                  <p className="text-[15px] font-extrabold mb-1.5" style={{ color: themeStyles.text }}>
-                    {item.initiator === "admin"
-                      ? (admin.contact_name ? `Mensaje de ${admin.contact_name}:` : "Mensaje del Administrador:")
-                      : "Tu solicitud:"}
+                  <p className="text-base font-extrabold mb-2 dark:text-white">
+                    {item.initiator === "admin" ? (admin.contact_name ? `Mensaje de ${admin.contact_name}:` : "Mensaje del Administrador:") : "Tu solicitud:"}
                   </p>
-                  <p className="text-[15px] leading-[22px] line-clamp-3" style={{ color: themeStyles.secondaryText }}>
-                    {item.message || "Sin mensaje adicional."}
-                  </p>
+                  <p className="text-sm leading-relaxed text-slate-500 line-clamp-3">{item.message || "Sin mensaje adicional."}</p>
 
                   {isPending && item.initiator === "admin" && (
-                    <div className="flex gap-3 mt-4">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleAccept(item.id); }}
-                        className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none"
-                        style={{ backgroundColor: "#10B98120", color: "#10B981" }}
-                      >
-                        Aceptar
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleReject(item.id); }}
-                        className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none"
-                        style={{ backgroundColor: "#EF444420", color: "#EF4444" }}
-                      >
-                        Declinar
-                      </button>
+                    <div className="flex gap-3 mt-5">
+                      <button onClick={(e) => { e.stopPropagation(); handleAccept(item.id); }} className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600">Aceptar</button>
+                      <button onClick={(e) => { e.stopPropagation(); handleReject(item.id); }} className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none bg-red-100 dark:bg-red-900/30 text-red-600">Declinar</button>
                     </div>
                   )}
 
                   {isAccepted && (
-                    <div
-                      className="mt-4 p-5 rounded-xl border"
-                      style={{ backgroundColor: "rgba(16, 185, 129, 0.08)", borderColor: "#10B981" }}
-                    >
-                      <p className="text-xs font-extrabold uppercase tracking-[1px] mb-1" style={{ color: "#10B981" }}>
-                        Contacto
-                      </p>
-                      {admin.contact_name && (
-                        <p className="text-base font-bold mb-3" style={{ color: themeStyles.text }}>👤 {admin.contact_name}</p>
-                      )}
-                      {(admin.contact_email || admin.email) && (
-                        <p className="text-base font-bold mb-3" style={{ color: themeStyles.text }}>
-                          📧 {admin.contact_email || admin.email}
-                        </p>
-                      )}
-                      {admin.contact_phone && (
-                        <p className="text-base font-bold mb-3" style={{ color: themeStyles.text }}>📞 {admin.contact_phone}</p>
-                      )}
+                    <div className="mt-5 p-5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
+                      <p className="text-xs font-extrabold uppercase tracking-[1px] mb-2 text-emerald-600">Contacto</p>
+                      {admin.contact_name && <p className="text-base font-bold mb-2 dark:text-white">👤 {admin.contact_name}</p>}
+                      {(admin.contact_email || admin.email) && <p className="text-base font-bold mb-2 dark:text-white">📧 {admin.contact_email || admin.email}</p>}
+                      {admin.contact_phone && <p className="text-base font-bold mb-3 dark:text-white">📞 {admin.contact_phone}</p>}
                       <div className="flex gap-3 mt-2">
                         {admin.contact_phone && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); window.open(`tel:${admin.contact_phone}`, "_self"); }}
-                            className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none flex items-center justify-center gap-1"
-                            style={{ backgroundColor: "#10B98120", color: "#10B981" }}
-                          >
+                          <button onClick={(e) => { e.stopPropagation(); window.open(`tel:${admin.contact_phone}`, "_self"); }} className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none flex items-center justify-center gap-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600">
                             <Phone size={14} /> Llamar
                           </button>
                         )}
                         {(admin.contact_email || admin.email) && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); window.open(`mailto:${admin.contact_email || admin.email}?subject=MindMood Contacto`, "_self"); }}
-                            className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none flex items-center justify-center gap-1"
-                            style={{ backgroundColor: "#8B5CF620", color: "#8B5CF6" }}
-                          >
+                          <button onClick={(e) => { e.stopPropagation(); window.open(`mailto:${admin.contact_email || admin.email}`, "_self"); }} className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none flex items-center justify-center gap-1 bg-violet-100 dark:bg-violet-900/30 text-violet-600">
                             <Mail size={14} /> Email
                           </button>
                         )}
@@ -208,11 +132,8 @@ export default function Inbox() {
                   )}
 
                   {isRejected && (
-                    <div
-                      className="mt-4 p-4 rounded-xl border text-center"
-                      style={{ backgroundColor: "rgba(239, 68, 68, 0.06)", borderColor: "rgba(239, 68, 68, 0.3)" }}
-                    >
-                      <p className="text-[15px] font-bold" style={{ color: "#EF4444" }}>Invitación declinada</p>
+                    <div className="mt-5 p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 text-center">
+                      <p className="text-sm font-bold text-red-600">Invitación declinada</p>
                     </div>
                   )}
                 </motion.div>
@@ -222,13 +143,7 @@ export default function Inbox() {
         )}
       </div>
 
-      <ContactInfoModal
-        visible={contactModal.visible}
-        onClose={() => setContactModal({ visible: false, name: "", email: "", phone: "" })}
-        adminName={contactModal.name}
-        adminEmail={contactModal.email}
-        adminPhone={contactModal.phone}
-      />
+      <ContactInfoModal visible={contactModal.visible} onClose={() => setContactModal({ visible: false, name: "", email: "", phone: "" })} adminName={contactModal.name} adminEmail={contactModal.email} adminPhone={contactModal.phone} />
     </div>
   );
 }

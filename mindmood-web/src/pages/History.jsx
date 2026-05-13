@@ -1,24 +1,27 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, Clock, ArrowLeft } from "lucide-react";
+import { Search, ChevronRight, Clock, Sparkles, Sun, HeartHandshake, Zap, Waves, Flame, Wind, Ghost, CloudRain, Frown, AlertTriangle, HelpCircle } from "lucide-react";
 import { supabase } from "../services/supabase";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
 import { getCachedData, setCachedData, cacheKeys } from "../services/cache";
 
-const EMOTION_COLORS = {
-  Excelente: "#10B981", Feliz: "#EC4899", Agradecido: "#FBBF24",
-  Sorpresa: "#06B6D4", Neutral: "#A78BFA", Enojo: "#F97316",
-  Ansiedad: "#8B5CF6", Miedo: "#7C3AED", Triste: "#F43F5E", Crisis: "#EF4444",
-  Asco: "#84CC16", Indeterminado: "#64748B",
-};
+const MOODS = [
+  { id: "excelente", name: "Excelente", color: "#10B981", icon: Sparkles },
+  { id: "feliz", name: "Feliz", color: "#F472B6", icon: Sun },
+  { id: "agradecido", name: "Agradecido", color: "#FBBF24", icon: HeartHandshake },
+  { id: "sorpresa", name: "Sorpresa", color: "#22D3EE", icon: Zap },
+  { id: "neutral", name: "Neutral", color: "#818CF8", icon: Waves },
+  { id: "enojo", name: "Enojo", color: "#FB923C", icon: Flame },
+  { id: "ansiedad", name: "Ansiedad", color: "#A78BFA", icon: Wind },
+  { id: "miedo", name: "Miedo", color: "#C084FC", icon: Ghost },
+  { id: "triste", name: "Triste", color: "#FB7185", icon: CloudRain },
+  { id: "asco", name: "Asco", color: "#A3E635", icon: Frown },
+  { id: "crisis", name: "Crisis", color: "#F87171", icon: AlertTriangle },
+];
 
-const EMOJI_MAP = {
-  Excelente: "🤩", Feliz: "😊", Agradecido: "🙏", Sorpresa: "😲",
-  Neutral: "😐", Enojo: "😠", Ansiedad: "😰", Miedo: "😨",
-  Triste: "😢", Crisis: "🆘", Asco: "🤢",
-};
+const ICON_MAP = { Sparkles, Sun, HeartHandshake, Zap, Waves, Flame, Wind, Ghost, CloudRain, Frown, AlertTriangle, HelpCircle };
 
 export default function History() {
   const navigate = useNavigate();
@@ -26,176 +29,110 @@ export default function History() {
   const { user } = useAuth();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [activeFilter, setActiveFilter] = useState("all");
 
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
-  const fetchHistory = useCallback(async (forceRefresh = false) => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    const cacheKey = cacheKeys.historyEntries(user.id);
-    if (!forceRefresh) {
-      const cached = await getCachedData(cacheKey);
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        setEntries(cached);
-        setLoading(false);
-        return;
-      }
-    }
-
+  const fetchHistory = useCallback(async () => {
+    if (!user) { setLoading(false); return; }
     try {
-      const { data, error } = await supabase
-        .from("entries")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("entries").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
       if (error) throw error;
-      const entriesData = data || [];
-      setEntries(entriesData);
-      await setCachedData(cacheKey, entriesData);
+      setEntries(data || []);
     } catch (error) {
       if (import.meta.env.DEV) console.error("History fetch error:", error);
-      const cached = await getCachedData(cacheKey);
-      if (cached && Array.isArray(cached)) {
-        setEntries(cached);
-      }
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }, [user]);
 
-  useEffect(() => {
-    fetchHistory(true);
-  }, [fetchHistory]);
+  useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
-  const getEmoji = (mood) => EMOJI_MAP[mood] || "😐";
+  const filteredEntries = activeFilter === "all" ? entries : entries.filter(e => {
+    const mood = MOODS.find(m => m.name.toLowerCase() === (e.mood || "").toLowerCase());
+    return mood?.id === activeFilter;
+  });
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: themeStyles.background }}>
-        <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: `${themeStyles.accent}40`, borderTopColor: themeStyles.accent }} />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full" />
       </div>
     );
   }
 
-  const glass = { backgroundColor: themeStyles.glassBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: themeStyles.border };
-
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: themeStyles.background }}>
-      <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full blur-[100px] opacity-[0.06]" style={{ backgroundColor: themeStyles.accent }} />
-      <div className="max-w-lg mx-auto pb-10 relative z-10">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-          <button
-            onClick={() => navigate("/home")}
-            className="bg-transparent border-none cursor-pointer px-6 pt-8 pb-2 flex items-center gap-2"
-          >
-            <ArrowLeft size={24} color={themeStyles.secondaryText} />
-            <span className="text-sm font-bold" style={{ color: themeStyles.secondaryText }}>Volver</span>
-          </button>
-        </motion.div>
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 relative overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-500/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
+      </div>
 
-        {entries.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-10 pt-20">
-            <span className="text-[80px] mb-7">📖</span>
-            <p className="text-[26px] font-black text-center" style={{ color: themeStyles.text }}>Bóveda vacía</p>
-            <p className="text-[17px] text-center mt-3 font-semibold" style={{ color: themeStyles.secondaryText }}>
-              Tus reflexiones guardadas aparecerán aquí.
-            </p>
+      <div className="max-w-7xl mx-auto px-4 lg:px-12 py-6 lg:py-12 relative z-10 space-y-8 pb-24">
+        <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-black tracking-tight dark:text-white">Cápsula del Tiempo</h1>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">Tus momentos, ordenados por emoción.</p>
+          </div>
+        </header>
+
+        <section className="flex gap-2 overflow-x-auto pb-4 snap-x">
+          <button onClick={() => setActiveFilter("all")} className={`px-6 py-3 rounded-full font-bold text-sm transition-all shrink-0 snap-start ${activeFilter === "all" ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800"}`}>
+            Todos
+          </button>
+          {MOODS.map(mood => (
+            <button
+              key={mood.id}
+              onClick={() => setActiveFilter(mood.id)}
+              className={`px-6 py-3 rounded-full font-bold text-sm transition-all shrink-0 snap-start flex items-center gap-2 ${activeFilter === mood.id ? "shadow-md text-white" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400"}`}
+              style={activeFilter === mood.id ? { backgroundColor: mood.color } : {}}
+            >
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: activeFilter === mood.id ? "white" : mood.color }} />
+              {mood.name}
+            </button>
+          ))}
+        </section>
+
+        {filteredEntries.length === 0 ? (
+          <div className="flex flex-col items-center pt-20">
+            <span className="text-[80px] mb-7 opacity-30">📖</span>
+            <p className="text-[26px] font-black text-center dark:text-white">Bóveda vacía</p>
+            <p className="text-[17px] text-center mt-3 font-semibold text-slate-400">Tus reflexiones guardadas aparecerán aquí.</p>
           </div>
         ) : (
-          <div className="px-5 pt-4 pb-20">
-            {entries.map((item, i) => {
-              const dateObj = new Date(item.created_at);
-              const dateStr = dateObj.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-              const timeStr = dateObj.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: true });
-              const primaryEmotion = item.emotion ?? item.mood;
-              let sortedMoods = [];
-              if (item.distribution && Object.keys(item.distribution).length > 0) {
-                sortedMoods = Object.entries(item.distribution).sort((a, b) => b[1] - a[1]);
-              } else {
-                sortedMoods = [[primaryEmotion, 100]];
-              }
-              const emotionColor = EMOTION_COLORS[primaryEmotion] || themeStyles.accent;
-
+          <div className="grid gap-4">
+            {filteredEntries.map((entry, idx) => {
+              const moodObj = MOODS.find(m => m.name.toLowerCase() === (entry.mood || "").toLowerCase()) || MOODS[4];
+              const Icon = ICON_MAP[moodObj.icon.name] || HelpCircle;
+              const dateObj = new Date(entry.created_at);
               return (
                 <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: i * 0.05 }}
-                  className="p-6 rounded-3xl mb-5 border-[1.5px]"
-                  style={{
-                    borderLeftColor: emotionColor,
-                    borderLeftWidth: 4,
-                    ...glass,
-                    boxShadow: `0 8px 24px ${themeStyles.shadow}`,
-                  }}
+                  key={entry.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="group bg-white dark:bg-slate-800 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden"
                 >
-                  <div className="flex justify-between items-start mb-4 pb-3"
-                    style={{ borderBottom: "1px solid rgba(124, 58, 237, 0.1)" }}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Calendar size={14} color={themeStyles.secondaryText} />
-                        <span className="text-[13px] font-extrabold uppercase" style={{ color: themeStyles.secondaryText }}>
-                          {dateStr}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock size={14} color="#EC4899" />
-                        <span className="text-xs font-black" style={{ color: themeStyles.glow }}>
-                          {timeStr}
-                        </span>
-                      </div>
-                      <div
-                        className="inline-block px-2.5 py-1.5 rounded-xl border text-[11px] font-extrabold uppercase tracking-[0.5px]"
-                        style={{
-                          backgroundColor: isOnline ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
-                          borderColor: isOnline ? "rgba(16, 185, 129, 0.4)" : "rgba(239, 68, 68, 0.4)",
-                          color: isOnline ? "#10B981" : "#EF4444",
-                        }}
-                      >
-                        {isOnline ? "En línea" : "Offline"}
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-[28px] mb-0.5">{getEmoji(primaryEmotion)}</span>
-                      <span className="text-[11px] font-black uppercase tracking-[0.5px]" style={{ color: themeStyles.text }}>
-                        {primaryEmotion}
-                      </span>
-                    </div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 dark:bg-slate-900/40 rounded-full -translate-y-1/2 translate-x-1/2 p-4 flex items-end justify-start opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Icon className="w-8 h-8" style={{ color: moodObj.color }} />
                   </div>
-
-                  <p className="text-[17px] leading-7 font-medium mb-4" style={{ color: themeStyles.text }}>
-                    {item.text}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2">
-                    {sortedMoods.map(([name]) => (
-                      <span
-                        key={name}
-                        className="px-3 py-1.5 rounded-xl border text-[11px] font-extrabold uppercase"
-                        style={{
-                          backgroundColor: name === primaryEmotion ? "rgba(236, 72, 153, 0.15)" : "rgba(124, 58, 237, 0.08)",
-                          borderColor: name === primaryEmotion ? "rgba(236, 72, 153, 0.3)" : "rgba(124, 58, 237, 0.15)",
-                          color: name === primaryEmotion ? themeStyles.glow : themeStyles.secondaryText,
-                        }}
-                      >
-                        {name === primaryEmotion ? `✨ ${name}` : name}
-                      </span>
-                    ))}
+                  <div className="flex flex-col md:flex-row md:items-center gap-6">
+                    <div className="flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl min-w-[100px]">
+                      <span className="text-xs font-black uppercase text-indigo-500">{dateObj.toLocaleDateString(undefined, { month: "short" })}</span>
+                      <span className="text-2xl font-black dark:text-white leading-none">{dateObj.getDate()}</span>
+                      <span className="text-[10px] font-bold text-slate-400 mt-1">{dateObj.getFullYear()}</span>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase text-white shadow-sm" style={{ backgroundColor: moodObj.color }}>
+                          {moodObj.name}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <Clock className="w-3 h-3" />
+                          <span className="text-[10px] font-bold uppercase">{dateObj.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span>
+                        </div>
+                      </div>
+                      <p className="text-slate-800 dark:text-slate-100 font-medium line-clamp-2 leading-relaxed">"{entry.text}"</p>
+                    </div>
+                    <div className="hidden md:block">
+                      <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                    </div>
                   </div>
                 </motion.div>
               );

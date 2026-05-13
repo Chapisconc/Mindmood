@@ -1,50 +1,33 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Maximize2, X, TrendingUp, Activity, Smile, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Zap, Award, Target, TrendingUp } from "lucide-react";
 import { useTheme } from "../theme/ThemeContext";
-import {
-  AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-} from "recharts";
-import RadarChart from "../components/RadarChart";
-import Icon from "../components/Icon";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from "recharts";
 import { useStats } from "../hooks/useStats";
-import { ChartContainer, ChartTooltipContent } from "../components/ui/Chart";
+
+const PIE_COLORS = ["#EC4899", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#F97316", "#84CC16", "#7C3AED", "#F43F5E"];
 
 export default function Stats() {
   const navigate = useNavigate();
   const { themeStyles } = useTheme();
   const { loading, stats } = useStats();
-  const [popout, setPopout] = useState({ visible: false, type: null });
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: themeStyles.background }}>
-        <div className="relative w-12 h-12">
-          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-purple-500 animate-spin" />
-          <div className="absolute inset-1 rounded-full border-2 border-transparent border-b-pink-500 animate-spin" style={{ animationDirection: "reverse", animationDuration: "0.8s" }} />
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full" />
       </div>
     );
   }
 
   if (!stats || stats.totalCount === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: themeStyles.background }}>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center px-10"
-        >
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center px-10">
           <div className="text-7xl mb-6">📊</div>
-          <p className="text-2xl font-black mb-3" style={{ color: themeStyles.text }}>
-            Aún no hay datos
-          </p>
-          <p className="text-base font-semibold" style={{ color: themeStyles.secondaryText }}>
-            Registra tu primera entrada para ver estadísticas.
-          </p>
+          <p className="text-2xl font-black mb-3 dark:text-white">Aún no hay datos</p>
+          <p className="text-base font-semibold text-slate-400">Registra tu primera entrada para ver estadísticas.</p>
         </motion.div>
       </div>
     );
@@ -52,314 +35,104 @@ export default function Stats() {
 
   const { totalCount, lineData, pieData, radarData, maxCount, dominant } = stats;
 
-  const lineConfig = { value: { label: "Ánimo", color: "#EC4899" } };
-  const pieConfig = {};
-  pieData?.forEach((d) => { pieConfig[d.emotionName] = { label: d.emotionName, color: d.color }; });
-
-  const pieColors = ["#EC4899", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#F97316", "#84CC16", "#7C3AED", "#F43F5E"];
-
-  const glass = { backgroundColor: themeStyles.glassBg, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderColor: themeStyles.border };
+  const barData = (pieData || []).map(d => ({ name: d.emotionName, count: d.valueCount, color: d.color }));
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: themeStyles.background }}>
-      <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full blur-[100px] opacity-[0.06]" style={{ backgroundColor: themeStyles.accent }} />
-      <div className="max-w-lg mx-auto pb-20 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="px-6 pt-8 pb-2">
-            <button
-              onClick={() => navigate("/home")}
-              className="bg-transparent border-none cursor-pointer flex items-center gap-2 mb-2"
-            >
-              <ArrowLeft size={24} color={themeStyles.secondaryText} />
-              <span className="text-sm font-bold" style={{ color: themeStyles.secondaryText }}>Volver</span>
-            </button>
-            <p className="text-3xl font-black tracking-tight" style={{ color: themeStyles.text }}>
-              Estadísticas
-            </p>
-            <p className="text-base font-semibold mt-1" style={{ color: themeStyles.secondaryText }}>
-              Resumen Semanal
-            </p>
-          </div>
-
-          <div className="flex gap-3 px-6 mb-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="flex-1 rounded-3xl p-5 border relative overflow-hidden"
-              style={{
-                ...glass,
-                boxShadow: `0 8px 24px ${themeStyles.shadow}`,
-              }}
-            >
-              <div
-                className="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl"
-                style={{ backgroundColor: `${dominant.color}30` }}
-              />
-              <Smile size={24} color={dominant.color} />
-              <p className="text-lg font-black mt-3" style={{ color: themeStyles.text }}>
-                {dominant.name}
-              </p>
-              <p className="text-xs font-bold mt-1 opacity-60" style={{ color: themeStyles.secondaryText }}>
-                Ánimo Frecuente
-              </p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.15 }}
-              className="flex-1 rounded-3xl p-5 border relative overflow-hidden"
-              style={{
-                ...glass,
-                boxShadow: `0 8px 24px ${themeStyles.shadow}`,
-              }}
-            >
-              <div
-                className="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl"
-                style={{ backgroundColor: "#EC489930" }}
-              />
-              <Activity size={24} color="#EC4899" />
-              <p className="text-lg font-black mt-3" style={{ color: themeStyles.text }}>
-                {totalCount}
-              </p>
-              <p className="text-xs font-bold mt-1 opacity-60" style={{ color: themeStyles.secondaryText }}>
-                Total de Registros
-              </p>
-            </motion.div>
-          </div>
-
-          {lineData?.length > 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mx-6 p-5 rounded-3xl border mb-4"
-              style={{
-                ...glass,
-                boxShadow: `0 8px 24px ${themeStyles.shadow}`,
-              }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-base font-black" style={{ color: themeStyles.text }}>
-                  Evolución Semanal
-                </p>
-                <TrendingUp size={18} color="#EC4899" />
-              </div>
-              <ChartContainer config={lineConfig} style={{ height: 220 }}>
-                <AreaChart data={lineData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                  <defs>
-                    <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#EC4899" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="#EC4899" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={themeStyles.border} strokeOpacity={0.3} />
-                  <XAxis
-                    dataKey="label"
-                    tick={{ fontSize: 11, fontWeight: 700, fill: themeStyles.secondaryText }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    domain={[-1, 1]}
-                    tick={{ fontSize: 11, fontWeight: 700, fill: themeStyles.secondaryText }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(v) => ["-1", "-0.5", "0", "0.5", "1"][(v + 1) * 2] || ""}
-                  />
-                  <RechartsTooltip
-                    content={<ChartTooltipContent />}
-                    cursor={{ stroke: themeStyles.glow, strokeWidth: 1, strokeDasharray: "4 4" }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#EC4899"
-                    strokeWidth={3}
-                    fill="url(#moodGradient)"
-                    dot={{ r: 4, fill: "#EC4899", stroke: themeStyles.card, strokeWidth: 2 }}
-                    activeDot={{ r: 6, fill: "#EC4899", stroke: themeStyles.card, strokeWidth: 3 }}
-                  />
-                </AreaChart>
-              </ChartContainer>
-            </motion.div>
-          )}
-
-          <div className="mx-6 p-5 rounded-3xl border mb-4"
-            style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
-          >
-            <p className="text-base font-black mb-4" style={{ color: themeStyles.text }}>
-              Balance Emocional
-            </p>
-            <div className="flex justify-center">
-              <RadarChart data={radarData} maxValue={maxCount} size={280} />
-            </div>
-          </div>
-
-          <div className="flex gap-3 px-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex-1 p-5 rounded-3xl border"
-              style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-black" style={{ color: themeStyles.text }}>
-                  Distribución
-                </p>
-                <button
-                  onClick={() => setPopout({ visible: true, type: "pie" })}
-                  className="bg-transparent border-none cursor-pointer p-1 hover:opacity-70 transition-opacity"
-                >
-                  <Maximize2 size={16} color="#EC4899" />
-                </button>
-              </div>
-              <div className="relative flex items-center justify-center" style={{ height: 160 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <defs>
-                      <filter id="glow">
-                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                        <feMerge>
-                          <feMergeNode in="coloredBlur"/>
-                          <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                      </filter>
-                    </defs>
-                    <Pie
-                      data={pieData}
-                      dataKey="valueCount"
-                      nameKey="emotionName"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={70}
-                      paddingAngle={2}
-                    >
-                      {pieData.map((entry, i) => (
-                        <Cell 
-                          key={`cell-${i}`} 
-                          fill={pieColors[i % pieColors.length]} 
-                          stroke="none"
-                          filter="url(#glow)"
-                        />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                {dominant && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <Icon name={dominant.icon} size={28} color={dominant.color} />
-                    <p className="text-xs font-bold mt-1" style={{ color: dominant.color }}>
-                      {dominant.name}
-                    </p>
-                    <p className="text-[10px] font-semibold opacity-60" style={{ color: themeStyles.secondaryText }}>
-                      Predominante
-                    </p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-              className="flex-1 p-5 rounded-3xl border"
-              style={{ ...glass, boxShadow: `0 8px 24px ${themeStyles.shadow}` }}
-            >
-              <p className="text-sm font-black mb-4" style={{ color: themeStyles.text }}>
-                Estados
-              </p>
-              <div className="flex flex-col gap-2.5 max-h-[150px] overflow-y-auto">
-                {pieData.map((item, i) => (
-                  <div key={item.emotionName} className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: pieColors[i % pieColors.length] }} />
-                    <span className="text-xs font-bold flex-1 truncate" style={{ color: themeStyles.secondaryText }}>
-                      {item.emotionName}
-                    </span>
-                    <span className="text-xs font-black" style={{ color: themeStyles.text }}>
-                      {Math.round((item.valueCount / totalCount) * 100)}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 relative overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-500/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
       </div>
 
-      {popout.visible && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: "rgba(15, 10, 30, 0.85)" }}
-          onClick={() => setPopout({ visible: false, type: null })}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md rounded-4xl p-6 border"
-            style={{ backgroundColor: themeStyles.glassBg, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderColor: themeStyles.border, boxShadow: `0 16px 48px ${themeStyles.shadow}` }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-4 mb-4" style={{ borderBottom: `1px solid ${themeStyles.border}` }}>
-              <p className="text-lg font-black" style={{ color: themeStyles.text }}>
-                Distribución Detallada
-              </p>
-              <button
-                onClick={() => setPopout({ visible: false, type: null })}
-                className="bg-transparent border-none cursor-pointer p-1 hover:opacity-70 transition-opacity"
-              >
-                <X size={28} color="#EC4899" />
-              </button>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 lg:px-12 py-6 lg:py-12 relative z-10 space-y-8 pb-24">
+        <header className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors dark:text-white">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-3xl font-black dark:text-white">Estadísticas</h1>
+        </header>
 
-            <div className="flex flex-col items-center py-4">
-              <div style={{ width: 260, height: 260 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      dataKey="valueCount"
-                      nameKey="emotionName"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={70}
-                      outerRadius={110}
-                      paddingAngle={3}
-                    >
-                      {pieData.map((entry, i) => (
-                        <Cell key={`pop-${i}`} fill={pieColors[i % pieColors.length]} stroke="none" />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { icon: Zap, bg: "bg-indigo-50 dark:bg-indigo-900/30", text: "text-indigo-600 dark:text-indigo-400", label: "Registros Totales", value: totalCount },
+            { icon: Award, bg: "bg-rose-50 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400", label: "Mejor Racha", value: "15 Días" },
+            { icon: Target, bg: "bg-emerald-50 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", label: "Mood Promedio", value: dominant?.name || "Estable" },
+          ].map((card, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+              className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4"
+            >
+              <div className={`w-14 h-14 rounded-2xl ${card.bg} flex items-center justify-center ${card.text} shrink-0`}>
+                <card.icon className="w-7 h-7" />
               </div>
-              <div className="w-full mt-6 flex flex-col gap-2.5">
-                {pieData.map((item, i) => (
-                  <div
-                    key={item.emotionName}
-                    className="flex items-center p-3 rounded-2xl transition-colors hover:opacity-80"
-                    style={{ backgroundColor: `${pieColors[i % pieColors.length]}15` }}
-                  >
-                    <div className="w-3 h-3 rounded-full mr-3 flex-shrink-0" style={{ backgroundColor: pieColors[i % pieColors.length] }} />
-                    <span className="text-sm font-bold flex-1" style={{ color: themeStyles.secondaryText }}>
-                      {item.emotionName}
-                    </span>
-                    <span className="text-sm font-black" style={{ color: themeStyles.text }}>
-                      {Math.round((item.valueCount / totalCount) * 100)}%
-                    </span>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider truncate">{card.label}</p>
+                <p className="text-2xl font-black dark:text-white">{card.value}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          <section className="p-8 bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
+            <h2 className="text-xl font-black mb-8 dark:text-white">Distribución Dominante</h2>
+            <div className="flex-1 min-h-[300px] flex flex-col md:flex-row items-center gap-8">
+              <div className="w-full h-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RePieChart>
+                    <Pie data={pieData} dataKey="valueCount" nameKey="emotionName" cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={10} stroke="none">
+                      {pieData.map((entry, i) => <Cell key={`cell-${i}`} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: "24px", border: "none", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", fontSize: "12px", fontWeight: "800" }} />
+                  </RePieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-4xl font-black dark:text-white">{totalCount}</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Registros</span>
+                </div>
+              </div>
+              <div className="w-full md:w-1/3 grid grid-cols-2 md:grid-cols-1 gap-3">
+                {pieData.slice(0, 5).map((d, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                      <span className="text-[10px] font-black dark:text-white uppercase tracking-tighter truncate max-w-[80px]">{d.emotionName}</span>
+                    </div>
+                    <span className="text-xs font-black text-slate-500">{d.valueCount}</span>
                   </div>
                 ))}
               </div>
             </div>
-          </motion.div>
+          </section>
+
+          <section className="p-8 bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
+            <h2 className="text-xl font-black mb-8 dark:text-white">Frecuencia por Emoción</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barData} layout="vertical" margin={{ left: 40 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 700, fill: "#64748B" }} />
+                  <Tooltip cursor={{ fill: "transparent" }} />
+                  <Bar dataKey="count" radius={[0, 10, 10, 0]}>
+                    {barData.map((entry, i) => <Cell key={`cell-${i}`} fill={entry.color || PIE_COLORS[i % PIE_COLORS.length]} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
         </div>
-      )}
+
+        <section className="p-8 bg-slate-900 dark:bg-indigo-600 rounded-[2.5rem] text-white">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black">Reporte Proyectado</h3>
+              <p className="text-white/60 text-sm max-w-md">Basado en tus últimas entradas, tu balance emocional sigue evolucionando. Sigue registrando tus sentimientos para un análisis más profundo.</p>
+            </div>
+            <button onClick={() => navigate("/home")} className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black hover:bg-slate-100 transition-colors shrink-0">
+              Volver al inicio
+            </button>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

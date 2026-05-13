@@ -37,27 +37,15 @@ function NavLink({ item, isActive, collapsed, onClick }) {
         backgroundColor: isActive ? `${theme.accent}18` : "transparent",
         color: isActive ? theme.accent : theme.secondaryText,
       }}
-      onMouseEnter={(e) => {
-        if (!isActive) e.currentTarget.style.backgroundColor = theme.softAccent;
-      }}
-      onMouseLeave={(e) => {
-        if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
-      }}
+      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = theme.softAccent; }}
+      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = "transparent"; }}
     >
-      <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{
-          backgroundColor: isActive ? `${theme.accent}20` : theme.itemBg,
-        }}
-      >
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: isActive ? `${theme.accent}20` : theme.itemBg }}>
         <Icon size={20} color={isActive ? theme.accent : theme.secondaryText} />
       </div>
-      {!collapsed && (
-        <span className="text-sm font-bold tracking-tight">{item.label}</span>
-      )}
-      {isActive && !collapsed && (
-        <div className="ml-auto w-1.5 h-8 rounded-full" style={{ backgroundColor: theme.accent }} />
-      )}
+      {!collapsed && <span className="text-sm font-bold tracking-tight" style={{ color: isActive ? theme.accent : theme.secondaryText }}>{item.label}</span>}
+      {isActive && !collapsed && <div className="ml-auto w-1.5 h-8 rounded-full" style={{ backgroundColor: theme.accent }} />}
     </button>
   );
 }
@@ -68,79 +56,41 @@ function Sidebar({ collapsed, onToggle, currentPath, navigate }) {
   const isAdmin = profile?.role === "admin";
 
   return (
-    <motion.aside
-      animate={{ width: collapsed ? 72 : 260 }}
-      className="hidden lg:flex flex-col fixed left-0 top-0 h-screen z-40 border-r"
-      style={{
-        backgroundColor: theme.card,
-        borderColor: theme.border,
-      }}
+    <motion.aside animate={{ width: collapsed ? 72 : 260 }}
+      className="hidden lg:flex flex-col fixed left-0 top-0 h-screen z-40 border-r bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
     >
-      <div
-        className="flex items-center gap-3 px-4 h-16 border-b flex-shrink-0"
-        style={{ borderColor: theme.border }}
-      >
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: theme.accent }}
-        >
+      <div className="flex items-center gap-3 px-4 h-16 border-b flex-shrink-0 border-slate-200 dark:border-slate-800">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: theme.accent }}>
           <span className="text-white text-base font-black">M</span>
         </div>
-        {!collapsed && (
-          <span className="text-lg font-black tracking-tight" style={{ color: theme.text }}>
-            MindMood
-          </span>
-        )}
-        <button
-          onClick={onToggle}
-          className="ml-auto bg-transparent border-none cursor-pointer p-1 rounded-lg hover:opacity-70 transition-opacity"
-        >
-          <ChevronRight
-            size={18}
-            color={theme.secondaryText}
-            style={{ transform: collapsed ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
-          />
+        {!collapsed && <span className="text-lg font-black tracking-tight dark:text-white" style={{ color: theme.text }}>MindMood</span>}
+        <button onClick={onToggle} className="ml-auto bg-transparent border-none cursor-pointer p-1 rounded-lg hover:opacity-70 transition-opacity">
+          <ChevronRight size={18} color={theme.secondaryText}
+            style={{ transform: collapsed ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.path}
-            item={item}
-            isActive={currentPath === item.path}
-            collapsed={collapsed}
-            onClick={() => navigate(item.path)}
-            theme={theme}
-          />
+          <NavLink key={item.path} item={item} isActive={currentPath === item.path} collapsed={collapsed} onClick={() => navigate(item.path)} />
         ))}
         {isAdmin && (
-          <NavLink
-            item={{ path: "/admin-dashboard", icon: Shield, label: "Admin" }}
-            isActive={currentPath === "/admin-dashboard"}
-            collapsed={collapsed}
-            onClick={() => navigate("/admin-dashboard")}
-            theme={theme}
-          />
+          <NavLink item={{ path: "/admin-dashboard", icon: Shield, label: "Admin" }} isActive={currentPath === "/admin-dashboard"} collapsed={collapsed} onClick={() => navigate("/admin-dashboard")} />
         )}
       </div>
 
-      <div className="p-3 border-t flex-shrink-0" style={{ borderColor: theme.border }}>
+      <div className="p-3 border-t flex-shrink-0 border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3 px-2 py-2">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black"
-            style={{ backgroundColor: theme.itemBg, color: theme.text }}
-          >
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black"
+            style={{ backgroundColor: theme.itemBg, color: theme.text }}>
             {(profile?.display_name || user?.email || "U")[0].toUpperCase()}
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate" style={{ color: theme.text }}>
+              <p className="text-sm font-bold truncate dark:text-white" style={{ color: theme.text }}>
                 {profile?.display_name || user?.email?.split("@")[0] || "Usuario"}
               </p>
-              <p className="text-[11px] font-semibold truncate opacity-60" style={{ color: theme.secondaryText }}>
-                {user?.email}
-              </p>
+              <p className="text-[11px] font-semibold truncate opacity-60 dark:text-slate-400" style={{ color: theme.secondaryText }}>{user?.email}</p>
             </div>
           )}
         </div>
@@ -149,32 +99,18 @@ function Sidebar({ collapsed, onToggle, currentPath, navigate }) {
   );
 }
 
-function MobileHeader({ onMenuToggle, currentPath }) {
+function MobileHeader({ onMenuToggle }) {
   const { themeStyles: theme } = useTheme();
-  const navigate = useNavigate();
-
   return (
-    <div
-      className="lg:hidden flex items-center justify-between px-4 h-14 border-b"
-      style={{
-        backgroundColor: theme.card,
-        borderColor: theme.border,
-      }}
-    >
-      <button
-        onClick={onMenuToggle}
-        className="bg-transparent border-none cursor-pointer p-2"
-      >
-        <Menu size={24} color={theme.text} />
+    <div className="lg:hidden flex items-center justify-between px-4 h-14 border-b bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+      <button onClick={onMenuToggle} className="bg-transparent border-none cursor-pointer p-2 dark:text-white">
+        <Menu size={24} />
       </button>
       <div className="flex items-center gap-2">
-        <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: theme.accent }}
-        >
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: theme.accent }}>
           <span className="text-white text-xs font-black">M</span>
         </div>
-        <span className="text-base font-black" style={{ color: theme.text }}>MindMood</span>
+        <span className="text-base font-black dark:text-white" style={{ color: theme.text }}>MindMood</span>
       </div>
       <div className="w-10" />
     </div>
@@ -188,66 +124,29 @@ function MobileNav({ currentPath, navigate }) {
   const mobileItems = NAV_ITEMS.slice(0, 4);
 
   return (
-    <div
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t flex items-center justify-around px-2 py-1"
-      style={{
-        backgroundColor: theme.card,
-        borderColor: theme.border,
-      }}
-    >
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t flex items-center justify-around px-2 py-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
       {mobileItems.map((item) => {
         const Icon = item.icon;
         const active = currentPath === item.path;
         return (
-          <button
-            key={item.path}
-            onClick={() => navigate(item.path)}
-            className="flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl bg-transparent border-none cursor-pointer"
-          >
-            <Icon
-              size={20}
-              color={active ? theme.accent : theme.secondaryText}
-            />
-            <span
-              className="text-[10px] font-extrabold"
-              style={{ color: active ? theme.accent : theme.secondaryText }}
-            >
-              {item.label}
-            </span>
+          <button key={item.path} onClick={() => navigate(item.path)}
+            className="flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl bg-transparent border-none cursor-pointer">
+            <Icon size={20} color={active ? theme.accent : theme.secondaryText} />
+            <span className="text-[10px] font-extrabold" style={{ color: active ? theme.accent : theme.secondaryText }}>{item.label}</span>
           </button>
         );
       })}
       {isAdmin && (
-        <button
-          onClick={() => navigate("/admin-dashboard")}
-          className="flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl bg-transparent border-none cursor-pointer"
-        >
-          <Shield
-            size={20}
-            color={currentPath === "/admin-dashboard" ? theme.accent : theme.secondaryText}
-          />
-          <span
-            className="text-[10px] font-extrabold"
-            style={{ color: currentPath === "/admin-dashboard" ? theme.accent : theme.secondaryText }}
-          >
-            Admin
-          </span>
+        <button onClick={() => navigate("/admin-dashboard")}
+          className="flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl bg-transparent border-none cursor-pointer">
+          <Shield size={20} color={currentPath === "/admin-dashboard" ? theme.accent : theme.secondaryText} />
+          <span className="text-[10px] font-extrabold" style={{ color: currentPath === "/admin-dashboard" ? theme.accent : theme.secondaryText }}>Admin</span>
         </button>
       )}
-      <button
-        onClick={() => navigate("/profile")}
-        className="flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl bg-transparent border-none cursor-pointer"
-      >
-        <UserCircle
-          size={20}
-          color={currentPath === "/profile" ? theme.accent : theme.secondaryText}
-        />
-        <span
-          className="text-[10px] font-extrabold"
-          style={{ color: currentPath === "/profile" ? theme.accent : theme.secondaryText }}
-        >
-          Perfil
-        </span>
+      <button onClick={() => navigate("/profile")}
+        className="flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl bg-transparent border-none cursor-pointer">
+        <UserCircle size={20} color={currentPath === "/profile" ? theme.accent : theme.secondaryText} />
+        <span className="text-[10px] font-extrabold" style={{ color: currentPath === "/profile" ? theme.accent : theme.secondaryText }}>Perfil</span>
       </button>
     </div>
   );
@@ -257,51 +156,26 @@ function MobileMenu({ visible, onClose, currentPath, navigate }) {
   const { themeStyles: theme } = useTheme();
   const { profile, user } = useAuth();
   const isAdmin = profile?.role === "admin";
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
+  const handleLogout = async () => { await supabase.auth.signOut(); navigate("/"); };
 
   return (
     <AnimatePresence>
       {visible && (
         <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-50"
-            style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="lg:hidden fixed inset-0 z-50 bg-black/60" onClick={onClose} />
+          <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="lg:hidden fixed top-0 left-0 bottom-0 w-72 z-50 border-r"
-            style={{
-              backgroundColor: theme.card,
-              borderColor: theme.border,
-            }}
+            className="lg:hidden fixed top-0 left-0 bottom-0 w-72 z-50 border-r bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
           >
-            <div
-              className="flex items-center justify-between px-4 h-14 border-b"
-              style={{ borderColor: theme.border }}
-            >
+            <div className="flex items-center justify-between px-4 h-14 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: theme.accent }}
-                >
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: theme.accent }}>
                   <span className="text-white text-sm font-black">M</span>
                 </div>
-                <span className="text-lg font-black" style={{ color: theme.text }}>MindMood</span>
+                <span className="text-lg font-black dark:text-white" style={{ color: theme.text }}>MindMood</span>
               </div>
-              <button
-                onClick={onClose}
-                className="bg-transparent border-none cursor-pointer p-1"
-              >
+              <button onClick={onClose} className="bg-transparent border-none cursor-pointer p-1">
                 <X size={22} color={theme.secondaryText} />
               </button>
             </div>
@@ -311,19 +185,11 @@ function MobileMenu({ visible, onClose, currentPath, navigate }) {
                 const Icon = item.icon;
                 const active = currentPath === item.path;
                 return (
-                  <button
-                    key={item.path}
-                    onClick={() => { navigate(item.path); onClose(); }}
+                  <button key={item.path} onClick={() => { navigate(item.path); onClose(); }}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 border-none cursor-pointer text-left"
-                    style={{
-                      backgroundColor: active ? `${theme.accent}18` : "transparent",
-                      color: active ? theme.accent : theme.secondaryText,
-                    }}
-                  >
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: active ? `${theme.accent}20` : theme.itemBg }}
-                    >
+                    style={{ backgroundColor: active ? `${theme.accent}18` : "transparent", color: active ? theme.accent : theme.secondaryText }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: active ? `${theme.accent}20` : theme.itemBg }}>
                       <Icon size={20} color={active ? theme.accent : theme.secondaryText} />
                     </div>
                     <span className="text-sm font-bold">{item.label}</span>
@@ -331,18 +197,11 @@ function MobileMenu({ visible, onClose, currentPath, navigate }) {
                 );
               })}
               {isAdmin && (
-                <button
-                  onClick={() => { navigate("/admin-dashboard"); onClose(); }}
+                <button onClick={() => { navigate("/admin-dashboard"); onClose(); }}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 border-none cursor-pointer text-left"
-                  style={{
-                    backgroundColor: currentPath === "/admin-dashboard" ? `${theme.accent}18` : "transparent",
-                    color: currentPath === "/admin-dashboard" ? theme.accent : theme.secondaryText,
-                  }}
-                >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: currentPath === "/admin-dashboard" ? `${theme.accent}20` : theme.itemBg }}
-                  >
+                  style={{ backgroundColor: currentPath === "/admin-dashboard" ? `${theme.accent}18` : "transparent", color: currentPath === "/admin-dashboard" ? theme.accent : theme.secondaryText }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: currentPath === "/admin-dashboard" ? `${theme.accent}20` : theme.itemBg }}>
                     <Shield size={20} />
                   </div>
                   <span className="text-sm font-bold">Admin</span>
@@ -350,30 +209,23 @@ function MobileMenu({ visible, onClose, currentPath, navigate }) {
               )}
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t" style={{ borderColor: theme.border }}>
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-3 mb-3 px-2">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black"
-                  style={{ backgroundColor: theme.itemBg, color: theme.text }}
-                >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black"
+                  style={{ backgroundColor: theme.itemBg, color: theme.text }}>
                   {(profile?.display_name || user?.email || "U")[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold truncate" style={{ color: theme.text }}>
+                  <p className="text-sm font-bold truncate dark:text-white" style={{ color: theme.text }}>
                     {profile?.display_name || user?.email?.split("@")[0] || "Usuario"}
                   </p>
-                  <p className="text-[11px] truncate opacity-60" style={{ color: theme.secondaryText }}>
-                    {user?.email}
-                  </p>
+                  <p className="text-[11px] truncate opacity-60 dark:text-slate-400" style={{ color: theme.secondaryText }}>{user?.email}</p>
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
+              <button onClick={handleLogout}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-none cursor-pointer font-bold text-sm"
-                style={{ backgroundColor: `${theme.error}15`, color: theme.error }}
-              >
-                <LogOut size={16} />
-                Cerrar Sesión
+                style={{ backgroundColor: `${theme.error}15`, color: theme.error }}>
+                <LogOut size={16} /> Cerrar Sesión
               </button>
             </div>
           </motion.div>
@@ -403,65 +255,40 @@ export default function Layout() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.background }}>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="w-12 h-12 rounded-full border-2 border-transparent border-t-purple-500 animate-spin" />
       </div>
     );
   }
 
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
+  if (!user) return <Navigate to="/" replace />;
 
   const wrapperClass = sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]";
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: theme.background }}>
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        currentPath={currentPath}
-        navigate={navigate}
-      />
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950">
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} currentPath={currentPath} navigate={navigate} />
+      <MobileHeader onMenuToggle={() => setMobileMenuOpen(true)} />
+      <MobileMenu visible={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} currentPath={currentPath} navigate={navigate} />
 
-      <MobileHeader
-        onMenuToggle={() => setMobileMenuOpen(true)}
-        currentPath={currentPath}
-      />
-
-      <MobileMenu
-        visible={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        currentPath={currentPath}
-        navigate={navigate}
-      />
-
-      <div className={`transition-all duration-200 ${wrapperClass}`}
-        style={{ paddingBottom: "80px" }}
-      >
+      <div className={`transition-all duration-200 ${wrapperClass}`} style={{ paddingBottom: "80px" }}>
         <div className="max-w-6xl mx-auto">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPath}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                <Route path="/home" element={<HomePage />} />
-                <Route path="/new-entry" element={<NewEntry />} />
-                <Route path="/history" element={<History />} />
-                <Route path="/stats" element={<Stats />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/inbox" element={<Inbox />} />
-                <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                <Route path="*" element={<Navigate to="/home" replace />} />
-              </Routes>
-            </Suspense>
-          </motion.div>
-        </AnimatePresence>
+          <AnimatePresence mode="wait">
+            <motion.div key={currentPath} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  <Route path="/home" element={<HomePage />} />
+                  <Route path="/new-entry" element={<NewEntry />} />
+                  <Route path="/history" element={<History />} />
+                  <Route path="/stats" element={<Stats />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/inbox" element={<Inbox />} />
+                  <Route path="/admin-dashboard" element={<AdminDashboard />} />
+                  <Route path="*" element={<Navigate to="/home" replace />} />
+                </Routes>
+              </Suspense>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
 
