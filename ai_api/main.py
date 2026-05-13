@@ -41,6 +41,7 @@ ALLOWED_ORIGINS = os.environ.get("CORS_ORIGINS", "").split(",") if os.environ.ge
     "http://localhost:5173",
     "http://localhost:4173",
     "https://mindmood.vercel.app",
+    "https://mindmood-web.vercel.app",
 ]
 app.add_middleware(
     CORSMiddleware,

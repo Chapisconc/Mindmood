@@ -1,16 +1,26 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./theme/ThemeContext";
 import { I18nProvider } from "./i18n/I18nContext";
 import ErrorBoundary from "./components/ErrorBoundary";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Home from "./pages/Home";
-import NewEntry from "./pages/NewEntry";
-import History from "./pages/History";
-import Stats from "./pages/Stats";
-import Profile from "./pages/Profile";
-import AdminDashboard from "./pages/AdminDashboard";
-import Inbox from "./pages/Inbox";
+
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Home = lazy(() => import("./pages/Home"));
+const NewEntry = lazy(() => import("./pages/NewEntry"));
+const History = lazy(() => import("./pages/History"));
+const Stats = lazy(() => import("./pages/Stats"));
+const Profile = lazy(() => import("./pages/Profile"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Inbox = lazy(() => import("./pages/Inbox"));
+
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: "#0F0A1E" }}>
+      <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: "#8B5CF640", borderTopColor: "#8B5CF6" }} />
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -21,18 +31,20 @@ export default function App() {
             style={{ minHeight: "100vh", backgroundColor: "var(--bg)" }}
             className="transition-colors duration-300"
           >
-            <Routes>
-              <Route path="/" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/new-entry" element={<NewEntry />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/stats" element={<Stats />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/inbox" element={<Inbox />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                <Route path="/" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/home" element={<Home />} />
+                <Route path="/new-entry" element={<NewEntry />} />
+                <Route path="/history" element={<History />} />
+                <Route path="/stats" element={<Stats />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/inbox" element={<Inbox />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
           </div>
         </ErrorBoundary>
       </I18nProvider>

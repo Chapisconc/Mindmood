@@ -10,6 +10,37 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["icons/*.svg"],
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.(png|jpg|jpeg|svg|gif|webp|ico)/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "image-cache",
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 }
+            }
+          },
+          {
+            urlPattern: /\/analyze/,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "api-cache",
+              networkTimeoutSeconds: 10,
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/zeqbaahbmrkqcfzkylxf\.supabase\.co/,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "supabase-cache",
+              networkTimeoutSeconds: 15,
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 }
+            }
+          }
+        ]
+      },
       manifest: {
         name: "MindMood - Diario Inteligente",
         short_name: "MindMood",
@@ -25,11 +56,13 @@ export default defineConfig({
             src: "/icons/icon-192x192.svg",
             sizes: "192x192",
             type: "image/svg+xml",
+            purpose: "any maskable"
           },
           {
             src: "/icons/icon-512x512.svg",
             sizes: "512x512",
             type: "image/svg+xml",
+            purpose: "any maskable"
           },
         ],
       },

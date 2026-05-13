@@ -1,48 +1,25 @@
 import { es, en } from "./translations";
-import { supabase } from "../services/supabase";
-import { subscribeToSession } from "../hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 import { useState, useEffect, createContext, useContext } from "react";
 
 const I18nContext = createContext();
 
 export const I18nProvider = ({ children }) => {
+  const { profile, updateProfile } = useAuth();
   const [lang, setLang] = useState("es");
-  const translations = lang === "es" ? es : en;
 
   useEffect(() => {
-    const unsubscribe = subscribeToSession(async (session) => {
-      if (session?.user) {
-        try {
-          const { data } = await supabase
-            .from("profiles")
-            .select("lang")
-            .eq("id", session.user.id)
-            .single();
-          if (data?.lang) setLang(data.lang);
-        } catch (e) {
-          if (import.meta.env.DEV) console.log("Lang load fail:", e);
-        }
-      }
-    });
+    if (profile?.lang) {
+      setLang(profile.lang);
+    }
+  }, [profile?.lang]);
 
-    return unsubscribe;
-  }, []);
+  const translations = lang === "es" ? es : en;
 
   const toggleLang = async () => {
     const newLang = lang === "es" ? "en" : "es";
     setLang(newLang);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const session = sessionData?.session;
-      if (session) {
-        await supabase
-          .from("profiles")
-          .update({ lang: newLang })
-          .eq("id", session.user.id);
-      }
-    } catch (e) {
-      if (import.meta.env.DEV) console.log("Lang save fail:", e);
-    }
+    await updateProfile({ lang: newLang });
   };
 
   const t = (key) => translations[key] || key;

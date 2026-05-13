@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, CloudOff } from "lucide-react";
 import { supabase } from "../services/supabase";
 import { useTheme } from "../theme/ThemeContext";
+import { useJournalEntry } from "../hooks/useJournalEntry";
 import Icon from "../components/Icon";
 import EmotionModal from "../components/EmotionModal";
 import AppButton from "../components/AppButton";
@@ -13,6 +14,7 @@ const MAX_CHARS = 2000;
 export default function NewEntry() {
   const navigate = useNavigate();
   const { themeStyles } = useTheme();
+  const { updateStreak } = useJournalEntry();
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -73,25 +75,6 @@ export default function NewEntry() {
       setText(val);
       localStorage.setItem("entry_draft", val);
     }
-  };
-
-  const updateStreak = async (userId) => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("streak, last_entry_at")
-      .eq("id", userId)
-      .single();
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    let newStreak = 1;
-    if (profile?.last_entry_at) {
-      const lastDate = new Date(profile.last_entry_at);
-      const lastTime = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate()).getTime();
-      const diffDays = (today - lastTime) / (1000 * 60 * 60 * 24);
-      if (diffDays === 1) newStreak = (profile.streak || 0) + 1;
-      else if (diffDays === 0) newStreak = profile.streak || 1;
-    }
-    await supabase.from("profiles").update({ streak: newStreak, last_entry_at: now.toISOString() }).eq("id", userId);
   };
 
   const handleSave = async () => {

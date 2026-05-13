@@ -1,11 +1,12 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
 import { themes } from "./themes";
-import { supabase } from "../services/supabase";
-import { subscribeToSession } from "../hooks/useAuth";
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
+  const { profile, updateProfile } = useAuth();
+  
   const getSystemTheme = () => {
     if (typeof window !== "undefined" && window.matchMedia) {
       return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -18,26 +19,10 @@ export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(getSystemTheme);
 
   useEffect(() => {
-    const unsubscribe = subscribeToSession(async (session) => {
-      if (session?.user) {
-        try {
-          const { data } = await supabase
-            .from("profiles")
-            .select("theme")
-            .eq("id", session.user.id)
-            .single();
-
-          if (data?.theme) {
-            setTheme(data.theme);
-          }
-        } catch (e) {
-          if (import.meta.env.DEV) console.log("Theme load fail:", e);
-        }
-      }
-    });
-
-    return unsubscribe;
-  }, []);
+    if (profile?.theme) {
+      setTheme(profile.theme);
+    }
+  }, [profile?.theme]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -55,39 +40,16 @@ export const ThemeProvider = ({ children }) => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
-  const syncTheme = async () => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const session = sessionData?.session;
-      if (!session) return;
-      const { data } = await supabase
-        .from("profiles")
-        .select("theme")
-        .eq("id", session.user.id)
-        .single();
-      if (data?.theme) {
-        setTheme(data.theme);
-      }
-    } catch (e) {
-      if (import.meta.env.DEV) console.log("Theme sync fail:", e);
+  const syncTheme = () => {
+    if (profile?.theme) {
+      setTheme(profile.theme);
     }
   };
 
   const toggleTheme = async () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const session = sessionData?.session;
-      if (session) {
-        await supabase
-          .from("profiles")
-          .update({ theme: newTheme })
-          .eq("id", session.user.id);
-      }
-    } catch (e) {
-      if (import.meta.env.DEV) console.log("Theme save fail:", e);
-    }
+    await updateProfile({ theme: newTheme });
   };
 
   const themeStyles = themes[theme];
