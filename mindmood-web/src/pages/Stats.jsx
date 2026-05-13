@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Maximize2, X, TrendingUp, Activity, Smile } from "lucide-react";
+import { Maximize2, X, TrendingUp, Activity, Smile, ArrowLeft } from "lucide-react";
 import { useTheme } from "../theme/ThemeContext";
 import {
   AreaChart, Area, PieChart, Pie, Cell,
@@ -8,10 +9,12 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import RadarChart from "../components/RadarChart";
+import Icon from "../components/Icon";
 import { useStats } from "../hooks/useStats";
 import { ChartContainer, ChartTooltipContent } from "../components/ui/Chart";
 
 export default function Stats() {
+  const navigate = useNavigate();
   const { themeStyles } = useTheme();
   const { loading, stats } = useStats();
   const [popout, setPopout] = useState({ visible: false, type: null });
@@ -64,6 +67,13 @@ export default function Stats() {
           transition={{ duration: 0.5 }}
         >
           <div className="px-6 pt-8 pb-2">
+            <button
+              onClick={() => navigate("/home")}
+              className="bg-transparent border-none cursor-pointer flex items-center gap-2 mb-2"
+            >
+              <ArrowLeft size={24} color={themeStyles.secondaryText} />
+              <span className="text-sm font-bold" style={{ color: themeStyles.secondaryText }}>Volver</span>
+            </button>
             <p className="text-3xl font-black tracking-tight" style={{ color: themeStyles.text }}>
               Estadísticas
             </p>
@@ -241,7 +251,7 @@ export default function Stats() {
                 </ResponsiveContainer>
                 {dominant && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-3xl">{dominant.icon}</span>
+                    <Icon name={dominant.icon} size={28} color={dominant.color} />
                     <p className="text-xs font-bold mt-1" style={{ color: dominant.color }}>
                       {dominant.name}
                     </p>

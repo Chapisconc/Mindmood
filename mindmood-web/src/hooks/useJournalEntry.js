@@ -126,6 +126,7 @@ export const useJournalEntry = () => {
   return {
     saveEntry,
     getEntries,
+    updateStreak,
     loading,
     error,
   };
