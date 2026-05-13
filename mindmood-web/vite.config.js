@@ -11,8 +11,19 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icons/*.svg"],
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        skipWaiting: true,
+        clientsClaim: true,
+        globPatterns: ["**/*.{js,css,ico,png,svg}"],
         runtimeCaching: [
+          {
+            urlPattern: /\/$/,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "html-cache",
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 }
+            }
+          },
           {
             urlPattern: /^https:\/\/.*\.(png|jpg|jpeg|svg|gif|webp|ico)/,
             handler: "CacheFirst",
