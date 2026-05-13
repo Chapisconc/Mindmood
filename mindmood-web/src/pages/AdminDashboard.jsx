@@ -140,8 +140,24 @@ export default function AdminDashboard() {
     );
   }
 
+  const pieData = EMOTIONS_MAP.slice(0, 11).map((emo, i) => ({
+    emotionName: emo.name,
+    valueCount: moodStats[emo.name] || 0,
+    color: PIE_COLORS[i % PIE_COLORS.length],
+  })).filter(d => d.valueCount > 0);
+
+  const barData = pieData.map(d => ({
+    name: d.emotionName,
+    count: d.valueCount,
+    color: d.color,
+  }));
+
   const crisisCount = moodStats["Crisis"] || 0;
   const totalEntriesNum = totalEntries;
+
+  const globalTop = pieData.length > 0
+    ? pieData.reduce((a, b) => (b.valueCount > a.valueCount ? b : a))
+    : null;
 
   const matchesSearch = (item) => {
     const q = searchQuery.toLowerCase();
@@ -272,7 +288,7 @@ export default function AdminDashboard() {
         <StatCard icon={Users} label="Usuarios" value={totalUsers} color="text-indigo-500" />
         <StatCard icon={FileText} label="Entradas" value={totalEntriesNum} color="text-fuchsia-500" />
         <StatCard icon={AlertTriangle} label="Crisis" value={crisisCount} color="text-rose-500" />
-        <StatCard icon={Activity} label="Sentimiento Global" value={pieData.length > 0 ? pieData.reduce((a, b) => a.valueCount > b.valueCount ? a : b).emotionName : "Neutral"} color="text-indigo-500" />
+        <StatCard icon={Activity} label="Sentimiento Global" value={globalTop ? globalTop.emotionName : "Neutral"} color="text-indigo-500" />
       </div>
 
       {pieData.length === 0 ? (
@@ -297,6 +313,31 @@ export default function AdminDashboard() {
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-4xl font-black dark:text-white">{totalEntriesNum}</span>
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Entradas</span>
+
+                  {pieData.length > 0 && (
+                    <div className="mt-3 w-full px-6">
+                      <div className="flex flex-col items-center gap-2">
+                        {pieData
+                          .slice()
+                          .sort((a, b) => b.valueCount - a.valueCount)
+                          .slice(0, 5)
+                          .map((d, i) => (
+                            <div
+                              key={i}
+                              className="w-full flex items-center justify-center gap-2 bg-white/0"
+                            >
+                              <span
+                                className="w-2.5 h-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: d.color }}
+                              />
+                              <span className="text-[10px] font-black text-slate-200">
+                                {d.emotionName}: {d.valueCount}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
