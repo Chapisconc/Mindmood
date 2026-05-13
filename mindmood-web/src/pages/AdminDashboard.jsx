@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   PieChart as RePieChart, Pie, Cell, ResponsiveContainer,
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
 } from "recharts";
 import {
   Users, FileText, AlertTriangle, Search, Send,
@@ -321,52 +321,34 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className={`p-6 ${CARD}`}>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-black dark:text-white">
-            {activeChart === "radar" ? "Red de Sentimiento" : "Distribución Global de Emociones"}
-          </h2>
-          <div className="flex gap-2">
-            <button onClick={() => setActiveChart("radar")}
-              className={`px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all border-2 ${
-                activeChart === "radar"
-                  ? "bg-indigo-500 border-indigo-500 text-white shadow-lg"
-                  : "bg-slate-50 dark:bg-slate-800 border-transparent text-slate-500 dark:text-slate-400"
-              }`}>
-              Radar
-            </button>
-            <button onClick={() => setActiveChart("donut")}
-              className={`px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all border-2 ${
-                activeChart === "donut"
-                  ? "bg-indigo-500 border-indigo-500 text-white shadow-lg"
-                  : "bg-slate-50 dark:bg-slate-800 border-transparent text-slate-500 dark:text-slate-400"
-              }`}>
-              Emociones
-            </button>
+      <div className="grid lg:grid-cols-2 gap-8">
+        <div className={`p-6 ${CARD}`}>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-black dark:text-white">Red de Sentimiento</h2>
+            <div className="flex gap-2">
+              <button onClick={() => setActiveChart(activeChart === "radar" ? "donut" : "radar")}
+                className="px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all border-2 bg-slate-50 dark:bg-slate-800 border-transparent text-slate-500 dark:text-slate-400 hover:border-current">
+                {activeChart === "radar" ? "Donut" : "Radar"}
+              </button>
+            </div>
           </div>
-        </div>
-        {activeChart === "radar" ? (
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
-                <defs>
-                  <linearGradient id="radarGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6366F1" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#A855F7" stopOpacity={0.2} />
-                  </linearGradient>
-                </defs>
-                <PolarGrid stroke="#94a3b8" strokeDasharray="3 3" opacity={0.3} />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: "#64748b", fontSize: 10, fontWeight: 800 }} />
-                <PolarRadiusAxis domain={[0, maxRadar]} tick={{ fill: "#64748b", fontSize: 9 }} />
-                <Radar name="Entradas por emoción" dataKey="A" stroke="#6366F1" strokeWidth={3} fill="url(#radarGradient)" fillOpacity={0.6} />
-                <Tooltip contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", fontSize: "12px", fontWeight: "800" }} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="h-[300px] w-full md:w-1/2 relative">
-              <ResponsiveContainer width="100%" height="100%">
+              {activeChart === "radar" ? (
+                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+                  <PolarGrid stroke="#94a3b8" strokeDasharray="3 3" opacity={0.3} />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: "#64748b", fontSize: 10, fontWeight: 800 }} />
+                  <PolarRadiusAxis domain={[0, maxRadar]} hide />
+                  <Radar name="Entradas" dataKey="A" stroke="#6366F1" strokeWidth={3} fill="url(#radarGradient)" fillOpacity={0.6} />
+                  <Tooltip contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", fontSize: "12px", fontWeight: "800" }} />
+                  <defs>
+                    <linearGradient id="radarGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#6366F1" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#A855F7" stopOpacity={0.2} />
+                    </linearGradient>
+                  </defs>
+                </RadarChart>
+              ) : (
                 <RePieChart>
                   <Pie data={emotionDistData} cx="50%" cy="50%" innerRadius={60} outerRadius={95}
                     paddingAngle={3} dataKey="value" stroke="none">
@@ -378,22 +360,42 @@ export default function AdminDashboard() {
                     formatter={(value) => [`${value} entradas`]} />
                   <Legend />
                 </RePieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex-1 w-full md:w-1/2 space-y-2">
-              {emotionDistData.map((d, i) => {
-                const pct = totalEntries > 0 ? Math.round((d.value / totalEntries) * 100) : 0;
-                return (
-                  <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                    <span className="text-sm font-bold dark:text-white flex-1">{d.name}</span>
-                    <span className="text-xs font-black text-slate-500">{d.value} ({pct}%)</span>
-                  </div>
-                );
-              })}
-            </div>
+              )}
+            </ResponsiveContainer>
           </div>
-        )}
+          <div className="mt-4 space-y-1.5">
+            {emotionDistData.map((d, i) => {
+              const pct = totalEntries > 0 ? Math.round((d.value / totalEntries) * 100) : 0;
+              return (
+                <div key={i} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                  <span className="text-xs font-bold dark:text-white flex-1">{d.name}</span>
+                  <span className="text-[11px] font-black text-slate-500">{d.value} ({pct}%)</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className={`p-6 ${CARD}`}>
+          <h2 className="text-xl font-black mb-6 dark:text-white">Frecuencia Global por Emoción</h2>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={emotionDistData} layout="vertical" margin={{ left: 40 }}>
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false}
+                  tick={{ fontSize: 11, fontWeight: 700, fill: "#64748B" }} />
+                <Tooltip cursor={{ fill: "transparent" }}
+                  contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", fontSize: "12px", fontWeight: "800" }} />
+                <Bar dataKey="value" radius={[0, 8, 8, 0]}>
+                  {emotionDistData.map((entry, i) => (
+                    <Cell key={`bar-cell-${i}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
     </motion.div>
   );

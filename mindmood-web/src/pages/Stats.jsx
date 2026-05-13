@@ -75,11 +75,11 @@ export default function Stats() {
         <div className="grid lg:grid-cols-2 gap-8">
           <section className="p-8 bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
             <h2 className="text-xl font-black mb-8 dark:text-white">Distribución Dominante</h2>
-            <div className="flex-1 min-h-[300px] flex flex-col md:flex-row items-center gap-8">
-              <div className="w-full h-full relative">
+            <div className="flex-1 flex flex-col md:flex-row items-center gap-8">
+              <div className="h-[400px] w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <RePieChart>
-                    <Pie data={pieData} dataKey="valueCount" nameKey="emotionName" cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={10} stroke="none">
+                    <Pie data={pieData} dataKey="valueCount" nameKey="emotionName" cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={10} stroke="none">
                       {pieData.map((entry, i) => <Cell key={`cell-${i}`} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                     </Pie>
                     <Tooltip contentStyle={{ borderRadius: "24px", border: "none", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", fontSize: "12px", fontWeight: "800" }} />
