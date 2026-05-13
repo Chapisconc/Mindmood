@@ -40,7 +40,7 @@ export default function App() {
                 <Route path="/history" element={<History />} />
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin-dashboard" element={<AdminDashboard />} />
                 <Route path="/inbox" element={<Inbox />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

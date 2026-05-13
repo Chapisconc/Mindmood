@@ -1,47 +1,50 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "../services/supabase";
 import { useAuth } from "./useAuth";
 import { EMOTIONS_MAP, getEmotionByName } from "../theme/emotions";
 
 export const useStats = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchHistory = useCallback(async () => {
+  useEffect(() => {
+    if (authLoading) return;
+
     if (!user) {
       setError(new Error("No user logged in"));
       setLoading(false);
+      setEntries([]);
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    const fetchHistory = async () => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      const lastWeek = new Date();
-      lastWeek.setDate(lastWeek.getDate() - 7);
-      const { data, error: dbError } = await supabase
-        .from("entries")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("created_at", lastWeek.toISOString())
-        .order("created_at", { ascending: true });
+      try {
+        const lastWeek = new Date();
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        const { data, error: dbError } = await supabase
+          .from("entries")
+          .select("*")
+          .eq("user_id", user.id)
+          .gte("created_at", lastWeek.toISOString())
+          .order("created_at", { ascending: true });
 
-      if (dbError) throw dbError;
-      setEntries(data || []);
-    } catch (err) {
-      setError(err);
-      setEntries([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+        if (dbError) throw dbError;
+        setEntries(data || []);
+      } catch (err) {
+        setError(err);
+        setEntries([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  useEffect(() => {
     fetchHistory();
-  }, [fetchHistory]);
+  }, [user, authLoading]);
 
   const processedStats = useMemo(() => {
     if (entries.length === 0) return null;
@@ -92,13 +95,32 @@ export const useStats = () => {
     return { totalCount, lineData, pieData, radarData, maxCount, dominant };
   }, [entries]);
 
-  const refresh = useCallback(() => {
-    fetchHistory();
-  }, [fetchHistory]);
+  const refresh = async () => {
+    if (!user || authLoading) return;
+
+    setLoading(true);
+    try {
+      const lastWeek = new Date();
+      lastWeek.setDate(lastWeek.getDate() - 7);
+      const { data, error: dbError } = await supabase
+        .from("entries")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("created_at", lastWeek.toISOString())
+        .order("created_at", { ascending: true });
+
+      if (dbError) throw dbError;
+      setEntries(data || []);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
     entries,
-    loading,
+    loading: loading || authLoading,
     error,
     stats: processedStats,
     refresh,
