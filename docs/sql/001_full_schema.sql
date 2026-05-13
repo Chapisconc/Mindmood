@@ -232,7 +232,8 @@ RETURNS TABLE (
   anxiety_entries   INT,
   fear_entries      INT,
   gratitude_entries INT,
-  surprise_entries  INT
+  surprise_entries  INT,
+  disgust_entries   INT
 ) AS $$
 DECLARE
   caller_role text;
@@ -255,7 +256,8 @@ BEGIN
     (SELECT count(*)::int FROM public.entries en WHERE en.mood = 'Ansiedad'),
     (SELECT count(*)::int FROM public.entries en WHERE en.mood = 'Miedo'),
     (SELECT count(*)::int FROM public.entries en WHERE en.mood = 'Agradecido'),
-    (SELECT count(*)::int FROM public.entries en WHERE en.mood = 'Sorpresa');
+    (SELECT count(*)::int FROM public.entries en WHERE en.mood = 'Sorpresa'),
+    (SELECT count(*)::int FROM public.entries en WHERE en.mood = 'Asco');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
