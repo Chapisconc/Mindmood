@@ -38,13 +38,14 @@ async function fetchProfile() {
 export const useAuth = () => {
   const [user, setUser] = useState(globalUser);
   const [profile, setProfile] = useState(globalProfile);
-  const [loading, setLoading] = useState(globalUser === null && globalProfile === null);
+  const [loading, setLoading] = useState(true);
   const initRef = useRef(false);
 
   const fetchUserData = useCallback(async (forceRefresh = false) => {
-    if (!forceRefresh && globalUser) {
+    if (!forceRefresh && globalUser && globalProfile) {
       setUser(globalUser);
       setProfile(globalProfile);
+      setLoading(false);
       return;
     }
     if (!fetchPromise) {
@@ -56,6 +57,7 @@ export const useAuth = () => {
       fetchPromise = null;
       setUser(globalUser);
       setProfile(globalProfile);
+      setLoading(false);
     }
   }, []);
 
@@ -69,7 +71,6 @@ export const useAuth = () => {
       if (event === "INITIAL_SESSION") {
         if (session?.user) {
           setUser(session.user);
-          setLoading(false);
           fetchUserData(true);
         } else {
           notifyListeners(null, null);

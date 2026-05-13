@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -241,6 +241,12 @@ export default function Layout() {
   }
 
   if (!user) return <Navigate to="/" replace />;
+
+  useEffect(() => {
+    if (profile?.role === "admin" && !["/admin-dashboard", "/profile"].includes(currentPath)) {
+      navigate("/admin-dashboard", { replace: true });
+    }
+  }, [profile?.role]);
 
   const wrapperClass = sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]";
 

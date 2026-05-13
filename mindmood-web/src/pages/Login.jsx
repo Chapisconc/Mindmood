@@ -42,10 +42,7 @@ export default function Login() {
       supabase.from("profiles").update({ theme }).eq("id", user.id).then().catch(() => {});
       let role = user.user_metadata?.role;
       try {
-        const result = await Promise.race([
-          supabase.from("profiles").select("role").eq("id", user.id).single(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
-        ]);
+        const result = await supabase.from("profiles").select("role").eq("id", user.id).single();
         if (result?.data?.role) role = result.data.role;
       } catch (_) {}
       if (role === "admin") navigate("/admin-dashboard");
