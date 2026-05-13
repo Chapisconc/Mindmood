@@ -88,7 +88,7 @@ export const useAuth = () => {
         }
         setLoading(false);
       } else {
-        await fetchUserData(true);
+        fetchUserData(true);
       }
     });
 
