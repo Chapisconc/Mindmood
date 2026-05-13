@@ -64,3 +64,6 @@ mindmood-web/dist/
 
 # Skills lock
 skills-lock.json
+
+.vercel
+.env*.local

@@ -24,3 +24,5 @@ curl -H "ngrok-skip-browser-warning: true" https://tu-url.ngrok-free.dev/health 
 curl https://mindmood-web.vercel.app                   # Frontend
 
 ========================================================
+# Find and kill all ngrok processes
+taskkill /F /IM ngrok.exe

@@ -65,7 +65,11 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = async () => {
-    try { await supabase.auth.signOut({ scope: "local" }); } catch (_) {}
+    try { 
+      await supabase.auth.signOut();
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (_) {}
     navigate("/");
   };
 

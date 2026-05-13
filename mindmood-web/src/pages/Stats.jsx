@@ -206,25 +206,50 @@ export default function Stats() {
                   <Maximize2 size={16} color="#EC4899" />
                 </button>
               </div>
-              <div className="flex items-center justify-center" style={{ height: 150 }}>
+              <div className="relative flex items-center justify-center" style={{ height: 160 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
+                    <defs>
+                      <filter id="glow">
+                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                        <feMerge>
+                          <feMergeNode in="coloredBlur"/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
+                    </defs>
                     <Pie
                       data={pieData}
                       dataKey="valueCount"
                       nameKey="emotionName"
                       cx="50%"
                       cy="50%"
-                      innerRadius={38}
-                      outerRadius={62}
-                      paddingAngle={3}
+                      innerRadius={45}
+                      outerRadius={70}
+                      paddingAngle={2}
                     >
                       {pieData.map((entry, i) => (
-                        <Cell key={`cell-${i}`} fill={pieColors[i % pieColors.length]} stroke="none" />
+                        <Cell 
+                          key={`cell-${i}`} 
+                          fill={pieColors[i % pieColors.length]} 
+                          stroke="none"
+                          filter="url(#glow)"
+                        />
                       ))}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
+                {dominant && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-3xl">{dominant.icon}</span>
+                    <p className="text-xs font-bold mt-1" style={{ color: dominant.color }}>
+                      {dominant.name}
+                    </p>
+                    <p className="text-[10px] font-semibold opacity-60" style={{ color: themeStyles.secondaryText }}>
+                      Predominante
+                    </p>
+                  </div>
+                )}
               </div>
             </motion.div>
             <motion.div

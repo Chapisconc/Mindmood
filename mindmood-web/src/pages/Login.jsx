@@ -36,20 +36,23 @@ export default function Login() {
     });
     if (signInError) {
       setError(signInError.message);
-    } else if (user) {
-      await supabase
-        .from("profiles")
-        .update({ theme: theme })
-        .eq("id", user.id);
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      await syncTheme();
-      if (profile?.role === "admin") {
-        navigate("/admin-dashboard");
-      } else {
+      setLoading(false);
+      return;
+    } 
+    
+    if (user) {
+      try {
+        await supabase.from("profiles").update({ theme: theme }).eq("id", user.id);
+      } catch (_) {}
+      
+      try {
+        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+        if (profile?.role === "admin") {
+          navigate("/admin-dashboard");
+        } else {
+          navigate("/home");
+        }
+      } catch (_) {
         navigate("/home");
       }
     }
