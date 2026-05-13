@@ -439,6 +439,7 @@ export default function Layout() {
       <div className={`transition-all duration-200 ${wrapperClass}`}
         style={{ paddingBottom: "80px" }}
       >
+        <div className="max-w-6xl mx-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentPath}
@@ -461,6 +462,7 @@ export default function Layout() {
             </Suspense>
           </motion.div>
         </AnimatePresence>
+        </div>
       </div>
 
       <MobileNav currentPath={currentPath} navigate={navigate} />
