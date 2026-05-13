@@ -88,7 +88,7 @@ export default function EmotionModal({ visible, onClose, type, summary, distribu
           </div>
         )}
 
-        {total > 0 && (
+        {total > 0 ? (
           <div className="w-full mb-6 space-y-2.5">
             <p className="text-xs font-black uppercase tracking-wider mb-3 text-white/50">Distribución emocional</p>
             {distArray.map((d) => {
@@ -105,7 +105,22 @@ export default function EmotionModal({ visible, onClose, type, summary, distribu
               );
             })}
           </div>
-        )}
+        ) : selectedMoods?.length > 0 ? (
+          <div className="w-full mb-6">
+            <p className="text-xs font-black uppercase tracking-wider mb-3 text-white/50">Emociones detectadas</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {selectedMoods.map((m) => {
+                const c = MOOD_COLORS[m] || accent;
+                return (
+                  <span key={m} className="px-4 py-2 rounded-full text-[13px] font-extrabold text-white"
+                    style={{ backgroundColor: c }}>
+                    {m}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
 
         <div className="w-[60px] h-1 rounded mb-6" style={{ backgroundColor: accent }} />
 

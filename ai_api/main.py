@@ -12,7 +12,8 @@ import time
 import os
 from collections import defaultdict
 from spellchecker import SpellChecker
-from typing import List, Dict
+from typing import List, Dict, Tuple
+import math
  
 # Configurar logging para crisis
 logging.basicConfig(level=logging.WARNING)
@@ -508,6 +509,99 @@ def generate_human_summary(moods, compound_score, requires_help=False):
 
  
 # ============================================================================
+# 🔬 FUSIÓN MEJORADA: ENTROPÍA + VOTO SUAVIZADO + CONCILIACIÓN
+# ============================================================================
+
+APP_EMOTIONS = ["Excelente", "Feliz", "Agradecido", "Sorpresa", "Neutral",
+                "Enojo", "Ansiedad", "Miedo", "Triste", "Asco", "Crisis"]
+K = len(APP_EMOTIONS)
+
+def fusion_emocion_mejorada(
+    p_model: Dict[str, float],
+    selected_moods: List[str],
+    r: float = 0.7,
+    alpha_min: float = 0.1,
+    alpha_max: float = 0.8,
+    gamma: float = 2.0,
+    delta_conflicto: float = 0.15,
+    boost_conflicto: float = 0.15,
+) -> Tuple[Dict[str, float], float]:
+    """
+    Fusiona la distribución del modelo con las emociones seleccionadas por el usuario
+    usando entropía, voto suavizado y conciliación de conflictos.
+    
+    Args:
+        p_model: distribución del modelo en % (dict {emoción: valor})
+        selected_moods: emociones seleccionadas por el usuario
+        r: fiabilidad base del usuario (0.7 = el usuario acierta el 70% de las veces)
+        alpha_min: peso mínimo del usuario cuando el modelo está muy seguro
+        alpha_max: peso máximo del usuario cuando el modelo no sabe nada
+        gamma: controla la rapidez de la transición (mayor = más pegado al modelo)
+        delta_conflicto: diferencia máxima top1-top2 para considerar "empate"
+        boost_conflicto: cuánto reforzar alpha si el usuario desempata
+        
+    Returns:
+        (p_final_en_porcentajes, alpha_usado)
+    """
+    total = sum(p_model.values())
+    if total == 0:
+        return {e: round(100.0 / K, 1) for e in APP_EMOTIONS}, 0.0
+    
+    prob_model = {k: v / total for k, v in p_model.items()}
+    for e in APP_EMOTIONS:
+        prob_model.setdefault(e, 0.0)
+    
+    # 1. Entropía normalizada de la distribución del modelo
+    entropia = -sum(p * math.log2(p) for p in prob_model.values() if p > 0)
+    H_norm = min(max(entropia / math.log2(K), 0.0), 1.0)
+    
+    # 2. Alpha dinámico: curva continua basada en incertidumbre
+    alpha = alpha_max - (alpha_max - alpha_min) * (1.0 - H_norm) ** gamma
+    alpha = min(max(alpha, alpha_min), alpha_max)
+    
+    # 3. Voto suavizado del usuario (soft voting)
+    n_selected = len(selected_moods) if selected_moods else 0
+    q_user = {}
+    
+    if n_selected > 0:
+        r_per_selected = r / n_selected
+        remainder_per_other = (1.0 - r) / (K - n_selected) if K > n_selected else 0.0
+        for e in APP_EMOTIONS:
+            q_user[e] = r_per_selected if e in selected_moods else remainder_per_other
+    else:
+        for e in APP_EMOTIONS:
+            q_user[e] = 1.0 / K
+    
+    # 4. Fusión: p_final = (1-α)·p_model + α·q_user
+    p_final = {}
+    for e in APP_EMOTIONS:
+        p_final[e] = (1.0 - alpha) * prob_model[e] + alpha * q_user[e]
+    
+    # 5. Conciliación: si el usuario eligió la 2ª opción del modelo en un "empate"
+    if n_selected > 0:
+        sorted_emotions = sorted(prob_model, key=prob_model.get, reverse=True)
+        e_top1 = sorted_emotions[0]
+        prob_top1 = prob_model[e_top1]
+        e_top2 = sorted_emotions[1] if K > 1 else None
+        prob_top2 = prob_model[e_top2] if e_top2 else 0.0
+        
+        if (e_top2 and prob_top1 != 0 and
+            any(s == e_top2 for s in selected_moods) and
+            (prob_top1 - prob_top2) < delta_conflicto):
+            alpha = min(alpha + boost_conflicto, 0.95)
+            for e in APP_EMOTIONS:
+                p_final[e] = (1.0 - alpha) * prob_model[e] + alpha * q_user[e]
+    
+    # Normalizar a porcentajes
+    total_final = sum(p_final.values())
+    if total_final > 0:
+        p_final_pct = {k: round((v / total_final) * 100.0, 1) for k, v in p_final.items()}
+    else:
+        p_final_pct = {k: round(100.0 / K, 1) for k in APP_EMOTIONS}
+    
+    return p_final_pct, round(alpha, 3)
+
+# ============================================================================
 # 🚀 ENDPOINT PRINCIPAL MEJORADO
 # ============================================================================
  
@@ -657,45 +751,33 @@ def analyze(data: AnalyzeRequest):
         detected_moods.append("Excelente")
         distribution["Excelente"] = distribution.pop("Feliz", 0) # Promovemos Feliz a Excelente
 
-    # Paso 6: Mezclar con emociones seleccionadas por el usuario (boost + complemento)
+    # Paso 6: Fusión mejorada con entropía, voto suavizado y conciliación
     if data.selected_moods and len(data.selected_moods) > 0:
-        SELECTED_BOOST = 1.5
-        SELECTED_BASE = 20.0
-        for mood in data.selected_moods:
-            if mood in distribution:
-                distribution[mood] *= SELECTED_BOOST
-            else:
-                distribution[mood] = SELECTED_BASE
-            if mood not in detected_moods:
-                detected_moods.append(mood)
-        total_dist = sum(distribution.values())
-        if total_dist > 0:
-            distribution = {k: round((v / total_dist) * 100, 1) for k, v in distribution.items()}
-    
-    # Si el usuario seleccionó emociones, preservarlas todas sin truncar
-    if data.selected_moods:
-        selected_set = set(data.selected_moods)
-        # Añadir seleccionadas que no estén ya
+        distribution, alpha_usado = fusion_emocion_mejorada(
+            p_model=distribution,
+            selected_moods=data.selected_moods,
+        )
         for m in data.selected_moods:
             if m not in detected_moods:
                 detected_moods.append(m)
-        # Recalcular distribución incluyendo seleccionadas
-        if len(data.selected_moods) > 3:
-            pass
-    elif len(detected_moods) > 3:
-        priority_moods = [m for m in detected_moods if m in ["Crisis", "Excelente"]]
-        other_moods = sorted(
-            [m for m in detected_moods if m not in ["Crisis", "Excelente"]],
-            key=lambda m: distribution.get(m, 0),
-            reverse=True
-        )
-        allowed_other = 3 - len(priority_moods)
-        final_moods = priority_moods + other_moods[:max(0, allowed_other)]
-        detected_moods = final_moods
-        distribution = {k: v for k, v in distribution.items() if k in detected_moods}
-        total_dist = sum(distribution.values())
-        if total_dist > 0:
-            distribution = {k: round((v / total_dist) * 100, 1) for k, v in distribution.items()}
+        # Ordenar detected_moods por valor en la distribución final
+        detected_moods.sort(key=lambda m: distribution.get(m, 0), reverse=True)
+    else:
+        # Sin selección del usuario: limitar a 3 emociones para claridad visual
+        if len(detected_moods) > 3:
+            priority_moods = [m for m in detected_moods if m in ["Crisis", "Excelente"]]
+            other_moods = sorted(
+                [m for m in detected_moods if m not in ["Crisis", "Excelente"]],
+                key=lambda m: distribution.get(m, 0),
+                reverse=True
+            )
+            allowed_other = 3 - len(priority_moods)
+            final_moods = priority_moods + other_moods[:max(0, allowed_other)]
+            detected_moods = final_moods
+            distribution = {k: v for k, v in distribution.items() if k in detected_moods}
+            total_dist = sum(distribution.values())
+            if total_dist > 0:
+                distribution = {k: round((v / total_dist) * 100, 1) for k, v in distribution.items()}
     
     # Paso 8: Determinar mood primario (Priorizando emociones específicas)
     if not detected_moods:
