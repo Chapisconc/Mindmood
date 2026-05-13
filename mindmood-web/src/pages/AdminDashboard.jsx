@@ -341,20 +341,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Sin colores/leyenda debajo del radar: solo conteos por emoción */}
-              <div className="w-full md:w-1/3 space-y-2">
-                {pieData
-                  .slice()
-                  .sort((a, b) => b.valueCount - a.valueCount)
-                  .map((d, i) => (
-                    <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-white/0 dark:bg-transparent">
-                      <span className="text-[11px] font-black dark:text-white uppercase tracking-tighter truncate max-w-[140px]">
-                        {d.emotionName}
-                      </span>
-                      <span className="text-xs font-black text-slate-500">{d.valueCount}</span>
-                    </div>
-                  ))}
-              </div>
             </div>
           </section>
 
