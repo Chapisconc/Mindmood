@@ -26,6 +26,11 @@ const NAV_ITEMS = [
   { path: "/profile", icon: UserCircle, label: "Perfil" },
 ];
 
+const ADMIN_NAV_ITEMS = [
+  { path: "/admin-dashboard", icon: Shield, label: "Dashboard" },
+  { path: "/profile", icon: UserCircle, label: "Perfil" },
+];
+
 function NavLink({ item, isActive, collapsed, onClick }) {
   const { themeStyles: theme } = useTheme();
   const Icon = item.icon;
@@ -71,12 +76,9 @@ function Sidebar({ collapsed, onToggle, currentPath, navigate }) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {NAV_ITEMS.map((item) => (
+        {(isAdmin ? ADMIN_NAV_ITEMS : NAV_ITEMS).map((item) => (
           <NavLink key={item.path} item={item} isActive={currentPath === item.path} collapsed={collapsed} onClick={() => navigate(item.path)} />
         ))}
-        {isAdmin && (
-          <NavLink item={{ path: "/admin-dashboard", icon: Shield, label: "Admin" }} isActive={currentPath === "/admin-dashboard"} collapsed={collapsed} onClick={() => navigate("/admin-dashboard")} />
-        )}
       </div>
 
       <div className="p-3 border-t flex-shrink-0 border-slate-200 dark:border-slate-800">
@@ -121,11 +123,11 @@ function MobileNav({ currentPath, navigate }) {
   const { themeStyles: theme } = useTheme();
   const { profile } = useAuth();
   const isAdmin = profile?.role === "admin";
-  const mobileItems = NAV_ITEMS.slice(0, 4);
+  const items = isAdmin ? ADMIN_NAV_ITEMS : [...NAV_ITEMS.slice(0, 4), { path: "/profile", icon: UserCircle, label: "Perfil" }];
 
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t flex items-center justify-around px-2 py-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-      {mobileItems.map((item) => {
+      {items.map((item) => {
         const Icon = item.icon;
         const active = currentPath === item.path;
         return (
@@ -136,18 +138,6 @@ function MobileNav({ currentPath, navigate }) {
           </button>
         );
       })}
-      {isAdmin && (
-        <button onClick={() => navigate("/admin-dashboard")}
-          className="flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl bg-transparent border-none cursor-pointer">
-          <Shield size={20} color={currentPath === "/admin-dashboard" ? theme.accent : theme.secondaryText} />
-          <span className="text-[10px] font-extrabold" style={{ color: currentPath === "/admin-dashboard" ? theme.accent : theme.secondaryText }}>Admin</span>
-        </button>
-      )}
-      <button onClick={() => navigate("/profile")}
-        className="flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl bg-transparent border-none cursor-pointer">
-        <UserCircle size={20} color={currentPath === "/profile" ? theme.accent : theme.secondaryText} />
-        <span className="text-[10px] font-extrabold" style={{ color: currentPath === "/profile" ? theme.accent : theme.secondaryText }}>Perfil</span>
-      </button>
     </div>
   );
 }
@@ -181,7 +171,7 @@ function MobileMenu({ visible, onClose, currentPath, navigate }) {
             </div>
 
             <div className="px-3 py-4 space-y-1">
-              {NAV_ITEMS.map((item) => {
+              {(isAdmin ? ADMIN_NAV_ITEMS : NAV_ITEMS).map((item) => {
                 const Icon = item.icon;
                 const active = currentPath === item.path;
                 return (
@@ -196,17 +186,6 @@ function MobileMenu({ visible, onClose, currentPath, navigate }) {
                   </button>
                 );
               })}
-              {isAdmin && (
-                <button onClick={() => { navigate("/admin-dashboard"); onClose(); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 border-none cursor-pointer text-left"
-                  style={{ backgroundColor: currentPath === "/admin-dashboard" ? `${theme.accent}18` : "transparent", color: currentPath === "/admin-dashboard" ? theme.accent : theme.secondaryText }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: currentPath === "/admin-dashboard" ? `${theme.accent}20` : theme.itemBg }}>
-                    <Shield size={20} />
-                  </div>
-                  <span className="text-sm font-bold">Admin</span>
-                </button>
-              )}
             </div>
 
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-800">
@@ -246,7 +225,7 @@ function LoadingFallback() {
 
 export default function Layout() {
   const { themeStyles: theme } = useTheme();
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -284,7 +263,7 @@ export default function Layout() {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/inbox" element={<Inbox />} />
                   <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                  <Route path="*" element={<Navigate to="/home" replace />} />
+                  <Route path="*" element={<Navigate to={profile?.role === "admin" ? "/admin-dashboard" : "/home"} replace />} />
                 </Routes>
               </Suspense>
             </motion.div>
