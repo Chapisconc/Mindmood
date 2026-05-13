@@ -230,7 +230,18 @@ export default function Layout() {
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [checkedAdmin, setCheckedAdmin] = useState(false);
   const currentPath = location.pathname;
+
+  useEffect(() => {
+    if (!user || checkedAdmin) return;
+    setCheckedAdmin(true);
+    supabase.rpc("is_admin").then(({ data }) => {
+      if (data && !["/admin-dashboard", "/profile"].includes(currentPath)) {
+        navigate("/admin-dashboard", { replace: true });
+      }
+    }).catch(() => {});
+  }, [user, checkedAdmin, currentPath, navigate]);
 
   useEffect(() => {
     if (profile?.role === "admin" && user && !["/admin-dashboard", "/profile"].includes(currentPath)) {

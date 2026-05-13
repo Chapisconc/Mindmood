@@ -40,7 +40,9 @@ export default function Login() {
       if (signInError) { setError(signInError.message); return; }
       if (!user) { setError("Usuario no encontrado"); return; }
       supabase.from("profiles").update({ theme }).eq("id", user.id).then().catch(() => {});
-      navigate("/home");
+      const { data: isAdmin } = await supabase.rpc("is_admin");
+      if (isAdmin) navigate("/admin-dashboard");
+      else navigate("/home");
     } catch (err) { setError(err?.message || "Error al iniciar sesión"); }
     finally { loadingRef.current = false; if (timeoutRef.current) clearTimeout(timeoutRef.current); setLoading(false); }
   }
