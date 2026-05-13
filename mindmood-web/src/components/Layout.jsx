@@ -232,6 +232,12 @@ export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const currentPath = location.pathname;
 
+  useEffect(() => {
+    if (profile?.role === "admin" && user && !["/admin-dashboard", "/profile"].includes(currentPath)) {
+      navigate("/admin-dashboard", { replace: true });
+    }
+  }, [profile?.role, user, currentPath, navigate]);
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -241,12 +247,6 @@ export default function Layout() {
   }
 
   if (!user) return <Navigate to="/" replace />;
-
-  useEffect(() => {
-    if (profile?.role === "admin" && !["/admin-dashboard", "/profile"].includes(currentPath)) {
-      navigate("/admin-dashboard", { replace: true });
-    }
-  }, [profile?.role]);
 
   const wrapperClass = sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]";
 
