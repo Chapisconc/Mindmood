@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../services/supabase";
 
-let globalSession = null;
+let globalUser = null;
 let globalProfile = null;
+let fetchPromise = null;
 const sessionListeners = new Set();
 
 export const subscribeToSession = (callback) => {
@@ -10,83 +11,72 @@ export const subscribeToSession = (callback) => {
   return () => sessionListeners.delete(callback);
 };
 
-const notifyListeners = (session, profile) => {
-  globalSession = session;
+const notifyListeners = (user, profile) => {
+  globalUser = user;
   globalProfile = profile;
-  sessionListeners.forEach((cb) => cb(session, profile));
+  sessionListeners.forEach((cb) => cb(user, profile));
 };
 
+async function fetchProfile() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      notifyListeners(user, profile || null);
+    } else {
+      notifyListeners(null, null);
+    }
+  } catch {
+    notifyListeners(null, null);
+  }
+}
+
 export const useAuth = () => {
-  const [user, setUser] = useState(globalSession);
+  const [user, setUser] = useState(globalUser);
   const [profile, setProfile] = useState(globalProfile);
-  const [loading, setLoading] = useState(!globalSession);
+  const [loading, setLoading] = useState(globalUser === null && globalProfile === null);
   const initRef = useRef(false);
 
   const fetchUserData = useCallback(async (forceRefresh = false) => {
-    if (!forceRefresh && globalSession) {
-      setUser(globalSession);
+    if (!forceRefresh && globalUser) {
+      setUser(globalUser);
       setProfile(globalProfile);
-      setLoading(false);
       return;
     }
+    if (!fetchPromise) {
+      fetchPromise = fetchProfile();
+    }
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-        notifyListeners(user, profile || null);
-        setUser(user);
-        setProfile(profile || null);
-      } else {
-        notifyListeners(null, null);
-        setUser(null);
-        setProfile(null);
-      }
-    } catch (error) {
-      if (import.meta.env.DEV) console.error("Auth fetch error:", error);
-      notifyListeners(null, null);
-      setUser(null);
-      setProfile(null);
+      await fetchPromise;
     } finally {
-      setLoading(false);
+      fetchPromise = null;
+      setUser(globalUser);
+      setProfile(globalProfile);
     }
   }, []);
 
   useEffect(() => {
     if (initRef.current) return;
     initRef.current = true;
-    setLoading(true);
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "INITIAL_SESSION") {
         if (session?.user) {
-          try {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("*")
-              .eq("id", session.user.id)
-              .single();
-            notifyListeners(session.user, profile || null);
-            setUser(session.user);
-            setProfile(profile || null);
-          } catch {
-            notifyListeners(session.user, null);
-            setUser(session.user);
-            setProfile(null);
-          }
+          setUser(session.user);
+          setLoading(false);
+          fetchUserData(true);
         } else {
           notifyListeners(null, null);
           setUser(null);
           setProfile(null);
+          setLoading(false);
         }
-        setLoading(false);
       } else {
         fetchUserData(true);
       }
@@ -100,9 +90,7 @@ export const useAuth = () => {
   const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
-    } catch (error) {
-      if (import.meta.env.DEV) console.error("Sign out error:", error);
-    }
+    } catch {}
     setUser(null);
     setProfile(null);
   }, []);
