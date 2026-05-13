@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, PlusCircle, BookOpen, TrendingUp, Bell,
-  UserCircle, Shield, ChevronRight,
+  UserCircle, Shield, LogOut, Sun, Moon, ChevronRight,
 } from "lucide-react";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
@@ -31,68 +31,65 @@ const ADMIN_NAV_ITEMS = [
   { path: "/profile", icon: UserCircle, label: "Perfil" },
 ];
 
-function NavLink({ item, isActive, collapsed, onClick }) {
-  const { themeStyles: theme } = useTheme();
-  const Icon = item.icon;
-  return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 border-none cursor-pointer text-left"
-      style={{
-        backgroundColor: isActive ? `${theme.accent}18` : "transparent",
-        color: isActive ? theme.accent : theme.secondaryText,
-      }}
-      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = theme.softAccent; }}
-      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = "transparent"; }}
-    >
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: isActive ? `${theme.accent}20` : theme.itemBg }}>
-        <Icon size={20} color={isActive ? theme.accent : theme.secondaryText} />
-      </div>
-      {!collapsed && <span className="text-sm font-bold tracking-tight" style={{ color: isActive ? theme.accent : theme.secondaryText }}>{item.label}</span>}
-      {isActive && !collapsed && <div className="ml-auto w-1.5 h-8 rounded-full" style={{ backgroundColor: theme.accent }} />}
-    </button>
-  );
-}
-
 function Sidebar({ collapsed, onToggle, currentPath, navigate }) {
-  const { themeStyles: theme } = useTheme();
+  const { themeStyles, theme, toggleTheme } = useTheme();
   const { profile, user } = useAuth();
-  const isAdmin = profile?.role === "admin";
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
 
   return (
     <motion.aside animate={{ width: collapsed ? 72 : 260 }}
       className="hidden lg:flex flex-col fixed left-0 top-0 h-screen z-40 border-r bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
     >
       <div className="flex items-center gap-3 px-4 h-16 border-b flex-shrink-0 border-slate-200 dark:border-slate-800">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: theme.accent }}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: themeStyles.accent }}>
           <span className="text-white text-base font-black">M</span>
         </div>
-        {!collapsed && <span className="text-lg font-black tracking-tight dark:text-white" style={{ color: theme.text }}>MindMood</span>}
+        {!collapsed && <span className="text-lg font-black tracking-tight dark:text-white" style={{ color: themeStyles.text }}>MindMood</span>}
         <button onClick={onToggle} className="ml-auto bg-transparent border-none cursor-pointer p-1 rounded-lg hover:opacity-70 transition-opacity">
-          <ChevronRight size={18} color={theme.secondaryText}
+          <ChevronRight size={18} color={themeStyles.secondaryText}
             style={{ transform: collapsed ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {(isAdmin ? ADMIN_NAV_ITEMS : NAV_ITEMS).map((item) => (
-          <NavLink key={item.path} item={item} isActive={currentPath === item.path} collapsed={collapsed} onClick={() => navigate(item.path)} />
-        ))}
+      <div className="flex-1 px-3 py-4 space-y-2 flex flex-col justify-center items-center">
+        <button onClick={toggleTheme}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border-none cursor-pointer"
+          style={{ color: themeStyles.secondaryText }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = themeStyles.softAccent}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: themeStyles.itemBg }}>
+            {theme === "dark" ? <Sun size={20} color="#FBBF24" /> : <Moon size={20} color="#6366F1" />}
+          </div>
+          {!collapsed && <span className="text-sm font-bold tracking-tight">{theme === "dark" ? "Modo Claro" : "Modo Oscuro"}</span>}
+        </button>
+        <button onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border-none cursor-pointer"
+          style={{ color: "#EF4444" }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#FEE2E2"}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#FEE2E2" }}>
+            <LogOut size={20} color="#EF4444" />
+          </div>
+          {!collapsed && <span className="text-sm font-bold tracking-tight">Cerrar Sesión</span>}
+        </button>
       </div>
 
       <div className="p-3 border-t flex-shrink-0 border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3 px-2 py-2">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black"
-            style={{ backgroundColor: theme.itemBg, color: theme.text }}>
+            style={{ backgroundColor: themeStyles.itemBg, color: themeStyles.text }}>
             {(profile?.display_name || user?.email || "U")[0].toUpperCase()}
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate dark:text-white" style={{ color: theme.text }}>
+              <p className="text-sm font-bold truncate dark:text-white" style={{ color: themeStyles.text }}>
                 {profile?.display_name || user?.email?.split("@")[0] || "Usuario"}
               </p>
-              <p className="text-[11px] font-semibold truncate opacity-60 dark:text-slate-400" style={{ color: theme.secondaryText }}>{user?.email}</p>
+              <p className="text-[11px] font-semibold truncate opacity-60 dark:text-slate-400" style={{ color: themeStyles.secondaryText }}>{user?.email}</p>
             </div>
           )}
         </div>
