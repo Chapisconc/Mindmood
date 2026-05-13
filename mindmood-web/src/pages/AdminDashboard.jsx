@@ -222,7 +222,7 @@ export default function AdminDashboard() {
               const contactRejected = item.contact_status === "rejected";
 
               return (
-                <motion.div key={item.id || item.entry_id || idx} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
+                <motion.div key={`ci-${item.id || item.entry_id || idx}`} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                   className={`group ${CARD} p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6`}
                 >
                   <div className="flex items-center gap-6 flex-1">
