@@ -192,7 +192,7 @@ export default function Layout() {
         </div>
       </div>
 
-      <MobileNav currentPath={currentPath} navigate={navigate} />
+      {profile?.role !== "admin" && <MobileNav currentPath={currentPath} navigate={navigate} />}
     </div>
   );
 }

@@ -33,7 +33,7 @@ export default function NewEntry() {
   const [loading, setLoading] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalData, setModalData] = useState({ type: "normal", summary: "", distribution: null });
+  const [modalData, setModalData] = useState({ type: "normal", summary: "" });
   const [apiStatus, setApiStatus] = useState("connecting");
   const [selectedMoods, setSelectedMoods] = useState([]);
   const initialMood = searchParams.get("mood") || null;
@@ -131,7 +131,6 @@ export default function NewEntry() {
       setModalData({
         type: requires_help ? "crisis" : "normal",
         summary: isOffline ? "Guardado localmente (Modo Offline)" : summary,
-        distribution: emotions_distribution,
         primaryMood: mood,
         selectedMoods: aiData.selected_moods || finalSelectedMoods,
       });
@@ -224,7 +223,6 @@ export default function NewEntry() {
         onClose={() => { setModalVisible(false); navigate("/home"); }}
         type={modalData.type}
         summary={modalData.summary}
-        distribution={modalData.distribution}
         primaryMood={modalData.primaryMood}
         selectedMoods={modalData.selectedMoods}
       />
