@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, PlusCircle, BookOpen, TrendingUp, Bell,
-  UserCircle, Shield, LogOut, Menu, X, ChevronRight,
+  UserCircle, Shield, ChevronRight,
 } from "lucide-react";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
@@ -101,24 +101,6 @@ function Sidebar({ collapsed, onToggle, currentPath, navigate }) {
   );
 }
 
-function MobileHeader({ onMenuToggle }) {
-  const { themeStyles: theme } = useTheme();
-  return (
-    <div className="lg:hidden flex items-center justify-between px-4 h-14 border-b bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-      <button onClick={onMenuToggle} className="bg-transparent border-none cursor-pointer p-2 dark:text-white">
-        <Menu size={24} />
-      </button>
-      <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: theme.accent }}>
-          <span className="text-white text-xs font-black">M</span>
-        </div>
-        <span className="text-base font-black dark:text-white" style={{ color: theme.text }}>MindMood</span>
-      </div>
-      <div className="w-10" />
-    </div>
-  );
-}
-
 function MobileNav({ currentPath, navigate }) {
   const { themeStyles: theme } = useTheme();
   const { profile } = useAuth();
@@ -142,78 +124,6 @@ function MobileNav({ currentPath, navigate }) {
   );
 }
 
-function MobileMenu({ visible, onClose, currentPath, navigate }) {
-  const { themeStyles: theme } = useTheme();
-  const { profile, user } = useAuth();
-  const isAdmin = profile?.role === "admin";
-  const handleLogout = async () => { await supabase.auth.signOut(); navigate("/"); };
-
-  return (
-    <AnimatePresence>
-      {visible && (
-        <>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-50 bg-black/60" onClick={onClose} />
-          <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="lg:hidden fixed top-0 left-0 bottom-0 w-72 z-50 border-r bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
-          >
-            <div className="flex items-center justify-between px-4 h-14 border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: theme.accent }}>
-                  <span className="text-white text-sm font-black">M</span>
-                </div>
-                <span className="text-lg font-black dark:text-white" style={{ color: theme.text }}>MindMood</span>
-              </div>
-              <button onClick={onClose} className="bg-transparent border-none cursor-pointer p-1">
-                <X size={22} color={theme.secondaryText} />
-              </button>
-            </div>
-
-            <div className="px-3 py-4 space-y-1">
-              {(isAdmin ? ADMIN_NAV_ITEMS : NAV_ITEMS).map((item) => {
-                const Icon = item.icon;
-                const active = currentPath === item.path;
-                return (
-                  <button key={item.path} onClick={() => { navigate(item.path); onClose(); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 border-none cursor-pointer text-left"
-                    style={{ backgroundColor: active ? `${theme.accent}18` : "transparent", color: active ? theme.accent : theme.secondaryText }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: active ? `${theme.accent}20` : theme.itemBg }}>
-                      <Icon size={20} color={active ? theme.accent : theme.secondaryText} />
-                    </div>
-                    <span className="text-sm font-bold">{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-3 mb-3 px-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black"
-                  style={{ backgroundColor: theme.itemBg, color: theme.text }}>
-                  {(profile?.display_name || user?.email || "U")[0].toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold truncate dark:text-white" style={{ color: theme.text }}>
-                    {profile?.display_name || user?.email?.split("@")[0] || "Usuario"}
-                  </p>
-                  <p className="text-[11px] truncate opacity-60 dark:text-slate-400" style={{ color: theme.secondaryText }}>{user?.email}</p>
-                </div>
-              </div>
-              <button onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-none cursor-pointer font-bold text-sm"
-                style={{ backgroundColor: `${theme.error}15`, color: theme.error }}>
-                <LogOut size={16} /> Cerrar Sesión
-              </button>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
-
 function LoadingFallback() {
   const { themeStyles: theme } = useTheme();
   return (
@@ -229,7 +139,6 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [checkedAdmin, setCheckedAdmin] = useState(false);
   const currentPath = location.pathname;
 
@@ -264,8 +173,6 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950">
       <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} currentPath={currentPath} navigate={navigate} />
-      <MobileHeader onMenuToggle={() => setMobileMenuOpen(true)} />
-      <MobileMenu visible={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} currentPath={currentPath} navigate={navigate} />
 
       <div className={`transition-all duration-200 ${wrapperClass}`} style={{ paddingBottom: "80px" }}>
         <div className="max-w-6xl mx-auto">

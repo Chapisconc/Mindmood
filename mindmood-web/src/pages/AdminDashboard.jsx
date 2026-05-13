@@ -12,23 +12,25 @@ import {
 } from "lucide-react";
 import { supabase } from "../services/supabase";
 import { EMOTIONS_MAP } from "../theme/emotions";
-import { useAuth } from "../hooks/useAuth";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 const CARD = "bg-white/70 dark:bg-slate-900/40 backdrop-blur-xl rounded-[3rem] border border-white/20 dark:border-slate-800 shadow-xl";
 
 export default function AdminDashboard() {
-  const { profile } = useAuth();
+  const [admin, setAdmin] = useState(null);
   const [stats, setStats] = useState(null);
   const [alarms, setAlarms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    if (profile?.role !== "admin") return;
-    fetchAdminData();
-  }, [profile?.role]);
+    supabase.rpc("is_admin").then(({ data }) => {
+      setAdmin(!!data);
+      if (data) fetchAdminData();
+      else setLoading(false);
+    });
+  }, []);
 
   const fetchAdminData = async () => {
     try {
@@ -42,7 +44,7 @@ export default function AdminDashboard() {
     finally { setLoading(false); }
   };
 
-  if (profile?.role !== "admin") {
+  if (admin === false) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center space-y-4">
@@ -54,7 +56,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (loading) {
+  if (admin === null || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="w-12 h-12 rounded-full border-2 border-transparent border-t-purple-500 animate-spin" />
