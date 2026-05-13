@@ -7,7 +7,7 @@ import { useTheme } from "../theme/ThemeContext";
 import { EMOTIONS_MAP, getEmotionByName } from "../theme/emotions";
 import { contactService } from "../services/contactService";
 import RadarChart from "../components/RadarChart";
-import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { PieChart as RePieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 const STATUS_COLORS = {
   active: { label: "Pendiente", color: "#EF4444" },
@@ -107,6 +107,39 @@ export default function AdminDashboard() {
         return (stats[keyMap[c.name]] || 0) > (stats[keyMap[p.name]] || 0) ? c : p;
       }, EMOTIONS_MAP[4])
     : EMOTIONS_MAP[4];
+
+  const crisisCount = stats?.crisis_entries || 0;
+  const nonCrisisCount = Math.max(0, totalEntries - crisisCount);
+  const crisisPie = [
+    { name: "Crisis", value: crisisCount, color: "#EF4444" },
+    { name: "Normal", value: nonCrisisCount, color: "#10B981" },
+  ].filter((d) => d.value > 0);
+
+  const statusCounts = alarms.reduce(
+    (acc, a) => {
+      const s = a.status || "active";
+      acc[s] = (acc[s] || 0) + 1;
+      return acc;
+    },
+    { active: 0, working: 0, resolved: 0 }
+  );
+  const alarmStatusData = Object.entries(statusCounts).map(([key, value]) => ({
+    name: STATUS_COLORS[key]?.label || key,
+    value,
+    color: STATUS_COLORS[key]?.color || "#888",
+  })).filter((d) => d.value > 0);
+
+  const leaderMap = {};
+  alarms.forEach((a) => {
+    const email = a.student_email || a.email || "unknown";
+    if (!leaderMap[email]) leaderMap[email] = { email, count: 0, lastCrisis: null };
+    leaderMap[email].count++;
+    const d = a.created_at ? new Date(a.created_at) : null;
+    if (!leaderMap[email].lastCrisis || d > leaderMap[email].lastCrisis) leaderMap[email].lastCrisis = d;
+  });
+  const crisisLeaders = Object.values(leaderMap)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
 
   const filters = [
     { key: "all", label: "Todos" },
@@ -253,6 +286,128 @@ export default function AdminDashboard() {
             )}
           </AnimatePresence>
         </div>
+
+        <div className="flex gap-3 px-5 mb-4">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex-1 rounded-3xl p-4 border"
+            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+          >
+            <p className="text-xs font-black mb-2" style={{ color: themeStyles.secondaryText }}>Crisis vs Normal</p>
+            {crisisPie.length > 0 ? (
+              <div style={{ width: "100%", height: 120 }}>
+                <ResponsiveContainer>
+                  <RePieChart>
+                    <Pie data={crisisPie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={3}>
+                      {crisisPie.map((e, i) => <Cell key={i} fill={e.color} stroke="none" />)}
+                    </Pie>
+                  </RePieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-sm font-bold" style={{ color: themeStyles.text }}>Sin datos</p>
+            )}
+            <div className="flex justify-center gap-4 mt-1">
+              {crisisPie.map((e) => (
+                <div key={e.name} className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: e.color }} />
+                  <span className="text-[10px] font-bold" style={{ color: themeStyles.secondaryText }}>
+                    {e.name}: {e.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="flex-1 rounded-3xl p-4 border"
+            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+          >
+            <p className="text-xs font-black mb-2" style={{ color: themeStyles.secondaryText }}>Estado Alarmas</p>
+            {alarmStatusData.length > 0 ? (
+              <div style={{ width: "100%", height: 120 }}>
+                <ResponsiveContainer>
+                  <RePieChart>
+                    <Pie data={alarmStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={3}>
+                      {alarmStatusData.map((e, i) => <Cell key={i} fill={e.color} stroke="none" />)}
+                    </Pie>
+                  </RePieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-sm font-bold" style={{ color: themeStyles.text }}>Sin alarmas</p>
+            )}
+            <div className="flex justify-center gap-3 mt-1">
+              {alarmStatusData.map((e) => (
+                <div key={e.name} className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: e.color }} />
+                  <span className="text-[10px] font-bold" style={{ color: themeStyles.secondaryText }}>
+                    {e.name}: {e.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        {chartData.filter((d) => d.percentage > 0).length > 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mx-5 mb-4 p-5 rounded-3xl border"
+            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+          >
+            <p className="text-base font-black mb-4" style={{ color: themeStyles.text }}>Barras por Emoción</p>
+            <div style={{ width: "100%", height: 200 }}>
+              <ResponsiveContainer>
+                <BarChart data={chartData} layout="vertical" margin={{ left: 60, right: 10, top: 0, bottom: 0 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: themeStyles.secondaryText }} width={55} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: themeStyles.card, border: `1px solid ${themeStyles.border}`, borderRadius: 12, fontSize: 12 }}
+                    labelStyle={{ color: themeStyles.text }}
+                  />
+                  <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={16}>
+                    {chartData.map((e, i) => (
+                      <Cell key={i} fill={e.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+        )}
+
+        {crisisLeaders.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mx-5 mb-4 p-5 rounded-3xl border"
+            style={{ backgroundColor: themeStyles.card, borderColor: themeStyles.border }}
+          >
+            <p className="text-base font-black mb-3" style={{ color: themeStyles.text }}>Usuarios con más Crisis</p>
+            {crisisLeaders.map((u, i) => (
+              <div key={u.email} className="flex items-center justify-between py-2 border-b last:border-b-0" style={{ borderColor: themeStyles.border }}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xs font-black flex-shrink-0" style={{ color: i === 0 ? "#F59E0B" : themeStyles.secondaryText }}>
+                    #{i + 1}
+                  </span>
+                  <p className="text-sm font-bold truncate" style={{ color: themeStyles.text }}>{u.email}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-sm font-black" style={{ color: "#EF4444" }}>{u.count}</span>
+                  <span className="text-[10px] font-semibold opacity-60" style={{ color: themeStyles.secondaryText }}>crisis</span>
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        )}
 
         <div className="flex gap-2 px-5 mb-4 overflow-x-auto pb-1">
           {filters.map((f) => (
