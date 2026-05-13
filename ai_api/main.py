@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import pipeline
@@ -7,6 +8,9 @@ import re
 import logging
 import json
 import emoji
+import time
+import os
+from collections import defaultdict
 from spellchecker import SpellChecker
 from typing import List, Dict
  
@@ -29,14 +33,59 @@ def read_root():
         }
     }
 
-# Enable CORS
+# ============================================================================
+# 🌐 CORS RESTRINGIDO (solo orígenes conocidos)
+# ============================================================================
+ALLOWED_ORIGINS = os.environ.get("CORS_ORIGINS", "").split(",") if os.environ.get("CORS_ORIGINS") else [
+    "https://cheating-uncanny-squire.ngrok-free.dev",
+    "exp://localhost:19000",
+    "http://localhost:19006",
+    "http://127.0.0.1:8000",
+    "http://localhost:5173",
+    "http://localhost:4173",
+    "https://mindmood.vercel.app",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["POST", "GET", "OPTIONS"],
+    allow_headers=["Content-Type", "ngrok-skip-browser-warning"],
 )
+
+# ============================================================================
+# 🔒 RATE LIMITING POR MEMORIA
+# ============================================================================
+RATE_LIMIT_WINDOW = 60  # segundos
+RATE_LIMIT_MAX = 10      # requests por ventana
+_rate_store = defaultdict(list)
+
+async def rate_limiter(request: Request, call_next):
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    window_start = now - RATE_LIMIT_WINDOW
+
+    _rate_store[client_ip] = [t for t in _rate_store[client_ip] if t > window_start]
+
+    if len(_rate_store[client_ip]) >= RATE_LIMIT_MAX:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "error": "Demasiadas solicitudes. Intenta de nuevo en un minuto.",
+                "requires_help": False,
+                "mood": "Neutral",
+                "score": 0,
+                "summary": "Límite de solicitudes alcanzado. Por favor espera antes de enviar otro análisis.",
+                "crisis_level": "normal",
+                "confidence": 0,
+            },
+        )
+
+    _rate_store[client_ip].append(now)
+    response = await call_next(request)
+    return response
+
+app.middleware("http")(rate_limiter)
  
 logger.info("Cargando modelo robertuito-sentiment-analysis. Esto puede tomar unos segundos...")
 sentiment_pipeline = pipeline(
@@ -213,8 +262,6 @@ def analyze_emotional_reinforcement(text: str) -> dict:
 # 🔤 NORMALIZACIÓN DE JERGA MEXICANA Y CORRECTOR ORTOGRÁFICO
 # ============================================================================
  
-import os
-
 # Inicializar corrector ortográfico en español
 spell = SpellChecker(language='es')
 
@@ -430,8 +477,8 @@ def generate_human_summary(moods, compound_score, requires_help=False):
         ]
     }
 
-    import random
-    insight = random.choice(insights.get(primary, insights['Neutral']))
+    import secrets
+    insight = secrets.choice(insights.get(primary, insights['Neutral']))
     
     # 2. Construir la narrativa
     if compound_score <= -0.5:
@@ -523,7 +570,8 @@ def analyze(data: AnalyzeRequest):
         requires_help = True
         crisis_level = "critical"
         compound = -0.95 # Fuerza un score muy bajo para crisis
-        logger.warning(f"CRISIS DETECTED: {original_text[:100]}...")
+        masked = original_text[:50] + "..." if len(original_text) > 50 else original_text[:20]
+        logger.warning(f"CRISIS DETECTED (masked): [redacted]")
     
     # Paso 5: Análisis avanzado de Emociones (HuggingFace)
     emotion_map = {
@@ -554,8 +602,8 @@ def analyze(data: AnalyzeRequest):
             else:
                 distribution[es_label] = percentage
                 
-            # Agregar a detected_moods si es significativo (> 15%)
-            if percentage > 15.0 and es_label != 'Neutral':
+            # Agregar a detected_moods si es significativo (> 35%)
+            if percentage > 35.0 and es_label != 'Neutral':
                 detected_moods.append(es_label)
                 
     except Exception as e:
@@ -565,19 +613,38 @@ def analyze(data: AnalyzeRequest):
     # Limpiar posibles errores de redondeo en distribución
     distribution = {k: round(v, 1) for k, v in distribution.items() if v > 0.5} # Filtramos los muy bajos
     
-    # NUEVO: Refuerzo por Palabras Clave para Multi-Emociones
-    # Si el usuario escribe palabras de una emoción, nos aseguramos de que aparezca
-    for category, keywords in EMOTION_KEYWORDS.items():
-        if any(kw in text_no_accents for kw in keywords):
-            if category not in detected_moods:
-                detected_moods.append(category)
-            # Asegurar que tenga al menos un 20% en la distribución
-            distribution[category] = max(distribution.get(category, 0), 20.0)
+    # Filtro de polaridad: eliminar emociones que contradicen el tono general
+    # Se aplica PRIMERO para limpiar el ruido del modelo antes del refuerzo por keywords
+    if compound > 0.3:
+        negative_emotions = ["Triste", "Enojo", "Miedo", "Asco", "Ansiedad"]
+        cleaned_dist = {k: v for k, v in distribution.items() if k not in negative_emotions or v > 25.0}
+        if cleaned_dist:
+            distribution = cleaned_dist
+            detected_moods = [m for m in detected_moods if m not in negative_emotions or distribution.get(m, 0) > 25.0]
+    elif compound < -0.3:
+        positive_emotions = ["Feliz", "Excelente", "Agradecido", "Sorpresa"]
+        cleaned_dist = {k: v for k, v in distribution.items() if k not in positive_emotions or v > 25.0}
+        if cleaned_dist:
+            distribution = cleaned_dist
+            detected_moods = [m for m in detected_moods if m not in positive_emotions or distribution.get(m, 0) > 25.0]
     
-    # Re-normalizar la distribución para que sume 100% después del refuerzo
+    # Re-normalizar la distribución para que sume 100%
     total_dist = sum(distribution.values())
     if total_dist > 0:
         distribution = {k: round((v / total_dist) * 100, 1) for k, v in distribution.items()}
+    
+    # Refuerzo por Palabras Clave: usar regex con word boundaries \b para evitar falsos positivos
+    for category, keywords in EMOTION_KEYWORDS.items():
+        for kw in keywords:
+            try:
+                word_pattern = re.compile(r'\b' + re.escape(kw) + r'\b', re.IGNORECASE)
+                if word_pattern.search(text_no_accents):
+                    if category not in detected_moods:
+                        detected_moods.append(category)
+                    distribution[category] = max(distribution.get(category, 0), 30.0)
+                    break
+            except re.error:
+                pass
     
     # Añadir Crisis si los indicadores de alerta saltaron
     if requires_help:
@@ -589,60 +656,71 @@ def analyze(data: AnalyzeRequest):
         detected_moods.append("Excelente")
         distribution["Excelente"] = distribution.pop("Feliz", 0) # Promovemos Feliz a Excelente
 
+    # Limitar a máximo 3 emociones para evitar ruido visual
+    # Mantener Crisis/Excelente siempre, luego ordenar por distribución
+    if len(detected_moods) > 3:
+        priority_moods = [m for m in detected_moods if m in ["Crisis", "Excelente"]]
+        other_moods = sorted(
+            [m for m in detected_moods if m not in ["Crisis", "Excelente"]],
+            key=lambda m: distribution.get(m, 0),
+            reverse=True
+        )
+        allowed_other = 3 - len(priority_moods)
+        final_moods = priority_moods + other_moods[:max(0, allowed_other)]
+        detected_moods = final_moods
+        distribution = {k: v for k, v in distribution.items() if k in detected_moods}
+        total_dist = sum(distribution.values())
+        if total_dist > 0:
+            distribution = {k: round((v / total_dist) * 100, 1) for k, v in distribution.items()}
+    
     # Paso 8: Determinar mood primario (Priorizando emociones específicas)
     if not detected_moods:
-        # Si el score es muy neutro y no hay emociones detectadas, es Indeterminado (o Neutral si el score es exactamente 0)
         if abs(compound) < 0.1:
             primary_mood = "Indeterminado"
         else:
             primary_mood = "Neutral"
         crisis_level = "normal"
     else:
-        # Prioridad basada en severidad
         if requires_help or "Crisis" in detected_moods:
             primary_mood = "Crisis"
             crisis_level = "critical"
-        elif compound >= 0.85: # Prioridad máxima a felicidad extrema
+        elif compound >= 0.85:
             primary_mood = "Excelente"
-        elif "Enojo" in detected_moods: 
-            primary_mood = "Enojo"
-            # Si el enojo fue lo que bajó el score pero NO hay palabras de crisis reales, quitamos la alerta
-            if not has_crisis_indicators(text_lower) and "Crisis" not in detected_moods:
+        else:
+            primary_mood = max(detected_moods, key=lambda m: distribution.get(m, 0))
+            if primary_mood == "Enojo" and not has_crisis_indicators(text_lower):
                 requires_help = False
                 crisis_level = "normal"
-        elif "Ansiedad" in detected_moods: 
-            primary_mood = "Ansiedad"
-        elif "Miedo" in detected_moods: 
-            primary_mood = "Miedo"
-        elif "Agradecido" in detected_moods: 
-            primary_mood = "Agradecido"
-        elif "Sorpresa" in detected_moods: 
-            primary_mood = "Sorpresa"
-        elif "Asco" in detected_moods: 
-            primary_mood = "Asco"
-        elif "Triste" in detected_moods: 
-            primary_mood = "Triste"
-        elif "Feliz" in detected_moods: 
-            primary_mood = "Feliz"
-        elif compound >= 0.8: 
-            primary_mood = "Excelente"
-        else: 
-            primary_mood = detected_moods[0] if detected_moods else "Neutral"
  
     # Paso 9: Calcular confianza
     has_keywords = len(detected_moods) > 0
     score_confidence = min(abs(compound), 1.0)
-    confidence = (score_confidence + (0.5 if has_keywords else 0.0)) / 1.5
-    
-    # Penalizar confianza si hay contradicciones (Sarcasmo probable)
+    base_confidence = (score_confidence + (0.5 if has_keywords else 0.0)) / 1.5
+
+    if distribution:
+        max_dist = max(distribution.values())
+        if max_dist >= 60:
+            dispersion_bonus = 0.15
+        elif max_dist >= 40:
+            dispersion_bonus = 0.0
+        else:
+            dispersion_bonus = -0.1
+        base_confidence += dispersion_bonus
+
     if (compound > 0.2 and reinforcement["emoji_score"] < -0.05) or \
        (compound < -0.2 and reinforcement["emoji_score"] > 0.05):
-        confidence -= 0.2
-        
-    confidence = max(min(round(confidence, 2), 1.0), 0.1)
+        base_confidence -= 0.2
+
+    confidence = max(min(round(base_confidence, 2), 1.0), 0.1)
     
     # Paso 10: Generar resumen
     human_summary = generate_human_summary(detected_moods, compound, requires_help)
+    
+    # Filtrar distribución para que solo incluya emociones detectadas (elimina ruido visual)
+    distribution = {k: v for k, v in distribution.items() if k in detected_moods}
+    total_dist = sum(distribution.values())
+    if total_dist > 0:
+        distribution = {k: round((v / total_dist) * 100, 1) for k, v in distribution.items()}
     
     # Limpiar moods duplicados
     detected_moods = list(set(detected_moods))

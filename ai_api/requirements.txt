@@ -2,7 +2,7 @@ fastapi==0.115.8
 uvicorn==0.34.0
 pydantic==2.10.6
 transformers==4.35.0
-torch==2.2.0
+torch>=2.6.0
 emoji==2.14.0
 pyspellchecker==0.8.2
 python-multipart==0.0.9

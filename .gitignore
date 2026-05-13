@@ -1,4 +1,3 @@
-```
 # Dependencies
 node_modules/
 
@@ -6,6 +5,7 @@ node_modules/
 .env
 .env.local
 .env.*
+!.env.example
 
 # Logs
 *.log
@@ -34,26 +34,7 @@ pip-delete-this-directory.txt
 nosetests.xml
 coverage.xml
 *.cover
-*.log
 .git/modules/
-.DS_Store
-Thumbs.db
-
-# Node.js
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-node_modules/
-dist/
-build/
-*.min.js
-*.min.css
-coverage/
-.nyc_output
-.npm
-.yarn
-.pnp.*
-.pnp.js
 
 # IDE
 .vscode/
@@ -74,4 +55,12 @@ Icon?
 .svn/
 .hg/
 .git/
-```
+
+# Expo (legacy)
+.expo/
+
+# Web build
+mindmood-web/dist/
+
+# Skills lock
+skills-lock.json
