@@ -3,16 +3,10 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./theme/ThemeContext";
 import { I18nProvider } from "./i18n/I18nContext";
 import ErrorBoundary from "./components/ErrorBoundary";
+import Layout from "./components/Layout";
 
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
-const Home = lazy(() => import("./pages/Home"));
-const NewEntry = lazy(() => import("./pages/NewEntry"));
-const History = lazy(() => import("./pages/History"));
-const Stats = lazy(() => import("./pages/Stats"));
-const Profile = lazy(() => import("./pages/Profile"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const Inbox = lazy(() => import("./pages/Inbox"));
 
 function LoadingFallback() {
   return (
@@ -35,14 +29,7 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/new-entry" element={<NewEntry />} />
-                <Route path="/history" element={<History />} />
-                <Route path="/stats" element={<Stats />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                <Route path="/inbox" element={<Inbox />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="/*" element={<Layout />} />
               </Routes>
             </Suspense>
           </div>
