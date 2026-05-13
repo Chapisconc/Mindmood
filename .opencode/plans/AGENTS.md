@@ -49,6 +49,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 VITE_SUPABASE_URL=https://[project].supabase.co
 VITE_SUPABASE_ANON_KEY=[anon_key]
+VITE_API_TUNNEL_URL=https://your-tunnel.trycloudflare.com
 VITE_API_LOCAL_URL=http://127.0.0.1:8000
 ```
 
@@ -59,20 +60,35 @@ SUPABASE_KEY=[service_role_key]
 CORS_ORIGINS=https://mindmood.vercel.app,http://localhost:5173
 ```
 
-## Deployment (Free)
-
-### Backend → Render.com
-1. Push repo to GitHub
-2. Go to https://render.com → New Web Service → connect repo
-3. Root Directory: `ai_api/`
-4. Build Command: `pip install -r requirements.txt`
-5. Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-6. Add env vars (SUPABASE_URL, SUPABASE_KEY, CORS_ORIGINS)
+## Deployment
 
 ### Frontend → Vercel
 1. `cd mindmood-web`
 2. `npx vercel --prod`
-3. Or connect GitHub repo to Vercel dashboard
+3. Set env var in Vercel: `VITE_API_TUNNEL_URL=https://your-tunnel.trycloudflare.com`
+
+### Backend → Local + Cloudflare Tunnel
+The HuggingFace transformer needs too much RAM for free Render tier, so the AI API runs locally.
+
+**Prerequisites:**
+1. Install cloudflared from https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+2. Create `ai_api/.env` with your Supabase credentials
+
+**Start everything with one command:**
+```powershell
+.\start_local.ps1
+```
+
+This starts the API on `http://127.0.0.1:8000` and exposes it via Cloudflare Tunnel. The tunnel URL (something like `https://mindmood-api.trycloudflare.com`) is shown in the terminal — set that as `VITE_API_TUNNEL_URL` on your Vercel project.
+
+**Or start manually:**
+```bash
+cd ai_api
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+# In another terminal:
+cloudflared tunnel --url http://localhost:8000
+```
 
 ## Key Architecture
 

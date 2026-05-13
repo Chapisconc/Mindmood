@@ -20,22 +20,26 @@ export default function NewEntry() {
   const [modalData, setModalData] = useState({ type: "normal", summary: "", distribution: null });
   const [apiStatus, setApiStatus] = useState("connecting");
 
-  const NGROK_URL = (import.meta.env.VITE_API_NGROK_URL || "https://cheating-uncanny-squire.ngrok-free.dev") + "/analyze";
+  const TUNNEL_URL = (import.meta.env.VITE_API_TUNNEL_URL || import.meta.env.VITE_API_NGROK_URL || "") + "/analyze";
   const LOCAL_URL = import.meta.env.VITE_API_LOCAL_URL
     ? `${import.meta.env.VITE_API_LOCAL_URL}/analyze`
     : "http://127.0.0.1:8000/analyze";
 
-  const getApiUrls = () => [LOCAL_URL, NGROK_URL];
+  const getApiUrls = () => {
+    const urls = [LOCAL_URL];
+    if (TUNNEL_URL) urls.push(TUNNEL_URL);
+    return urls;
+  };
 
   const checkApiStatusOnce = async () => {
     const urls = getApiUrls();
     for (const url of urls) {
-      const isNgrok = url.includes("ngrok");
-      const timeout = isNgrok ? 5000 : 2000;
+      const isTunnel = url.includes("trycloudflare") || url.includes("ngrok");
+      const timeout = isTunnel ? 5000 : 2000;
       try {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
-        const headers = isNgrok ? { "ngrok-skip-browser-warning": "true" } : {};
+        const headers = url.includes("ngrok") ? { "ngrok-skip-browser-warning": "true" } : {};
         const res = await fetch(url, { signal: controller.signal, headers });
         clearTimeout(id);
         if (res.ok || res.status === 404) {
@@ -111,6 +115,7 @@ export default function NewEntry() {
               headers: {
                 "Content-Type": "application/json",
                 ...(url.includes("ngrok") ? { "ngrok-skip-browser-warning": "true" } : {}),
+                ...(url.includes("trycloudflare") ? { "cf-access-token": "" } : {}),
               },
               body: JSON.stringify({ text }),
               signal: controller.signal,

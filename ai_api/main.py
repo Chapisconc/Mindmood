@@ -37,9 +37,6 @@ def read_root():
 # 🌐 CORS RESTRINGIDO (solo orígenes conocidos)
 # ============================================================================
 ALLOWED_ORIGINS = os.environ.get("CORS_ORIGINS", "").split(",") if os.environ.get("CORS_ORIGINS") else [
-    "https://cheating-uncanny-squire.ngrok-free.dev",
-    "exp://localhost:19000",
-    "http://localhost:19006",
     "http://127.0.0.1:8000",
     "http://localhost:5173",
     "http://localhost:4173",
