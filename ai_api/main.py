@@ -672,9 +672,17 @@ def analyze(data: AnalyzeRequest):
         if total_dist > 0:
             distribution = {k: round((v / total_dist) * 100, 1) for k, v in distribution.items()}
     
-    # Limitar a máximo 3 emociones para evitar ruido visual
-    # Mantener Crisis/Excelente siempre, luego ordenar por distribución
-    if len(detected_moods) > 3:
+    # Si el usuario seleccionó emociones, preservarlas todas sin truncar
+    if data.selected_moods:
+        selected_set = set(data.selected_moods)
+        # Añadir seleccionadas que no estén ya
+        for m in data.selected_moods:
+            if m not in detected_moods:
+                detected_moods.append(m)
+        # Recalcular distribución incluyendo seleccionadas
+        if len(data.selected_moods) > 3:
+            pass
+    elif len(detected_moods) > 3:
         priority_moods = [m for m in detected_moods if m in ["Crisis", "Excelente"]]
         other_moods = sorted(
             [m for m in detected_moods if m not in ["Crisis", "Excelente"]],

@@ -40,11 +40,7 @@ export default function Login() {
       if (signInError) { setError(signInError.message); return; }
       if (!user) { setError("Usuario no encontrado"); return; }
       supabase.from("profiles").update({ theme }).eq("id", user.id).then().catch(() => {});
-      let role = user.user_metadata?.role;
-      const { data: profileRole } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
-      if (profileRole?.role) role = profileRole.role;
-      if (role === "admin") navigate("/admin-dashboard");
-      else navigate("/home");
+      navigate("/home");
     } catch (err) { setError(err?.message || "Error al iniciar sesión"); }
     finally { loadingRef.current = false; if (timeoutRef.current) clearTimeout(timeoutRef.current); setLoading(false); }
   }

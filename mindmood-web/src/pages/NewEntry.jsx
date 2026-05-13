@@ -36,7 +36,8 @@ export default function NewEntry() {
   const [modalData, setModalData] = useState({ type: "normal", summary: "", distribution: null });
   const [apiStatus, setApiStatus] = useState("connecting");
   const [selectedMoods, setSelectedMoods] = useState([]);
-  const [selectedMoodId, setSelectedMoodId] = useState(searchParams.get("mood") || "neutral");
+  const initialMood = searchParams.get("mood") || null;
+  const [selectedMoodIds, setSelectedMoodIds] = useState(initialMood ? [initialMood] : []);
 
   const TUNNEL_URL = (import.meta.env.VITE_API_TUNNEL_URL || import.meta.env.VITE_API_NGROK_URL || "") + "/analyze";
   const LOCAL_URL = import.meta.env.VITE_API_LOCAL_URL ? `${import.meta.env.VITE_API_LOCAL_URL}/analyze` : "http://127.0.0.1:8000/analyze";
@@ -86,6 +87,7 @@ export default function NewEntry() {
     if (!text.trim()) return;
     setLoading(true);
     try {
+      const moodIdToName = { excelente: "Excelente", feliz: "Feliz", agradecido: "Agradecido", sorpresa: "Sorpresa", neutral: "Neutral", enojo: "Enojo", ansiedad: "Ansiedad", miedo: "Miedo", triste: "Triste", asco: "Asco", crisis: "Crisis" };
       let aiData = { mood: "Neutral", score: 0, requires_help: false, summary: "", emotions_distribution: null };
 
       if (!isOffline) {
@@ -99,7 +101,7 @@ export default function NewEntry() {
             const response = await fetch(url, {
               method: "POST",
               headers: { "Content-Type": "application/json", ...(url.includes("ngrok") ? { "ngrok-skip-browser-warning": "true" } : {}), ...(url.includes("trycloudflare") ? { "cf-access-token": "" } : {}) },
-              body: JSON.stringify({ text, selected_moods: selectedMoods }),
+              body: JSON.stringify({ text, selected_moods: selectedMoodIds.map(id => moodIdToName[id] || id) }),
               signal: controller.signal,
             });
             clearTimeout(timeoutId);
@@ -111,7 +113,7 @@ export default function NewEntry() {
 
       const { data: { user } } = await supabase.auth.getUser();
       const { mood, score, requires_help, summary, emotions_distribution } = aiData;
-      const finalSelectedMoods = aiData.selected_moods || selectedMoods;
+      const finalSelectedMoods = aiData.selected_moods || selectedMoodIds.map(id => moodIdToName[id] || id);
 
       let { error: entryError } = await supabase.from("entries").insert([
         { user_id: user.id, text, mood, score, distribution: emotions_distribution, selected_moods: finalSelectedMoods },
@@ -131,14 +133,19 @@ export default function NewEntry() {
         summary: isOffline ? "Guardado localmente (Modo Offline)" : summary,
         distribution: emotions_distribution,
         primaryMood: mood,
-        selectedMoods: aiData.selected_moods || selectedMoods,
+        selectedMoods: aiData.selected_moods || finalSelectedMoods,
       });
       setModalVisible(true);
     } catch (e) { alert(e.message); }
     finally { setLoading(false); }
   };
 
-  const selectedMood = MOODS.find(m => m.id === selectedMoodId) || MOODS[4];
+  const toggleMood = (id) => {
+    setSelectedMoodIds(prev =>
+      prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
+    );
+  };
+  const selectedMoodObjs = selectedMoodIds.map(id => MOODS.find(m => m.id === id)).filter(Boolean);
 
   return (
     <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pb-24 relative px-4 lg:px-0">
@@ -156,11 +163,11 @@ export default function NewEntry() {
         <div className="flex gap-4 overflow-x-auto pb-8 px-2 snap-x">
           {MOODS.map((mood) => {
             const Icon = ICON_MAP[mood.icon.name] || HelpCircle;
-            const isSelected = selectedMoodId === mood.id;
+            const isSelected = selectedMoodIds.includes(mood.id);
             return (
               <button
                 key={mood.id}
-                onClick={() => setSelectedMoodId(mood.id)}
+                onClick={() => toggleMood(mood.id)}
                 className={`flex-shrink-0 snap-center flex flex-col items-center gap-4 p-6 rounded-[2.5rem] border-2 transition-all duration-500 group overflow-hidden w-28 h-40 ${isSelected ? "bg-slate-950 border-indigo-500 scale-110 shadow-2xl" : "bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-transparent shadow-xl"}`}
               >
                 <div className={`absolute -top-10 -right-10 w-20 h-20 blur-3xl opacity-0 group-hover:opacity-30 transition-opacity ${isSelected ? "opacity-40" : ""}`} style={{ backgroundColor: mood.color }} />
