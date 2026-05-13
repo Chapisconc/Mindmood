@@ -1,4 +1,1 @@
-{
-  "rootDirectory": "mindmood-web",
-  "buildCommand": "npm run build"
-}
+{}
