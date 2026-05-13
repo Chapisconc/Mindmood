@@ -2,6 +2,7 @@
   "name": "mindmood-root",
   "scripts": {
     "build": "cd mindmood-web && npm run build",
-    "dev": "cd mindmood-web && npm run dev"
+    "dev": "cd mindmood-web && npm run dev",
+    "postinstall": "cd mindmood-web && npm install"
   }
 }
