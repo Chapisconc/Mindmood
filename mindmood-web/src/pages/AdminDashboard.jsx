@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  PieChart as RePieChart, Pie, Cell, ResponsiveContainer,
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart as RePieChart, Pie, Cell,
 } from "recharts";
 import {
   Users, FileText, AlertTriangle, Search, Send,
-  Command, Shield, LayoutGrid, ClipboardList,
+  Command, Shield, ClipboardList,
   CheckCircle, AlertOctagon, RefreshCw, Sun, Moon,
   LogOut, Activity,
 } from "lucide-react";
@@ -20,12 +19,7 @@ import { es } from "date-fns/locale";
 
 const CARD = "bg-white/70 dark:bg-slate-900/40 backdrop-blur-xl rounded-[3rem] border border-white/20 dark:border-slate-800 shadow-xl";
 
-const MOOD_COLORS = {
-  Excelente: "#10B981", Feliz: "#EC4899", Agradecido: "#FBBF24",
-  Sorpresa: "#06B6D4", Neutral: "#A78BFA", Enojo: "#F97316",
-  Ansiedad: "#8B5CF6", Miedo: "#7C3AED", Triste: "#F43F5E",
-  Asco: "#84CC16", Crisis: "#EF4444",
-};
+const PIE_COLORS = ["#EC4899", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#F97316", "#84CC16", "#7C3AED", "#F43F5E"];
 
 const STATUS_LABELS = {
   active: { label: "Crítica", color: "#EF4444", bg: "bg-red-500/10", pulse: true },
@@ -42,7 +36,6 @@ export default function AdminDashboard() {
   const [alarms, setAlarms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeChart, setActiveChart] = useState("radar");
   const [contacting, setContacting] = useState({});
 
   useEffect(() => {
@@ -149,31 +142,6 @@ export default function AdminDashboard() {
 
   const crisisCount = moodStats["Crisis"] || 0;
   const totalEntriesNum = totalEntries;
-
-  const keyMap = {
-    Excelente: "excellent_entries", Feliz: "happy_entries",
-    Agradecido: "gratitude_entries", Sorpresa: "surprise_entries",
-    Neutral: "neutral_entries", Enojo: "anger_entries",
-    Ansiedad: "anxiety_entries", Miedo: "fear_entries",
-    Triste: "sad_entries", Asco: "disgust_entries",
-    Crisis: "crisis_entries",
-  };
-
-  const radarData = EMOTIONS_MAP.slice(0, 11).map(emo => ({
-    subject: emo.name,
-    A: moodStats[emo.name] || 0,
-  }));
-  const maxRadar = Math.max(...radarData.map(d => d.A), 10);
-
-  const emotionDistData = EMOTIONS_MAP.slice(0, 11).map(emo => ({
-    name: emo.name,
-    value: moodStats[emo.name] || 0,
-    color: MOOD_COLORS[emo.name] || "#64748B",
-  })).filter(d => d.value > 0);
-
-  const topMood = EMOTIONS_MAP.slice(0, 11).reduce((best, emo) =>
-    (moodStats[emo.name] || 0) > (moodStats[best.name] || 0) ? emo : best
-  , EMOTIONS_MAP[0]);
 
   const matchesSearch = (item) => {
     const q = searchQuery.toLowerCase();
@@ -304,8 +272,70 @@ export default function AdminDashboard() {
         <StatCard icon={Users} label="Usuarios" value={totalUsers} color="text-indigo-500" />
         <StatCard icon={FileText} label="Entradas" value={totalEntriesNum} color="text-fuchsia-500" />
         <StatCard icon={AlertTriangle} label="Crisis" value={crisisCount} color="text-rose-500" />
-        <StatCard icon={Activity} label="Sentimiento Global" value={topMood.name || "Neutral"} color={topMood.color || "text-slate-500"} />
+        <StatCard icon={Activity} label="Sentimiento Global" value={pieData.length > 0 ? pieData.reduce((a, b) => a.valueCount > b.valueCount ? a : b).emotionName : "Neutral"} color="text-indigo-500" />
       </div>
+
+      {pieData.length === 0 ? (
+        <div className={`p-8 text-center ${CARD}`}>
+          <p className="text-lg font-black dark:text-white">No hay datos de emociones aún</p>
+          <p className="text-sm text-slate-400 mt-2">Las gráficas aparecerán cuando haya entradas registradas.</p>
+        </div>
+      ) : (
+        <div className="grid lg:grid-cols-2 gap-8">
+          <section className={`p-8 ${CARD} flex flex-col`}>
+            <h2 className="text-xl font-black mb-8 dark:text-white">Distribución Global de Emociones</h2>
+            <div className="flex-1 flex flex-col md:flex-row items-center gap-8">
+              <div className="h-[400px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RePieChart>
+                    <Pie data={pieData} dataKey="valueCount" nameKey="emotionName" cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={10} stroke="none">
+                      {pieData.map((entry, i) => <Cell key={`cell-${i}`} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: "24px", border: "none", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", fontSize: "12px", fontWeight: "800" }} />
+                  </RePieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-4xl font-black dark:text-white">{totalEntriesNum}</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Entradas</span>
+                </div>
+              </div>
+
+              {/* Sin colores/leyenda debajo del radar: solo conteos por emoción */}
+              <div className="w-full md:w-1/3 space-y-2">
+                {pieData
+                  .slice()
+                  .sort((a, b) => b.valueCount - a.valueCount)
+                  .map((d, i) => (
+                    <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-white/0 dark:bg-transparent">
+                      <span className="text-[11px] font-black dark:text-white uppercase tracking-tighter truncate max-w-[140px]">
+                        {d.emotionName}
+                      </span>
+                      <span className="text-xs font-black text-slate-500">{d.valueCount}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </section>
+
+          <section className={`p-8 ${CARD}`}>
+            <h2 className="text-xl font-black mb-8 dark:text-white">Frecuencia Global por Emoción</h2>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barData} layout="vertical" margin={{ left: 40 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false}
+                    tick={{ fontSize: 12, fontWeight: 700, fill: "#64748B" }} />
+                  <Tooltip cursor={{ fill: "transparent" }}
+                    contentStyle={{ borderRadius: "20px", border: "none", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", fontSize: "12px", fontWeight: "800" }} />
+                  <Bar dataKey="count" radius={[0, 10, 10, 0]}>
+                    {barData.map((entry, i) => <Cell key={`bar-${i}`} fill={entry.color || PIE_COLORS[i % PIE_COLORS.length]} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+        </div>
+      )}
 
       <div className={`${CARD}`}>
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -332,94 +362,6 @@ export default function AdminDashboard() {
             "No hay casos resueltos", "#10B981")}
         </div>
       </div>
-
-      {emotionDistData.length === 0 ? (
-        <div className={`p-8 text-center ${CARD}`}>
-          <p className="text-lg font-black dark:text-white">No hay datos de emociones aún</p>
-          <p className="text-sm text-slate-400 mt-2">Las gráficas aparecerán cuando haya entradas registradas.</p>
-        </div>
-      ) : (
-        <div className="grid lg:grid-cols-2 gap-8">
-          <div className={`p-6 ${CARD}`}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black dark:text-white">
-                {activeChart === "radar" ? "Red de Sentimiento" : "Distribución Global"}
-              </h2>
-              <button onClick={() => setActiveChart(activeChart === "radar" ? "donut" : "radar")}
-                className="px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all border-2 bg-slate-50 dark:bg-slate-800 border-transparent text-slate-500 dark:text-slate-400 hover:border-current">
-                {activeChart === "radar" ? "Donut" : "Radar"}
-              </button>
-            </div>
-            {activeChart === "radar" ? (
-              <div className="h-[350px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
-                    <defs>
-                      <linearGradient id="radarGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#6366F1" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#A855F7" stopOpacity={0.2} />
-                      </linearGradient>
-                    </defs>
-                    <PolarGrid stroke="#94a3b8" strokeDasharray="3 3" opacity={0.3} />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: "#64748b", fontSize: 10, fontWeight: 800 }} />
-                    <PolarRadiusAxis domain={[0, maxRadar]} hide />
-                    <Radar name="Entradas" dataKey="A" stroke="#6366F1" strokeWidth={3} fill="url(#radarGradient)" fillOpacity={0.6} />
-                    <Tooltip contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", fontSize: "12px", fontWeight: "800" }} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="h-[350px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RePieChart>
-                    <Pie data={emotionDistData} cx="50%" cy="50%" innerRadius={60} outerRadius={95}
-                      paddingAngle={3} dataKey="value" stroke="none">
-                      {emotionDistData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", fontSize: "12px", fontWeight: "800" }}
-                      formatter={(value) => [`${value} entradas`]} />
-                    <Legend />
-                  </RePieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-            <div className="mt-4 space-y-1.5">
-              {emotionDistData.map((d, i) => {
-                const pct = totalEntries > 0 ? Math.round((d.value / totalEntries) * 100) : 0;
-                return (
-                  <div key={i} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                    <span className="text-xs font-bold dark:text-white flex-1">{d.name}</span>
-                    <span className="text-[11px] font-black text-slate-500">{d.value} ({pct}%)</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className={`p-6 ${CARD}`}>
-            <h2 className="text-xl font-black mb-6 dark:text-white">Frecuencia Global por Emoción</h2>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={emotionDistData} layout="vertical" margin={{ left: 40 }}>
-                  <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false}
-                    tick={{ fontSize: 11, fontWeight: 700, fill: "#64748B" }} />
-                  <Tooltip cursor={{ fill: "transparent" }}
-                    contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", fontSize: "12px", fontWeight: "800" }} />
-                  <Bar dataKey="value" radius={[0, 8, 8, 0]}>
-                    {emotionDistData.map((entry, i) => (
-                      <Cell key={`bar-cell-${i}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      )}
     </motion.div>
   );
 }

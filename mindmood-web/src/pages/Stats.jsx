@@ -91,7 +91,7 @@ export default function Stats() {
                 </div>
               </div>
               <div className="w-full md:w-1/3 grid grid-cols-2 md:grid-cols-1 gap-3">
-                {pieData.slice(0, 5).map((d, i) => (
+                {pieData.map((d, i) => (
                   <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
@@ -120,18 +120,6 @@ export default function Stats() {
             </div>
           </section>
         </div>
-
-        <section className="p-8 bg-slate-900 dark:bg-indigo-600 rounded-[2.5rem] text-white">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black">Reporte Proyectado</h3>
-              <p className="text-white/60 text-sm max-w-md">Basado en tus últimas entradas, tu balance emocional sigue evolucionando. Sigue registrando tus sentimientos para un análisis más profundo.</p>
-            </div>
-            <button onClick={() => navigate("/home")} className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black hover:bg-slate-100 transition-colors shrink-0">
-              Volver al inicio
-            </button>
-          </div>
-        </section>
       </div>
     </div>
   );

@@ -102,21 +102,83 @@ function MobileNav({ currentPath, navigate }) {
   const { themeStyles: theme } = useTheme();
   const { profile } = useAuth();
   const isAdmin = profile?.role === "admin";
-  const items = isAdmin ? ADMIN_NAV_ITEMS : [...NAV_ITEMS.slice(0, 4), { path: "/profile", icon: UserCircle, label: "Perfil" }];
+
+  // Requerido: Historial, Nueva Entrada, Perfil, Métricas (sin “bitácora semanal”/“ecosistema emocional”)
+  const items = !isAdmin
+    ? [
+        { path: "/history", icon: BookOpen, label: "Historial" },
+        { path: "/new-entry", icon: PlusCircle, label: "Nueva Entrada" },
+        { path: "/profile", icon: UserCircle, label: "Perfil" },
+        { path: "/stats", icon: TrendingUp, label: "Métricas" },
+      ]
+    : [];
+
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    // cierra menú al cambiar de ruta
+    setOpen(false);
+  }, [currentPath]);
+
+  if (isAdmin) return null;
+  if (!items.length) return null;
+
+  const activePath = (currentPath || "").split("?")[0].split("#")[0];
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t flex items-center justify-around px-2 py-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-      {items.map((item) => {
-        const Icon = item.icon;
-        const active = currentPath === item.path;
-        return (
-          <button key={item.path} onClick={() => navigate(item.path)}
-            className="flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl bg-transparent border-none cursor-pointer">
-            <Icon size={20} color={active ? theme.accent : theme.secondaryText} />
-            <span className="text-[10px] font-extrabold" style={{ color: active ? theme.accent : theme.secondaryText }}>{item.label}</span>
-          </button>
-        );
-      })}
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pb-3">
+      <div className="flex items-center justify-center">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-[92%] mx-auto rounded-[1.25rem] bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 backdrop-blur-xl py-3 px-4 flex items-center justify-between"
+          style={{ color: theme.secondaryText }}
+        >
+          <span className="text-sm font-black">Menú</span>
+          <span className="text-xs font-extrabold" style={{ color: theme.accent }}>
+            {open ? "Cerrar" : "Abrir"}
+          </span>
+        </button>
+      </div>
+
+      {open && (
+        <div className="w-[92%] mx-auto mt-2 rounded-[1.5rem] bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 backdrop-blur-xl overflow-hidden">
+          <div className="p-2 grid grid-cols-2 gap-2">
+            {items.map((item) => {
+              const Icon = item.icon;
+              const active = activePath === item.path;
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
+                  className="w-full flex items-center gap-3 py-3 px-3 rounded-2xl bg-transparent border-none cursor-pointer transition-colors"
+                  style={{
+                    backgroundColor: active ? `${theme.accent}20` : "transparent",
+                  }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{
+                      backgroundColor: active ? `${theme.accent}` : `${theme.itemBg}`,
+                      color: active ? "#fff" : theme.secondaryText,
+                    }}
+                  >
+                    <Icon size={18} color={active ? "#fff" : theme.secondaryText} />
+                  </div>
+                  <div className="flex flex-col items-start leading-tight">
+                    <span className="text-[12px] font-black" style={{ color: active ? theme.accent : theme.secondaryText }}>
+                      {item.label}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                      {active ? "Activo" : "Ir"}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -165,7 +227,8 @@ export default function Layout() {
 
   if (!user) return <Navigate to="/" replace />;
 
-  const isAdminRoute = currentPath === "/admin-dashboard";
+  const normalizedPath = (currentPath || "").split("?")[0].split("#")[0].replace(/\/+$/, "");
+  const isAdminRoute = normalizedPath === "/admin-dashboard" || normalizedPath.startsWith("/admin-dashboard/");
   const wrapperClass = isAdminRoute ? "lg:ml-0" : (sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]");
 
   return (
