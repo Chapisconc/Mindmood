@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "../services/supabase";
 import { useAuth } from "./useAuth";
 import { EMOTIONS_MAP, getEmotionByName } from "../theme/emotions";
@@ -8,11 +8,9 @@ export const useStats = () => {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const fetched = useRef(false);
 
   useEffect(() => {
-    if (authLoading || fetched.current) return;
-    fetched.current = true;
+    if (authLoading) return;
 
     if (!user) {
       setError(new Error("No user logged in"));
