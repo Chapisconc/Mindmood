@@ -163,10 +163,17 @@ else:
 
     def insertar_grafico_lineas(doc, categorias, valores, titulo="", **kw):
         """Fallback: genera grafico de lineas con matplotlib."""
-        datos = dict(zip(categorias, valores))
-        fig = diagrama_barras_matplotlib(datos, titulo=titulo, ylabel='Valores')
-        if fig:
-            insertar_figura_matplotlib(doc, fig)
+        if not _HAS_MPL: return
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.plot(categorias, valores, color='#6366F1', linewidth=2, marker='o', markersize=6, markerfacecolor='#EC4899')
+        if titulo: ax.set_title(titulo, fontsize=13, fontweight='bold', pad=12, color='#6366F1')
+        ax.grid(axis='y', linestyle='--', alpha=0.3)
+        ax.spines['top'].set_visible(False); ax.spines['right'].set_visible(False)
+        ax.tick_params(axis='x', rotation=35, labelsize=9)
+        plt.tight_layout()
+        buf = _fig_to_png(fig)
+        doc.add_picture(buf, width=Cm(16))
+        plt.close(fig); buf.close()
 
 # ============================================================================
 # 2. DIAGRAMAS CON MATPLOTLIB
@@ -469,18 +476,16 @@ def diagrama_casos_uso_matplotlib(doc, actores, casos_uso, relaciones=None, titu
     ax.set_title(titulo, fontsize=14, fontweight='bold', pad=15)
 
     # === Actores a la izquierda (figuras de palo simplificadas) ===
+    actor_colors = ['#6366F1', '#EC4899', '#10B981', '#F59E0B']
     for i, actor in enumerate(actores):
-        y = 6 - i * 1.5  # Posicion Y descendente por cada actor
-        # Circulo para la cabeza
-        circle = plt.Circle((1.5, y + 0.4), 0.2, edgecolor='#334155', facecolor='#E2E8F0', linewidth=1.5)
+        y = 6 - i * 1.5
+        color = actor_colors[i % len(actor_colors)]
+        circle = plt.Circle((1.5, y + 0.4), 0.2, edgecolor=color, facecolor=f'{color}20', linewidth=2)
         ax.add_patch(circle)
-        # Linea vertical para el cuerpo
-        ax.plot([1.5, 1.5], [y - 0.3, y + 0.2], color='#334155', linewidth=1.5)
-        # Linea horizontal para los brazos
-        ax.plot([1.3, 1.7], [y - 0.05, y - 0.05], color='#334155', linewidth=1.5)
-        # Linea en V para las piernas
-        ax.plot([1.3, 1.5, 1.7], [y - 0.3, y - 0.15, y - 0.3], color='#334155', linewidth=1.5)
-        ax.text(1.5, y - 0.6, actor, ha='center', fontsize=9, fontweight='bold')
+        ax.plot([1.5, 1.5], [y - 0.3, y + 0.2], color=color, linewidth=2)
+        ax.plot([1.3, 1.7], [y - 0.05, y - 0.05], color=color, linewidth=2)
+        ax.plot([1.3, 1.5, 1.7], [y - 0.3, y - 0.15, y - 0.3], color=color, linewidth=2)
+        ax.text(1.5, y - 0.6, actor, ha='center', fontsize=10, fontweight='bold', color=color)
 
     # === Casos de uso a la derecha (elipses) con distribucion en columnas ===
     for i, caso in enumerate(casos_uso):
@@ -493,18 +498,20 @@ def diagrama_casos_uso_matplotlib(doc, actores, casos_uso, relaciones=None, titu
         ax.add_patch(ellipse)
         ax.text(x, y, caso, ha='center', va='center', fontsize=7.5, fontweight='bold')
 
-    # === Relaciones (lineas entre actores y casos de uso) ===
+    # === Relaciones: lineas con color de cada actor, mas gruesas y visibles ===
     if relaciones:
         for actor_idx, caso_idx in relaciones:
             if actor_idx < len(actores) and caso_idx < len(casos_uso):
+                color = actor_colors[actor_idx % len(actor_colors)]
                 y_actor = 6 - actor_idx * 1.5
                 col = caso_idx // 5
                 row = caso_idx % 5
                 x_caso = 5 + col * 3.5
                 y_caso = 6 - row * 1.2
-                # Linea de conexion desde el actor hasta el caso de uso
-                ax.plot([1.7, x_caso - 1.5], [y_actor - 0.1, y_caso], color='#94A3B8',
-                        linewidth=1, linestyle='-', alpha=0.7)
+                ax.plot([1.7, x_caso - 1.5], [y_actor - 0.1, y_caso],
+                        color=color, linewidth=1.8, linestyle='-', alpha=0.85)
+                mid_x = (1.7 + x_caso - 1.5) / 2
+                mid_y = (y_actor - 0.1 + y_caso) / 2
 
     plt.tight_layout()
     buf = _fig_to_png(fig)
