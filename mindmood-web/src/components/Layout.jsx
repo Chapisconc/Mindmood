@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, PlusCircle, BookOpen, TrendingUp, Bell,
   UserCircle, Shield, LogOut, Sun, Moon, ChevronRight,
+  Menu, X,
 } from "lucide-react";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
@@ -31,31 +32,57 @@ const ADMIN_NAV_ITEMS = [
   { path: "/profile", icon: UserCircle, label: "Perfil" },
 ];
 
-function Sidebar({ collapsed, onToggle, currentPath, navigate }) {
+function Sidebar({ collapsed, onToggle, currentPath, navigate, mobileOpen, onMobileClose }) {
   const { themeStyles, theme, toggleTheme } = useTheme();
   const { profile, user } = useAuth();
+  const isActive = (path) => (currentPath || "").split("?")[0].split("#")[0] === path;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/";
   };
 
-  return (
-    <motion.aside animate={{ width: collapsed ? 72 : 260 }}
-      className="hidden lg:flex flex-col fixed left-0 top-0 h-screen z-40 border-r bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
-    >
+  const navContent = (isMobile, showCollapse = false) => (
+    <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-4 h-16 border-b flex-shrink-0 border-slate-200 dark:border-slate-800">
         <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: themeStyles.accent }}>
           <span className="text-white text-base font-black">M</span>
         </div>
-        {!collapsed && <span className="text-lg font-black tracking-tight dark:text-white" style={{ color: themeStyles.text }}>MindMood</span>}
-        <button onClick={onToggle} className="ml-auto bg-transparent border-none cursor-pointer p-1 rounded-lg hover:opacity-70 transition-opacity">
-          <ChevronRight size={18} color={themeStyles.secondaryText}
-            style={{ transform: collapsed ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
-        </button>
+        {(!isMobile || !collapsed) && <span className="text-lg font-black tracking-tight dark:text-white" style={{ color: themeStyles.text }}>MindMood</span>}
+        {showCollapse && (
+          <button onClick={onToggle} className="ml-auto bg-transparent border-none cursor-pointer p-1 rounded-lg hover:opacity-70 transition-opacity">
+            <ChevronRight size={18} color={themeStyles.secondaryText}
+              style={{ transform: collapsed ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+          </button>
+        )}
       </div>
 
-      <div className="flex-1 px-3 py-4 space-y-2 flex flex-col justify-center items-center">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.path);
+          return (
+            <button
+              key={item.path}
+              onClick={() => { navigate(item.path); if (isMobile) onMobileClose(); }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border-none cursor-pointer"
+              style={{
+                color: active ? themeStyles.accent : themeStyles.secondaryText,
+                backgroundColor: active ? `${themeStyles.accent}15` : "transparent",
+              }}
+              onMouseEnter={(e) => { if (!active) e.currentTarget.style.backgroundColor = themeStyles.softAccent; }}
+              onMouseLeave={(e) => { if (!active) e.currentTarget.style.backgroundColor = "transparent"; }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: active ? themeStyles.accent : themeStyles.itemBg }}>
+                <Icon size={20} color={active ? "#FFF" : themeStyles.secondaryText} />
+              </div>
+              {(!isMobile || !collapsed) && <span className="text-sm font-bold tracking-tight">{item.label}</span>}
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="px-3 py-2 space-y-1 border-t border-slate-200 dark:border-slate-800">
         <button onClick={toggleTheme}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border-none cursor-pointer"
           style={{ color: themeStyles.secondaryText }}
@@ -64,7 +91,7 @@ function Sidebar({ collapsed, onToggle, currentPath, navigate }) {
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: themeStyles.itemBg }}>
             {theme === "dark" ? <Sun size={20} color="#FBBF24" /> : <Moon size={20} color="#6366F1" />}
           </div>
-          {!collapsed && <span className="text-sm font-bold tracking-tight">{theme === "dark" ? "Modo Claro" : "Modo Oscuro"}</span>}
+          {(!isMobile || !collapsed) && <span className="text-sm font-bold tracking-tight">{theme === "dark" ? "Modo Claro" : "Modo Oscuro"}</span>}
         </button>
         <button onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border-none cursor-pointer"
@@ -74,7 +101,7 @@ function Sidebar({ collapsed, onToggle, currentPath, navigate }) {
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#FEE2E2" }}>
             <LogOut size={20} color="#EF4444" />
           </div>
-          {!collapsed && <span className="text-sm font-bold tracking-tight">Cerrar Sesión</span>}
+          {(!isMobile || !collapsed) && <span className="text-sm font-bold tracking-tight">Cerrar Sesión</span>}
         </button>
       </div>
 
@@ -84,7 +111,7 @@ function Sidebar({ collapsed, onToggle, currentPath, navigate }) {
             style={{ backgroundColor: themeStyles.itemBg, color: themeStyles.text }}>
             {(profile?.display_name || user?.email || "U")[0].toUpperCase()}
           </div>
-          {!collapsed && (
+          {(!isMobile || !collapsed) && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold truncate dark:text-white" style={{ color: themeStyles.text }}>
                 {profile?.display_name || user?.email?.split("@")[0] || "Usuario"}
@@ -94,94 +121,37 @@ function Sidebar({ collapsed, onToggle, currentPath, navigate }) {
           )}
         </div>
       </div>
-    </motion.aside>
+    </div>
   );
-}
-
-function MobileNav({ currentPath, navigate }) {
-  const { themeStyles: theme } = useTheme();
-  const { profile } = useAuth();
-  const isAdmin = profile?.role === "admin";
-
-  // Requerido: Historial, Nueva Entrada, Perfil, Métricas (sin “bitácora semanal”/“ecosistema emocional”)
-  const items = !isAdmin
-    ? [
-        { path: "/history", icon: BookOpen, label: "Historial" },
-        { path: "/new-entry", icon: PlusCircle, label: "Nueva Entrada" },
-        { path: "/profile", icon: UserCircle, label: "Perfil" },
-        { path: "/stats", icon: TrendingUp, label: "Métricas" },
-      ]
-    : [];
-
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    // cierra menú al cambiar de ruta
-    setOpen(false);
-  }, [currentPath]);
-
-  if (isAdmin) return null;
-  if (!items.length) return null;
-
-  const activePath = (currentPath || "").split("?")[0].split("#")[0];
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pb-3">
-      <div className="flex items-center justify-center">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="w-[92%] mx-auto rounded-[1.25rem] bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 backdrop-blur-xl py-3 px-4 flex items-center justify-between"
-          style={{ color: theme.secondaryText }}
-        >
-          <span className="text-sm font-black">Menú</span>
-          <span className="text-xs font-extrabold" style={{ color: theme.accent }}>
-            {open ? "Cerrar" : "Abrir"}
-          </span>
-        </button>
-      </div>
+    <>
+      {/* Desktop sidebar */}
+      <motion.aside animate={{ width: collapsed ? 72 : 260 }}
+        className="hidden lg:flex flex-col fixed left-0 top-0 h-screen z-40 border-r bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+      >
+        {navContent(false, true)}
+      </motion.aside>
 
-      {open && (
-        <div className="w-[92%] mx-auto mt-2 rounded-[1.5rem] bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 backdrop-blur-xl overflow-hidden">
-          <div className="p-2 grid grid-cols-2 gap-2">
-            {items.map((item) => {
-              const Icon = item.icon;
-              const active = activePath === item.path;
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => navigate(item.path)}
-                  className="w-full flex items-center gap-3 py-3 px-3 rounded-2xl bg-transparent border-none cursor-pointer transition-colors"
-                  style={{
-                    backgroundColor: active ? `${theme.accent}20` : "transparent",
-                  }}
-                >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{
-                      backgroundColor: active ? `${theme.accent}` : `${theme.itemBg}`,
-                      color: active ? "#fff" : theme.secondaryText,
-                    }}
-                  >
-                    <Icon size={18} color={active ? "#fff" : theme.secondaryText} />
-                  </div>
-                  <div className="flex flex-col items-start leading-tight">
-                    <span className="text-[12px] font-black" style={{ color: active ? theme.accent : theme.secondaryText }}>
-                      {item.label}
-                    </span>
-                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                      {active ? "Activo" : "Ir"}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden" onClick={onMobileClose}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-end px-4 h-16 border-b border-slate-200 dark:border-slate-800">
+              <button onClick={onMobileClose} className="bg-transparent border-none cursor-pointer p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <X size={20} className="text-slate-500 dark:text-slate-400" />
+              </button>
+            </div>
+            {navContent(true)}
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
+
+
 
 function LoadingFallback() {
   const { themeStyles: theme } = useTheme();
@@ -198,24 +168,21 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [checkedAdmin, setCheckedAdmin] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const currentPath = location.pathname;
+  const adminNavGuard = useRef(false);
 
   useEffect(() => {
-    if (!user || checkedAdmin) return;
-    setCheckedAdmin(true);
-    supabase.rpc("is_admin").then(({ data }) => {
-      if (data && !["/admin-dashboard", "/profile"].includes(currentPath)) {
-        navigate("/admin-dashboard", { replace: true });
-      }
-    }).catch(() => {});
-  }, [user, checkedAdmin, currentPath, navigate]);
+    setMobileMenuOpen(false);
+  }, [currentPath]);
 
   useEffect(() => {
-    if (profile?.role === "admin" && user && !["/admin-dashboard", "/profile"].includes(currentPath)) {
+    if (adminNavGuard.current) return;
+    if (profile?.role === "admin" && user && !["/admin-dashboard", "/profile"].includes(currentPath) && !authLoading) {
+      adminNavGuard.current = true;
       navigate("/admin-dashboard", { replace: true });
     }
-  }, [profile?.role, user, currentPath, navigate]);
+  }, [profile?.role, user, currentPath, navigate, authLoading]);
 
   if (authLoading) {
     return (
@@ -229,13 +196,30 @@ export default function Layout() {
 
   const normalizedPath = (currentPath || "").split("?")[0].split("#")[0].replace(/\/+$/, "");
   const isAdminRoute = normalizedPath === "/admin-dashboard" || normalizedPath.startsWith("/admin-dashboard/");
-  const wrapperClass = isAdminRoute ? "lg:ml-0" : (sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]");
+  const wrapperClass = isAdminRoute ? "" : (sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]");
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950">
-      {!isAdminRoute && <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} currentPath={currentPath} navigate={navigate} />}
+      {!isAdminRoute && (
+        <>
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="lg:hidden fixed top-4 left-4 z-30 p-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl hover:scale-105 transition-transform"
+          >
+            <Menu size={22} className="text-slate-700 dark:text-white" />
+          </button>
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+            currentPath={currentPath}
+            navigate={navigate}
+            mobileOpen={mobileMenuOpen}
+            onMobileClose={() => setMobileMenuOpen(false)}
+          />
+        </>
+      )}
 
-      <div className={`transition-all duration-200 ${wrapperClass}`} style={{ paddingBottom: isAdminRoute ? "0px" : "80px" }}>
+      <div className={`transition-all duration-200 ${wrapperClass}`}>
         <div className="max-w-6xl mx-auto">
           <AnimatePresence mode="wait">
             <motion.div key={currentPath} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
@@ -255,8 +239,6 @@ export default function Layout() {
           </AnimatePresence>
         </div>
       </div>
-
-      {profile?.role !== "admin" && <MobileNav currentPath={currentPath} navigate={navigate} />}
     </div>
   );
 }

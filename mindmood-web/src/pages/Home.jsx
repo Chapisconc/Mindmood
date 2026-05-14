@@ -1,14 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Flame, ChevronRight, TrendingUp, BarChart3, PieChart as PieChartIcon, Fingerprint, Sun, Sparkles, CloudRain, Waves, Zap, HeartHandshake, Ghost, Wind, Frown, AlertTriangle, HelpCircle } from "lucide-react";
+import { Flame, Bell, Sun, Sparkles, CloudRain, Waves, Zap, HeartHandshake, Ghost, Wind, Frown, AlertTriangle, HelpCircle } from "lucide-react";
 import { supabase } from "../services/supabase";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
-import { getCachedData, setCachedData, cacheKeys } from "../services/cache";
 import StreakModal from "../components/StreakModal";
 import StreakCalendarModal from "../components/StreakCalendarModal";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 const MOODS = [
   { id: "excelente", name: "Excelente", color: "#10B981", icon: Sparkles },
@@ -88,6 +86,10 @@ export default function Home() {
             <p className="text-slate-400 dark:text-slate-500 font-bold text-base md:text-lg italic">¿En qué frecuencia vibramos hoy?</p>
           </div>
 
+          <div className="flex items-center gap-3">
+          <button onClick={() => navigate("/inbox")} className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl p-4 md:p-5 rounded-[2rem] flex items-center justify-center border border-white/20 dark:border-slate-800 shadow-2xl hover:scale-105 transition-transform">
+            <Bell className="w-6 h-6 md:w-7 md:h-7 text-slate-600 dark:text-slate-300" />
+          </button>
           <div onClick={() => setShowStreakCalendar(true)} className="cursor-pointer bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl p-4 md:p-6 rounded-[2rem] md:rounded-[2.5rem] flex items-center gap-4 border border-white/20 dark:border-slate-800 shadow-2xl">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-tr from-orange-400 to-rose-400 rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
               <Flame className="w-5 h-5 md:w-6 md:h-6" />
@@ -95,6 +97,7 @@ export default function Home() {
             <div>
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em]">Streak</p>
               <p className="font-black text-slate-900 dark:text-white text-xl md:text-2xl leading-none">{(userData && userData.streak) || 0} Días</p>
+            </div>
             </div>
           </div>
         </header>
@@ -129,51 +132,7 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          <motion.div className="p-8 lg:p-10 bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] lg:rounded-[3.5rem] shadow-2xl border border-white/20 dark:border-slate-800 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10">
-              <TrendingUp className="w-32 h-32" />
-            </div>
-            <div className="relative space-y-6">
-              <div>
-                <h3 className="text-2xl font-black dark:text-white tracking-tighter">Bitácora Semanal</h3>
-                <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] mt-1">Índice de Bienestar Energético</p>
-              </div>
-              <div className="flex items-end justify-between gap-4 h-32">
-                {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => {
-                  const height = [40, 60, 45, 80, 55, 90, 75][i];
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-4 group">
-                      <div className="w-full relative h-32 bg-slate-100 dark:bg-slate-800/50 rounded-2xl overflow-hidden">
-                        <motion.div initial={{ height: 0 }} animate={{ height: `${height}%` }} transition={{ duration: 1, type: "spring" }} className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-indigo-500 to-fuchsia-500 rounded-2xl" />
-                      </div>
-                      <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{d}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
 
-          <motion.div className="p-8 lg:p-10 bg-slate-950 rounded-[3rem] lg:rounded-[3.5rem] shadow-2xl text-white relative overflow-hidden group" onClick={() => navigate("/history")}>
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-fuchsia-600 to-amber-600 opacity-60 group-hover:scale-110 transition-transform duration-700" />
-            <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-3xl" />
-            <div className="relative flex flex-col h-full space-y-6 min-h-[200px] cursor-pointer">
-              <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center shadow-2xl border border-white/20">
-                <Fingerprint className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h3 className="text-4xl font-black tracking-tighter mb-4 leading-tight">Tu Ecosistema Emocional</h3>
-                <p className="text-white/60 text-sm font-medium leading-relaxed max-w-xs">Hemos procesado tus datos. Estás vibrando en frecuencias de alta productividad este mes.</p>
-              </div>
-              <div className="mt-auto">
-                <button onClick={(e) => { e.stopPropagation(); navigate("/history"); }} className="w-full bg-white text-slate-950 py-5 rounded-3xl font-black text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:translate-x-1 transition-all shadow-2xl active:scale-95">
-                  Abrir Archivo <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
       </div>
 
       <StreakModal visible={showStreakModal} streak={streakCount} onClose={() => setShowStreakModal(false)} />

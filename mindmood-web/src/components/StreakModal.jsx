@@ -39,7 +39,7 @@ export default function StreakModal({ visible, streak, onClose }) {
           className="text-[26px] font-black text-center mb-2"
           style={{ color: themeStyles.text }}
         >
-          ¡Increíble Racha! 🚀
+          ¡Increíble Racha!
         </p>
         <p className="text-[56px] font-black mb-[18px]" style={{ color: "#F59E0B" }}>
           {streak} Días

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bell, Phone, Mail } from "lucide-react";
+import { ArrowLeft, Bell, Phone, Mail, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
@@ -113,9 +113,9 @@ export default function Inbox() {
                   {isAccepted && (
                     <div className="mt-5 p-5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
                       <p className="text-xs font-extrabold uppercase tracking-[1px] mb-2 text-emerald-600">Contacto</p>
-                      {admin.contact_name && <p className="text-base font-bold mb-2 dark:text-white">👤 {admin.contact_name}</p>}
-                      {(admin.contact_email || admin.email) && <p className="text-base font-bold mb-2 dark:text-white">📧 {admin.contact_email || admin.email}</p>}
-                      {admin.contact_phone && <p className="text-base font-bold mb-3 dark:text-white">📞 {admin.contact_phone}</p>}
+                    {admin.contact_name && <p className="text-base font-bold mb-2 dark:text-white flex items-center gap-2"><User size={16} className="inline shrink-0" />{admin.contact_name}</p>}
+                    {(admin.contact_email || admin.email) && <p className="text-base font-bold mb-2 dark:text-white flex items-center gap-2"><Mail size={16} className="inline shrink-0" />{admin.contact_email || admin.email}</p>}
+                    {admin.contact_phone && <p className="text-base font-bold mb-3 dark:text-white flex items-center gap-2"><Phone size={16} className="inline shrink-0" />{admin.contact_phone}</p>}
                       <div className="flex gap-3 mt-2">
                         {admin.contact_phone && (
                           <button onClick={(e) => { e.stopPropagation(); window.open(`tel:${admin.contact_phone}`, "_self"); }} className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none flex items-center justify-center gap-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600">

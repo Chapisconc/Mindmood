@@ -16,7 +16,21 @@ const MOOD_COLORS = {
   Indeterminado: "#64748B",
 };
 
-export default function EmotionModal({ visible, onClose, type, summary, primaryMood, selectedMoods }) {
+const MoodPills = ({ moods, accent }) =>
+  moods?.length > 0 ? (
+    <div className="flex flex-wrap gap-2 justify-center">
+      {moods.map((m) => {
+        const c = MOOD_COLORS[m] || accent;
+        return (
+          <span key={m} className="px-4 py-2 rounded-full text-[13px] font-extrabold text-white" style={{ backgroundColor: c }}>
+            {m}
+          </span>
+        );
+      })}
+    </div>
+  ) : null;
+
+export default function EmotionModal({ visible, onClose, type, summary, primaryMood, selectedMoods, userMoods, aiMoods }) {
   const isCrisis = type === "crisis";
   const accent = MOOD_COLORS[primaryMood] || MOOD_COLORS.Neutral;
 
@@ -52,25 +66,33 @@ export default function EmotionModal({ visible, onClose, type, summary, primaryM
           {isCrisis ? "No estás solo" : primaryMood || "Análisis Mental"}
         </p>
 
-        {selectedMoods?.length > 0 && (
+        {(userMoods?.length > 0 || aiMoods?.length > 0) && (
+          <div className="w-full mb-6 space-y-4">
+            {userMoods?.length > 0 && (
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider mb-2 text-white/40 text-center">
+                  Tus emociones
+                </p>
+                <MoodPills moods={userMoods} accent={accent} />
+              </div>
+            )}
+            {aiMoods?.length > 0 && (
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider mb-2 text-white/40 text-center">
+                  IA detectó
+                </p>
+                <MoodPills moods={aiMoods} accent={accent} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {(!userMoods?.length && !aiMoods?.length && selectedMoods?.length > 0) && (
           <div className="w-full mb-6">
             <p className="text-xs font-black uppercase tracking-wider mb-3 text-white/50 text-center">
               Emociones detectadas
             </p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {selectedMoods.map((m) => {
-                const c = MOOD_COLORS[m] || accent;
-                return (
-                  <span
-                    key={m}
-                    className="px-4 py-2 rounded-full text-[13px] font-extrabold text-white"
-                    style={{ backgroundColor: c }}
-                  >
-                    {m}
-                  </span>
-                );
-              })}
-            </div>
+            <MoodPills moods={selectedMoods} accent={accent} />
           </div>
         )}
 

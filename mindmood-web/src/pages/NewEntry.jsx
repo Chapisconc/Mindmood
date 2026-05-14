@@ -132,6 +132,8 @@ export default function NewEntry() {
         type: requires_help ? "crisis" : "normal",
         summary: isOffline ? "Guardado localmente (Modo Offline)" : summary,
         primaryMood: mood,
+        userMoods: selectedMoodIds.map(id => moodIdToName[id] || id),
+        aiMoods: aiData.all_moods || [],
         selectedMoods: aiData.selected_moods || finalSelectedMoods,
       });
       setModalVisible(true);
@@ -201,18 +203,18 @@ export default function NewEntry() {
         <button
           onClick={handleSave}
           disabled={loading || !text.trim()}
-          className="group relative w-full h-24 bg-slate-950 dark:bg-white disabled:opacity-50 disabled:cursor-not-allowed rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(255,255,255,0.05)] transition-all active:scale-95 flex items-center justify-center"
+          className="group relative w-full h-20 bg-slate-950 dark:bg-white disabled:opacity-50 disabled:cursor-not-allowed rounded-[2rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(255,255,255,0.05)] transition-all active:scale-95 flex items-center justify-center"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-fuchsia-500 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity" />
           {loading ? (
-            <div className="flex items-center justify-center gap-4 relative z-10">
-              <Loader2 className="w-8 h-8 text-white dark:text-slate-950 animate-spin" />
-              <span className="text-white dark:text-slate-950 font-black text-2xl tracking-tighter uppercase font-mono">Decodificando...</span>
+            <div className="flex items-center justify-center gap-3 relative z-10">
+              <Loader2 className="w-6 h-6 text-white dark:text-slate-950 animate-spin" />
+              <span className="text-white dark:text-slate-950 font-black text-base tracking-tight uppercase font-mono">Decodificando...</span>
             </div>
           ) : (
-            <div className="flex items-center justify-center gap-4 relative z-10">
-              <span className="text-white dark:text-slate-950 font-black text-2xl tracking-tighter uppercase font-mono">Consolidar Frecuencia</span>
-              <Send className="w-6 h-6 text-white dark:text-slate-950 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" />
+            <div className="flex items-center justify-center gap-3 relative z-10">
+              <span className="text-white dark:text-slate-950 font-black text-lg tracking-tight uppercase">GUARDAR</span>
+              <Send className="w-5 h-5 text-white dark:text-slate-950 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
             </div>
           )}
         </button>

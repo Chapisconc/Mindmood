@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, ChevronRight, Clock, Sparkles, Sun, HeartHandshake, Zap, Waves, Flame, Wind, Ghost, CloudRain, Frown, AlertTriangle, HelpCircle } from "lucide-react";
+import { Search, ChevronRight, Clock, Sparkles, Sun, HeartHandshake, Zap, Waves, Flame, Wind, Ghost, CloudRain, Frown, AlertTriangle, HelpCircle, BookOpen } from "lucide-react";
 import { supabase } from "../services/supabase";
 import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
@@ -91,7 +91,7 @@ export default function History() {
 
         {filteredEntries.length === 0 ? (
           <div className="flex flex-col items-center pt-20">
-            <span className="text-[80px] mb-7 opacity-30">📖</span>
+            <BookOpen className="w-20 h-20 mb-7 opacity-30 text-slate-300 dark:text-slate-600" />
             <p className="text-[26px] font-black text-center dark:text-white">Bóveda vacía</p>
             <p className="text-[17px] text-center mt-3 font-semibold text-slate-400">Tus reflexiones guardadas aparecerán aquí.</p>
           </div>

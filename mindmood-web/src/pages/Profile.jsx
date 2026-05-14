@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { ArrowLeft, LogOut, Shield, Globe } from "lucide-react";
 import { supabase } from "../services/supabase";
 import { useTheme } from "../theme/ThemeContext";
 import { useTranslation } from "../i18n/I18nContext";
@@ -99,7 +99,7 @@ export default function Profile() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="p-8 bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800"
             >
-              <p className="text-sm font-black uppercase tracking-[1px] mb-6" style={{ color: "#EC4899" }}>🔐 Perfil de Administrador</p>
+              <p className="text-sm font-black uppercase tracking-[1px] mb-6 flex items-center gap-2" style={{ color: "#EC4899" }}><Shield size={18} className="inline" /> Perfil de Administrador</p>
               <div className="inline-block px-4 py-2 rounded-xl mb-6" style={{ backgroundColor: "#EC489920" }}>
                 <span className="text-xs font-black uppercase tracking-[0.5px]" style={{ color: "#EC4899" }}>Admin</span>
               </div>
@@ -149,12 +149,12 @@ export default function Profile() {
               <button onClick={() => lang !== "es" && toggleLang()}
                 className="flex-1 p-3 rounded-2xl border text-sm font-bold cursor-pointer"
                 style={{ backgroundColor: lang === "es" ? "#6366F1" : "transparent", borderColor: "#E2E8F0", color: lang === "es" ? "#FFF" : "#64748B" }}>
-                🇲🇽 Español
+                <Globe size={16} className="inline" /> Español
               </button>
               <button onClick={() => lang !== "en" && toggleLang()}
                 className="flex-1 p-3 rounded-2xl border text-sm font-bold cursor-pointer"
                 style={{ backgroundColor: lang === "en" ? "#6366F1" : "transparent", borderColor: "#E2E8F0", color: lang === "en" ? "#FFF" : "#64748B" }}>
-                🇺🇸 English
+                <Globe size={16} className="inline" /> English
               </button>
             </div>
           </motion.div>

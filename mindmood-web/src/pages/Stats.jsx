@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Zap, Award, Target, TrendingUp } from "lucide-react";
+import { ArrowLeft, Zap, Award, Target, TrendingUp, BarChart3 } from "lucide-react";
 import { useTheme } from "../theme/ThemeContext";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from "recharts";
 import { useStats } from "../hooks/useStats";
@@ -25,7 +25,7 @@ export default function Stats() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center px-10">
-          <div className="text-7xl mb-6">📊</div>
+          <BarChart3 className="w-20 h-20 mb-6 text-slate-300 dark:text-slate-600 mx-auto" />
           <p className="text-2xl font-black mb-3 dark:text-white">Aún no hay datos</p>
           <p className="text-base font-semibold text-slate-400">Registra tu primera entrada para ver estadísticas.</p>
         </motion.div>
