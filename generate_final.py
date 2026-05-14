@@ -280,6 +280,7 @@ def create_architecture():
     doc = Document()  # Crear nuevo documento Word
     configurar_estilos_titulos(doc)  # Aplicar estilos de titulos corporativos
     configurar_pie_pagina(doc)  # Agregar numeracion de pagina
+    configurar_estilo_global(doc)
     crear_portada(doc, 'Software Architecture Document')  # Portada del documento
 
     # === Seccion 1: Resumen de arquitectura ===
@@ -386,6 +387,8 @@ def create_sdd():
     doc = Document()
     configurar_estilos_titulos(doc)
     configurar_pie_pagina(doc)
+    configurar_estilo_global(doc)
+
     crear_portada(doc, 'Software Design Document (SDD)')
 
     # === Seccion 1: Diseno del frontend ===
@@ -519,6 +522,8 @@ def create_code_review():
     doc = Document()
     configurar_estilos_titulos(doc)
     configurar_pie_pagina(doc)
+    configurar_estilo_global(doc)
+
     crear_portada(doc, 'Code Review Report',
                   'AI Sentiment Pipeline - Resultados de pruebas')
 
@@ -800,6 +805,7 @@ def create_tesis():
     doc = Document()
     configurar_estilos_titulos(doc)
     configurar_pie_pagina(doc)
+    configurar_estilo_global(doc)
     crear_portada(doc, 'Documento de Tesis',
                   'Diario Emocional Inteligente basado en IA')
     insertar_indice_automatico(doc)
@@ -1051,13 +1057,12 @@ def create_tesis():
             cell.text = str(val)
             for p2 in cell.paragraphs:
                 for run in p2.runs:
-                    run.font.size = Pt(7.5); run.font.name = 'Calibri'
-            shading = OxmlElement('w:shd'); shading.set(qn('w:fill'), bg)
-            if bg in ('EF4444', 'F97316', 'F59E0B'):
-                shading.set(qn('w:fill'), bg + '20')
+                    run.font.size = Pt(8); run.font.name = 'Calibri'
+            # Color the entire row for impacto column, light tint for others
+            if ci == 2:
+                shading = OxmlElement('w:shd'); shading.set(qn('w:fill'), bg); shading.set(qn('w:val'), 'clear')
             else:
-                shading.set(qn('w:fill'), bg + '18')
-            shading.set(qn('w:val'), 'clear')
+                shading = OxmlElement('w:shd'); shading.set(qn('w:fill'), bg + '15'); shading.set(qn('w:val'), 'clear')
             cell._tc.get_or_add_tcPr().append(shading)
 
     doc.add_paragraph()

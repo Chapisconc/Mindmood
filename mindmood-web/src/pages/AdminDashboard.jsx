@@ -91,21 +91,18 @@ function PieChartRecharts({ data, dominant }) {
   const total = data.reduce((s, d) => s + d.count, 0) || 1;
   const chartData = data.map((d, i) => ({ name: d.name, value: d.count, color: PIE_COLORS[i % PIE_COLORS.length] }));
   return (
-    <div className="relative" style={{ width: 260, height: 260 }}>
+    <div className="relative" style={{ width: 380, height: 380 }}>
       <ResponsiveContainer width="100%" height="100%">
         <RePieChart>
-          {/* Donut: innerRadius hueco, paddingAngle separa sectores */}
-          <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={70} outerRadius={110} paddingAngle={3} stroke="none">
+          <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={105} outerRadius={160} paddingAngle={4} stroke="none">
             {chartData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
           </Pie>
-          {/* Tooltip flotante con estilo redondeado */}
-          <Tooltip contentStyle={{ borderRadius: "16px", border: "1px solid #E2E8F0", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", fontSize: "12px", fontWeight: "700" }} />
+          <Tooltip contentStyle={{ borderRadius: "16px", border: "1px solid #E2E8F0", boxShadow: "0 20px 40px rgba(0,0,0,0.12)", fontSize: "13px", fontWeight: "700", padding: "10px 14px" }} />
         </RePieChart>
       </ResponsiveContainer>
-      {/* Etiqueta central: emoción predominante */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <span className="text-sm font-black dark:text-white text-center leading-tight px-2" style={{ fontSize: dominant?.name?.length > 8 ? "11px" : "14px" }}>{dominant?.name || "—"}</span>
-        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">predominante</span>
+        <span className="text-lg font-black dark:text-white text-center leading-tight px-3" style={{ fontSize: dominant?.name?.length > 8 ? "15px" : "18px" }}>{dominant?.name || "—"}</span>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">predominante</span>
       </div>
     </div>
   );
@@ -113,7 +110,7 @@ function PieChartRecharts({ data, dominant }) {
 
 /* Componente de gráfico radar SVG personalizado */
 /* Dibuja polígonos concéntricos, ejes radiales, etiquetas y datos */
-function RadarChartSVG({ data, size = 300 }) {
+function RadarChartSVG({ data, size = 430 }) {
   const cx = size / 2;
   const cy = size / 2;
   const n = data.length;
@@ -483,32 +480,38 @@ export default function AdminDashboard() {
               <p className="text-3xl font-black text-amber-500">{alarms.filter(a => (a.status || "active") === "active").length}</p>
             </div>
             {/* Tarjeta de resueltas con barra de progreso SVG apilada */}
-            <div className="col-span-2 lg:col-span-1 bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Resueltas</span>
+            <div className="col-span-2 lg:col-span-1 bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Resumen Crisis</span>
                 <Activity className="w-4 h-4 text-emerald-500" />
               </div>
-              <p className="text-3xl font-black text-emerald-500">{alarms.filter(a => a.status === "resolved").length}</p>
-              {/* Barra de progreso SVG con segmentos: activo, en proceso, resuelto */}
-              <svg viewBox="0 0 100 20" className="w-full h-5 mt-2">
-                {(() => {
-                  const total = alarms.length || 1;
-                  const activeW = (alarms.filter(a => (a.status || "active") === "active").length / total) * 100;
-                  const workingW = (alarms.filter(a => a.status === "working").length / total) * 100;
-                  const resolvedW = (alarms.filter(a => a.status === "resolved").length / total) * 100;
-                  return <>
-                    <rect x="0" y="0" width={activeW} height="20" rx="4" fill="#EF4444" />
-                    <rect x={activeW} y="0" width={workingW} height="20" rx="4" fill="#F59E0B" />
-                    <rect x={activeW + workingW} y="0" width={resolvedW} height="20" rx="4" fill="#10B981" />
-                  </>;
-                })()}
-              </svg>
-              {/* Leyenda de colores para la barra */}
-              <div className="flex items-center gap-3 mt-1.5 text-[8px] font-bold">
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-red-500" />Crit</span>
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500" />Pro</span>
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Res</span>
+              {/* Mini-cards para cada estado */}
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: "Activas", count: alarms.filter(a => (a.status || "active") === "active").length, color: "#EF4444", icon: "●" },
+                  { label: "En Proc.", count: alarms.filter(a => a.status === "working").length, color: "#F59E0B", icon: "◉" },
+                  { label: "Resueltas", count: alarms.filter(a => a.status === "resolved").length, color: "#10B981", icon: "✓" },
+                ].map((s) => (
+                  <div key={s.label} className="text-center rounded-xl py-3 px-1 border" style={{ backgroundColor: `${s.color}08`, borderColor: `${s.color}20` }}>
+                    <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color: s.color }}>{s.label}</p>
+                    <p className="text-2xl font-black" style={{ color: s.color }}>{s.count}</p>
+                  </div>
+                ))}
               </div>
+              {/* Barra de progreso horizontal simple */}
+              {(() => {
+                const total = alarms.length || 1;
+                const aw = (alarms.filter(a => (a.status || "active") === "active").length / total) * 100;
+                const ww = (alarms.filter(a => a.status === "working").length / total) * 100;
+                const rw = (alarms.filter(a => a.status === "resolved").length / total) * 100;
+                return (
+                  <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                    {aw > 0 && <div style={{ width: `${aw}%`, backgroundColor: "#EF4444" }} />}
+                    {ww > 0 && <div style={{ width: `${ww}%`, backgroundColor: "#F59E0B" }} />}
+                    {rw > 0 && <div style={{ width: `${rw}%`, backgroundColor: "#10B981" }} />}
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -548,7 +551,7 @@ export default function AdminDashboard() {
                         <span className="text-xs font-bold dark:text-white min-w-[80px]">{m.name}</span>
                         <span className="text-xs font-black text-slate-400 ml-auto">{m.count}</span>
                       </div>
-                      <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-full h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${(m.count / maxMood) * 100}%` }}

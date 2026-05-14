@@ -339,22 +339,20 @@ def diagrama_clases_uml(doc, clases, titulo="Diagrama de Clases"):
         ax.text(x + w/2, y + 3.5/2, text, ha='center', va='center',
                 fontsize=7, fontfamily='monospace', linespacing=1.5)
 
-        # Flecha de herencia (clase i -> i+1) en gris
         if i < n - 1:
             ax.annotate('', xy=(x + w + 0.3, y + 3.5/2),
                         xytext=(x + w - 0.1, y + 3.5/2),
-                        arrowprops=dict(arrowstyle='->', color='#94A3B8', lw=1.5))
+                        arrowprops=dict(arrowstyle='->', color='#6366F1', lw=1.8))
 
     # === Segundo pase: flechas de asociacion (desplazadas hacia abajo) ===
     for i, cls in enumerate(clases):
         x = i * 4 + 0.5
         y = 1.5
         w = 3.5
-        # Flecha de asociacion en indigo, ligeramente mas abajo que la herencia
         if i < n - 1:
             ax.annotate('', xy=(x + w + 0.8, y + 3.5/2 - 0.5),
                         xytext=(x + w + 0.1, y + 3.5/2 - 0.5),
-                        arrowprops=dict(arrowstyle='->', color='#6366F1', lw=1))
+                        arrowprops=dict(arrowstyle='->', color='#EC4899', lw=1.8))
 
     plt.tight_layout()
     buf = _fig_to_png(fig)
@@ -787,8 +785,34 @@ def configurar_estilos_titulos(doc):
 
     h3 = doc.styles['Heading 3']
     h3.font.size = Pt(12)
-    h3.font.color.rgb = RGBColor(71, 85, 105)  # Gris pizarra
+    h3.font.color.rgb = RGBColor(71, 85, 105)
     h3.font.bold = True
+
+def configurar_estilo_global(doc):
+    """
+    Configura el estilo global del documento: interlineado 1.5, texto justificado,
+    tipografia Calibri moderna, margenes y espaciado profesional.
+    """
+    from docx.enum.text import WD_LINE_SPACING, WD_ALIGN_PARAGRAPH
+    from docx.shared import Pt as Pts, RGBColor as RGBC
+    from docx.oxml import OxmlElement as OxmlEl
+    from docx.oxml.ns import qn as qn_ns
+
+    style = doc.styles['Normal']
+    style.font.name = 'Calibri'
+    style.font.size = Pts(11)
+    style.font.color.rgb = RGBC(30, 41, 59)
+    style.paragraph_format.line_spacing = 1.5
+    style.paragraph_format.space_after = Pts(6)
+    style.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+
+    for h in ['Heading 1', 'Heading 2', 'Heading 3']:
+        hs = doc.styles[h]
+        hs.paragraph_format.line_spacing = 1.5
+        hs.paragraph_format.space_before = Pts(18)
+        hs.paragraph_format.space_after = Pts(8)
+        hs.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        hs.font.name = 'Calibri'
 
 # ============================================================================
 # 7. PIE DE PAGINA CON NUMERACION AUTOMATICA
@@ -1559,12 +1583,14 @@ def diagrama_despliegue_sistema(doc, titulo="Diagrama de Despliegue - Arquitectu
         ax.text(12, capa["y"] + 0.5, capa["tecnologia"],
                 ha='right', fontsize=7, fontstyle='italic', color='#64748B')
 
-    ax.annotate('', xy=(7, 4.8), xytext=(7, 3.2),
-               arrowprops=dict(arrowstyle='<->', color='#94A3B8', lw=1.5))
-    ax.text(7.5, 4, 'REST API\nJSON', fontsize=7, color='#64748B', ha='center')
-    ax.annotate('', xy=(7, 3), xytext=(7, 6.4),
-               arrowprops=dict(arrowstyle='<->', color='#94A3B8', lw=1.5))
-    ax.text(7.5, 4.7, 'HTTP\nJSON', fontsize=7, color='#64748B', ha='center')
+    # Presentacion -> Negocio (top to bot)
+    ax.annotate('', xy=(7, 5.0), xytext=(7, 5.8),
+               arrowprops=dict(arrowstyle='->', color='#6366F1', lw=2.2))
+    ax.text(7.5, 5.4, 'HTTP / JSON', fontsize=7.5, color='#6366F1', ha='center', fontweight='bold')
+    # Negocio -> Datos (top to bot)
+    ax.annotate('', xy=(7, 2.8), xytext=(7, 3.6),
+               arrowprops=dict(arrowstyle='->', color='#EC4899', lw=2.2))
+    ax.text(7.5, 3.2, 'SQL / RPC', fontsize=7.5, color='#EC4899', ha='center', fontweight='bold')
     ax.text(7, 0.5, 'Desarrollo: ngrok tunnel  |  Produccion: Vercel + Supabase',
             ha='center', fontsize=8, color='#64748B', style='italic')
 
