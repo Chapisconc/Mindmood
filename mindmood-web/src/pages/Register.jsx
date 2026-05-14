@@ -22,6 +22,7 @@ import { Mail, Lock, Eye, EyeOff, Sun, Moon } from "lucide-react";
 import Icon from "../components/Icon";
 // Botón reutilizable con estado de carga
 import AppButton from "../components/AppButton";
+import BackgroundDecor from "../components/BackgroundDecor";
 
 export default function Register() {
   // Hook de navegación — redirige al login tras registro exitoso
@@ -65,11 +66,7 @@ export default function Register() {
     /* Fondo principal claro/oscuro con desbordamiento oculto */
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 relative overflow-hidden flex flex-col">
 
-      {/* Capa decorativa: círculos borrosos de fondo, no interactivos */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-500/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
-      </div>
+      <BackgroundDecor />
 
       {/* Contenedor centrado del formulario */}
       <div className="flex-1 flex flex-col justify-center px-6 py-10 max-w-md mx-auto w-full relative z-10">

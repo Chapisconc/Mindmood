@@ -24,6 +24,7 @@ import { useTheme } from "../theme/ThemeContext";
 import { useJournalEntry } from "../hooks/useJournalEntry";
 // Modal que muestra el resultado del análisis (mood, crisis)
 import EmotionModal from "../components/EmotionModal";
+import BackgroundDecor from "../components/BackgroundDecor";
 
 /**
  * API_URL: determina dinámicamente la URL del endpoint de análisis.
@@ -180,12 +181,7 @@ export default function NewEntry() {
     /* Fondo principal claro/oscuro */
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 relative overflow-hidden">
 
-      {/* Círculos decorativos de fondo con efecto blur */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-indigo-500/5 blur-[120px] rounded-full" />
-        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-fuchsia-500/5 blur-[100px] rounded-full" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-amber-500/3 blur-[80px] rounded-full" />
-      </div>
+      <BackgroundDecor />
 
       {/* Contenedor del editor con animación de entrada */}
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto relative z-10 px-4 lg:px-0 py-10 lg:py-14 pb-32">

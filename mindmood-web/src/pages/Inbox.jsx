@@ -20,6 +20,7 @@ import { useAuth } from "../hooks/useAuth";
 import { contactService } from "../services/contactService";
 // Modal que muestra datos del contacto profesional (nombre, email, teléfono)
 import ContactInfoModal from "../components/ContactInfoModal";
+import BackgroundDecor from "../components/BackgroundDecor";
 
 /* Componente principal de la bandeja de entrada */
 export default function Inbox() {

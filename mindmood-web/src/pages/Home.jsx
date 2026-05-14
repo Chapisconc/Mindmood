@@ -14,13 +14,15 @@ import { useNavigate } from "react-router-dom";
 // Animaciones de entrada y transiciones
 import { motion } from "framer-motion";
 // Iconos: racha, campana, destellos, pluma, corazón, etc.
-import { Flame, Bell, Sparkles, PenLine, Heart, MessageCircle, BarChart3, CalendarDays } from "lucide-react";
+import { Flame, Bell, Sparkles, PenLine, Heart, BarChart3, CalendarDays } from "lucide-react";
 // Cliente Supabase para consultas a la BD
 import { supabase } from "../services/supabase";
 // Hook personalizado del tema (claro/oscuro)
 import { useTheme } from "../theme/ThemeContext";
 // Hook personalizado de autenticación (usuario y perfil)
 import { useAuth } from "../hooks/useAuth";
+import BackgroundDecor from "../components/BackgroundDecor";
+import Spinner from "../components/Spinner";
 // Modal de celebración de racha (streak)
 import StreakModal from "../components/StreakModal";
 // Modal de calendario visual de racha
@@ -111,11 +113,7 @@ export default function Home() {
     /* Contenedor principal con fondo claro/oscuro */
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 relative overflow-hidden">
 
-      {/* Círculos decorativos de fondo (efecto blur), no interactivos */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-indigo-500/5 blur-[120px] rounded-full" />
-        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-fuchsia-500/5 blur-[100px] rounded-full" />
-      </div>
+      <BackgroundDecor />
 
       {/* Contenido principal con padding responsivo y espacio inferior para nav móvil */}
       <div className="max-w-4xl mx-auto px-4 lg:px-8 py-6 lg:py-12 relative z-10 pb-24 lg:pb-0">

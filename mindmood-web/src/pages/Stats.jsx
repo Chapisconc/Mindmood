@@ -22,6 +22,7 @@ import { useTheme } from "../theme/ThemeContext";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from "recharts";
 // Hook personalizado que obtiene y procesa las estadísticas desde Supabase
 import { useStats } from "../hooks/useStats";
+import BackgroundDecor from "../components/BackgroundDecor";
 
 /**
  * PIE_COLORS: Paleta de colores para el gráfico de pastel (pie chart).
@@ -72,11 +73,7 @@ export default function Stats() {
     /* Fondo principal claro/oscuro */
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 relative overflow-hidden">
 
-      {/* Círculos decorativos de fondo con blur */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-500/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
-      </div>
+      <BackgroundDecor />
 
       {/* Contenedor principal con ancho máximo y padding responsivo */}
       <div className="max-w-7xl mx-auto px-4 lg:px-12 py-6 lg:py-12 relative z-10 space-y-8 pb-24">

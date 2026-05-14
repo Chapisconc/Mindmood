@@ -19,6 +19,7 @@ import { supabase } from "../services/supabase";
 import { useTheme } from "../theme/ThemeContext";
 // Hook personalizado de autenticación (usuario)
 import { useAuth } from "../hooks/useAuth";
+import BackgroundDecor from "../components/BackgroundDecor";
 
 /**
  * MOODS: Catálogo completo de estados de ánimo detectables.
@@ -115,11 +116,7 @@ export default function History() {
     /* Fondo principal claro/oscuro */
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 relative overflow-hidden">
 
-      {/* Círculos decorativos de fondo */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-indigo-500/5 blur-[120px] rounded-full" />
-        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-fuchsia-500/5 blur-[100px] rounded-full" />
-      </div>
+      <BackgroundDecor />
 
       {/* Contenido principal */}
       <div className="max-w-4xl mx-auto px-4 lg:px-8 py-6 lg:py-12 relative z-10 pb-28 lg:pb-12">

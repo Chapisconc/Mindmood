@@ -19,6 +19,7 @@ import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
 // Modal de notificación tipo toast para feedback visual
 import NoticeModal from "../components/NoticeModal";
+import BackgroundDecor from "../components/BackgroundDecor";
 
 /* Lista de avatares disponibles: nombre clave + gradiente de fondo */
 const AVATARS = [
@@ -86,12 +87,7 @@ export default function Profile() {
       Capa fija de orbes difuminados que no interfieren con clicks.
     */}
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 relative overflow-hidden">
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {/* Orbe decorativo superior derecho */}
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-indigo-500/5 blur-[120px] rounded-full" />
-        {/* Orbe decorativo inferior izquierdo */}
-        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-fuchsia-500/5 blur-[100px] rounded-full" />
-      </div>
+      <BackgroundDecor />
 
       {/*
         Contenedor principal centrado.

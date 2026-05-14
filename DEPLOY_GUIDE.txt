@@ -5,6 +5,12 @@ cd ai_api
 .\venv\Scripts\activate
 uvicorn main:app --host 0.0.0.0 --port 8000
 
+==  EXPONER API CON NGROK (tunnel publico) ==
+cd ai_api
+.\venv\Scripts\activate
+ngrok http 8000
+# URL publica: https://XXXX-XX-XX-XXX-XX.ngrok-free.app
+
 ==  INICIAR FRONTEND ==
 cd mindmood-web
 npm run dev

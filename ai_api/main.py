@@ -46,7 +46,7 @@ Rate Limiter:
 # ============================================================================
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from fastapi.middleware.cors import CORSMiddleware
 
 # ============================================================================
@@ -65,6 +65,9 @@ import emoji
 import time
 import os
 from collections import defaultdict
+import unicodedata
+import secrets
+from difflib import SequenceMatcher
 
 # ============================================================================
 # IMPORTACIONES - Corrector ortografico y tipado
@@ -513,15 +516,10 @@ def has_crisis_indicators(text: str) -> bool:
     Retorna:
         bool: True si se detectaron indicadores de crisis, False en caso contrario
     """
-    import unicodedata
-    # Funcion auxiliar local para eliminar acentos
-    def remove_accents(input_str):
-        nfkd_form = unicodedata.normalize('NFKD', input_str.lower())
-        return "".join([c for c in nfkd_form if not unicodedata.combining(c)])
     
     # Normalizar texto: minusculas y sin acentos para busqueda robusta
     text_lower = text.lower()
-    text_no_accents = remove_accents(text_lower)
+    text_no_accents = _quick_remove_accents(text_lower)
     # Obtener las palabras clave de la categoria Crisis del diccionario global
     crisis_keywords = EMOTION_KEYWORDS.get('Crisis', [])
     
@@ -548,18 +546,16 @@ def has_crisis_indicators(text: str) -> bool:
         try:
             # Opcion A: Corrector ortografico estandar (SpellChecker)
             corrected = spell.correction(word)
-            if corrected and remove_accents(corrected) in critical_stems:
+            if corrected and _quick_remove_accents(corrected) in critical_stems:
                 return True
             
             # Opcion B: Similitud de caracteres (Fuzzy matching con difflib)
             # Detecta palabras con errores de una letra (ej. "maatr" -> "matar")
-            from difflib import SequenceMatcher
             for stem in critical_stems:
                 # Si la similitud entre la palabra y el stem es mayor al 80%, es positivo
                 if SequenceMatcher(None, word, stem).ratio() > 0.8:
                     return True
-        except:
-            # Ignorar errores del corrector (e.g., palabras muy extranas)
+        except (ValueError, TypeError):
             pass
     
     # NIVEL 3: Patrones regex de frases completas indicadoras de crisis
@@ -603,7 +599,8 @@ class AnalyzeRequest(BaseModel):
                       description="Texto a analizar (3-2000 caracteres)")
     language: str = Field(default="es", description="Idioma del texto")
 
-    @validator('text')
+    @field_validator('text')
+    @classmethod
     def text_not_empty(cls, v):
         """Validador: asegurar que el texto no sea solo espacios en blanco"""
         if not v.strip():
@@ -713,8 +710,7 @@ def generate_human_summary(moods, compound_score, requires_help=False):
         ]
     }
 
-    # Seleccionar un insight aleatorio de la base de datos usando secrets (criptograficamente seguro)
-    import secrets
+    # Seleccionar un insight aleatorio de la base de datos usando secrets
     insight = secrets.choice(insights.get(primary, insights['Neutral']))
     
     # Construir la narrativa de introduccion basada en la polaridad del score compuesto
@@ -780,19 +776,15 @@ def analyze(data: AnalyzeRequest):
     # ========================================================================
     # ETAPA 1: Limpieza del texto - eliminar emojis y normalizar a minusculas
     # ========================================================================
+    # Guardar texto original con emojis para refuerzo emocional
+    raw_text = data.text
     # Eliminar todos los emojis del texto para que sea texto plano puro
     original_text = emoji.replace_emoji(data.text, replace='')
     # Convertir a minusculas para busqueda insensible
     text_lower = original_text.lower()
     
-    # Funcion local para eliminar acentos del texto (para busqueda de palabras clave)
-    import unicodedata
-    def remove_accents(input_str):
-        nfkd_form = unicodedata.normalize('NFKD', input_str)
-        return "".join([c for c in nfkd_form if not unicodedata.combining(c)])
-    
     # Texto sin acentos para busqueda de palabras clave (keyword spotting)
-    text_no_accents = remove_accents(text_lower)
+    text_no_accents = _quick_remove_accents(text_lower)
     
     # ========================================================================
     # ETAPA 2: Normalizar jerga mexicana a espanol estandar
@@ -828,7 +820,7 @@ def analyze(data: AnalyzeRequest):
     # ETAPA 4: Refuerzo emocional - intensificadores, mayusculas (gritos) y emojis
     # ========================================================================
     # Obtener factores de refuerzo: analizar mayusculas y emojis en el texto original
-    reinforcement = analyze_emotional_reinforcement(original_text)
+    reinforcement = analyze_emotional_reinforcement(raw_text)
     # Multiplicador combinado: intensificadores del lenguaje * factor de gritos/mayusculas
     multiplier = get_intensifier_multiplier(original_text) * reinforcement["multiplier"]
     
@@ -852,7 +844,7 @@ def analyze(data: AnalyzeRequest):
         compound = -0.95              # Forzar score muy bajo para priorizar crisis
         # Enmascarar el texto original en logs por privacidad (redacted)
         masked = original_text[:50] + "..." if len(original_text) > 50 else original_text[:20]
-        logger.warning(f"CRISIS DETECTED (masked): [redacted]")
+        logger.warning(f"CRISIS DETECTED: {masked}")
     
     # ========================================================================
     # ETAPA 6: Analisis avanzado de emociones con modelo HuggingFace (Robertuito emotions)
@@ -1089,7 +1081,7 @@ def health_check():
     return {
         "status": "healthy",
         "version": "2.0",
-        "features": ["sentiment_analysis", "crisis_detection", "mexican_slang", "translation_cache"]
+        "features": ["sentiment_analysis", "crisis_detection", "mexican_slang"]
     }
 
 # ============================================================================

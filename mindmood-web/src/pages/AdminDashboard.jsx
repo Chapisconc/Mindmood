@@ -29,6 +29,7 @@ import { EMOTIONS_MAP } from "../theme/emotions";
 // date-fns para formato de fechas con locale español
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import BackgroundDecor from "../components/BackgroundDecor";
 
 /* Etiquetas y colores para los estados de las alarmas/entradas */
 const STATUS_LABELS = {

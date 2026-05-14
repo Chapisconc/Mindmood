@@ -20,6 +20,7 @@ import { useTheme } from "../theme/ThemeContext";
 import { Mail, Lock, Eye, EyeOff, Heart } from "lucide-react";
 // Botón reutilizable con estado de carga
 import AppButton from "../components/AppButton";
+import BackgroundDecor from "../components/BackgroundDecor";
 
 export default function Login() {
   // Hook de navegación — redirige tras login exitoso
@@ -98,11 +99,7 @@ export default function Login() {
     /* Fondo principal con gradiente según tema */
     <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: gradientColors }}>
 
-      {/* Capa decorativa: círculos borrosos (blur) de fondo, no interactivos */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-500/10 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
-      </div>
+      <BackgroundDecor />
 
       {/* Contenedor principal del formulario, centrado vertical y horizontal */}
       <div className="flex-1 flex flex-col justify-center px-7 py-10 max-w-md mx-auto w-full relative z-10">

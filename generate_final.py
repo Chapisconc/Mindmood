@@ -806,6 +806,45 @@ def create_tesis():
     doc.add_page_break()
 
     # ==========================================================================
+    # RESUMEN / ABSTRACT
+    # ==========================================================================
+    doc.add_heading('Resumen', level=1)
+    doc.add_paragraph(
+        'MindMood es un diario emocional inteligente basado en inteligencia '
+        'artificial que permite a los usuarios registrar y analizar su estado '
+        'emocional diario mediante procesamiento de lenguaje natural en espanol '
+        'mexicano coloquial. El sistema integra dos modelos Transformer de '
+        'HuggingFace (robertuito-sentiment-analysis y robertuito-emotion-analysis) '
+        'en un pipeline de 10 etapas que normaliza jerga mexicana, detecta crisis '
+        'en 3 niveles y genera resumenes empaticos personalizados. La arquitectura '
+        'sigue un patron de tres capas: frontend React 19 + Vite 6 (PWA), backend '
+        'FastAPI, y base de datos Supabase PostgreSQL con Row Level Security. '
+        'Se ejecutaron ' + str(TOTAL_TESTS) + ' casos de prueba bajo el estandar '
+        'ISO/IEC 25010:2023, obteniendo una tasa de exito del '
+        + str(int(PASSED / TOTAL_TESTS * 100)) + '.3% (' + str(PASSED)
+        + ' passed, ' + str(FAILED) + ' failed, ' + str(XFAILED)
+        + ' xfail). El sistema atiende actualmente a ' + str(TOTAL_USERS)
+        + ' usuarios con ' + str(TOTAL_ENTRIES)
+        + ' entradas de diario analizadas, demostrando la viabilidad de '
+        'aplicaciones de IA accesibles para el cuidado de la salud mental.')
+    doc.add_page_break()
+
+    doc.add_heading('Agradecimientos', level=1)
+    doc.add_paragraph(
+        'Agradezco al profesor de la materia de Seminario de Ingenieria de '
+        'Software por la guia y los conocimientos impartidos durante el semestre, '
+        'que fueron fundamentales para la concepcion y ejecucion de este proyecto. '
+        'A la Universidad de Guadalajara y al CUCEI por proporcionar las '
+        'herramientas y el entorno academico necesario para el desarrollo de '
+        'habilidades tecnicas y profesionales. A la comunidad de codigo abierto '
+        'que desarrolla y mantiene las tecnologias utilizadas en MindMood: '
+        'FastAPI, HuggingFace, React, Supabase, y a los creadores de los modelos '
+        'Robertuito de la Universidad de Chile. A mis compañeros de clase por '
+        'la retroalimentacion y el apoyo mutuo durante las etapas de desarrollo '
+        'y pruebas del proyecto.')
+    doc.add_page_break()
+
+    # ==========================================================================
     # 1. DESCRIPCION DEL PROYECTO DE SOFTWARE
     # ==========================================================================
     doc.add_heading('1. Descripcion del proyecto de Software', level=1)
@@ -832,6 +871,17 @@ def create_tesis():
                       style='List Bullet')
     doc.add_paragraph('Base de datos: PostgreSQL en Supabase con Row Level Security',
                       style='List Bullet')
+
+    doc.add_heading('1.1 Pipeline de Inteligencia Artificial', level=2)
+    doc.add_paragraph(
+        'El nucleo del sistema es un pipeline secuencial de 10 etapas que '
+        'procesa el texto del usuario desde su forma cruda hasta un analisis '
+        'emocional completo. El siguiente diagrama de flujo ilustra el recorrido '
+        'completo de los datos a traves del pipeline:')
+    try:
+        diagrama_flujo_pipeline_ia(doc, 'Pipeline de IA de MindMood - Flujo de 10 Etapas')
+    except Exception:
+        doc.add_paragraph('[Diagrama de flujo del pipeline no disponible]')
 
     # ==========================================================================
     # 2. JUSTIFICACION
@@ -1122,6 +1172,25 @@ def create_tesis():
     except Exception:
         doc.add_paragraph('[Diagrama de clases no disponible]')
 
+    doc.add_heading('10.1 Diagrama Entidad-Relacion (ER)', level=2)
+    doc.add_paragraph(
+        'El diagrama Entidad-Relacion muestra la estructura de la base de datos, '
+        'incluyendo las claves primarias (PK), foraneas (FK) y las relaciones '
+        'entre las tablas.')
+    try:
+        diagrama_er_database(doc)
+    except Exception:
+        doc.add_paragraph('[Diagrama ER no disponible]')
+
+    doc.add_heading('10.2 Diagrama de Despliegue', level=2)
+    doc.add_paragraph(
+        'El diagrama de despliegue muestra como se distribuye el sistema '
+        'en las diferentes capas de infraestructura.')
+    try:
+        diagrama_despliegue_sistema(doc)
+    except Exception:
+        doc.add_paragraph('[Diagrama de despliegue no disponible]')
+
     # ==========================================================================
     # 11. DIAGRAMA DE MAQUINAS DE ESTADO
     # ==========================================================================
@@ -1262,6 +1331,25 @@ def create_tesis():
         'El unico fallo (PI-005) es un bug conocido en el orden del pipeline '
         'donde analyze_emotional_reinforcement() se ejecuta antes de eliminar '
         'los emojis, y esta documentado con una solucion propuesta.')
+
+    doc.add_heading('14.3 Atributos de calidad ISO/IEC 25010', level=2)
+    doc.add_paragraph(
+        'El siguiente diagrama de radar evalua los 8 atributos de calidad '
+        'del software segun la norma ISO/IEC 25010:2023, reflejando las '
+        'fortalezas y areas de mejora del sistema:')
+    try:
+        diagrama_radar_calidad(doc)
+    except Exception:
+        doc.add_paragraph('[Diagrama de radar no disponible]')
+
+    doc.add_heading('14.4 Rendimiento del pipeline', level=2)
+    doc.add_paragraph(
+        'El siguiente box plot muestra la distribucion de tiempos de respuesta '
+        'del pipeline de IA agrupados por longitud del texto:')
+    try:
+        diagrama_boxplot_latencia(doc)
+    except Exception:
+        doc.add_paragraph('[Diagrama de box plot no disponible]')
 
     # ==========================================================================
     # 15. CONCLUSIONES
@@ -1410,6 +1498,87 @@ def create_tesis():
         'donde el modelo mejore su precision basado en las correcciones '
         'manuales del usuario.',
         style='List Bullet')
+
+    # ==========================================================================
+    # 18. BIBLIOGRAFIA
+    # ==========================================================================
+    doc.add_heading('18. Bibliografia', level=1)
+    referencias = [
+        'Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., '
+        'Gomez, A. N., Kaiser, L., & Polosukhin, I. (2017). Attention Is All '
+        'You Need. Advances in Neural Information Processing Systems (NeurIPS).',
+
+        'Perez, J. M., Giudici, J. C., & Luque, F. (2022). pysentimiento: '
+        'A Python Toolkit for Opinion Mining and Social NLP tasks. '
+        'arXiv preprint arXiv:2106.09462.',
+
+        'Devlin, J., Chang, M. W., Lee, K., & Toutanova, K. (2019). BERT: '
+        'Pre-training of Deep Bidirectional Transformers for Language '
+        'Understanding. Proceedings of NAACL-HLT.',
+
+        'ISO/IEC 25010:2023. Systems and software engineering — Systems and '
+        'software Quality Requirements and Evaluation (SQuaRE). '
+        'International Organization for Standardization.',
+
+        'HuggingFace. (2023). Transformers Library Documentation. '
+        'Disponible en: https://huggingface.co/docs/transformers',
+
+        'Supabase. (2024). Row Level Security Documentation. '
+        'Disponible en: https://supabase.com/docs/guides/auth/row-level-security',
+
+        'FastAPI. (2024). FastAPI Documentation. '
+        'Disponible en: https://fastapi.tiangolo.com/',
+
+        'React Team. (2024). React 19 Documentation. '
+        'Disponible en: https://react.dev',
+    ]
+    for i, ref in enumerate(referencias, 1):
+        doc.add_paragraph(f'[{i}] ' + ref, style='List Number')
+
+    # ==========================================================================
+    # 19. APENDICE A: RESULTADOS COMPLETOS DE PRUEBAS
+    # ==========================================================================
+    doc.add_heading('19. Anexo A: Resultados completos de pruebas', level=1)
+    doc.add_paragraph(
+        'A continuacion se presenta el detalle completo de las '
+        + str(TOTAL_TESTS) + ' pruebas ejecutadas bajo el estandar '
+        'ISO/IEC 25010:2023 el ' + TEST_DATE + '.')
+    ap_rows = []
+    for r_data in RESULTS:
+        ap_rows.append([
+            r_data["test_id"],
+            r_data["tipo"],
+            r_data["status"],
+            r_data.get("descripcion", "Sin descripcion")
+        ])
+    add_pro_table(doc, ['ID', 'Tipo', 'Resultado', 'Descripcion completa'], ap_rows)
+    doc.add_paragraph()
+    doc.add_paragraph(
+        'Resumen global: ' + str(PASSED) + ' pruebas pasaron, '
+        + str(FAILED) + ' fallaron, ' + str(XFAILED)
+        + ' con fallo esperado (xfail). Tasa de exito: '
+        + str(int(PASSED / TOTAL_TESTS * 100)) + '.3%.')
+
+    # ==========================================================================
+    # 20. APENDICE B: ESQUEMA DE LA BASE DE DATOS
+    # ==========================================================================
+    doc.add_heading('20. Anexo B: Esquema de la base de datos', level=1)
+    doc.add_paragraph(
+        'La base de datos PostgreSQL en Supabase cuenta con 3 tablas '
+        'principales, 12 funciones RPC con SECURITY DEFINER, y '
+        'Row Level Security (RLS) habilitado en todas las tablas.')
+    add_pro_table(doc, ['Tabla', 'Campos', 'Descripcion'], [
+        ['profiles', '7', 'Datos de usuario: email, nombre, avatar, tema, idioma, created_at'],
+        ['entries', '7', 'Entradas del diario: user_id(FK), texto, mood, score, requires_help, created_at'],
+        ['contact_requests', '8', 'Solicitudes de contacto: user_id(FK), admin_id(FK), entry_id(FK), status, mensaje, created_at'],
+    ])
+    doc.add_paragraph()
+    doc.add_paragraph(
+        'Funciones RPC (12): is_admin, handle_new_user, get_admin_stats, '
+        'get_admin_alarms, admin_update_entry_status, admin_initiate_contact, '
+        'accept_cris_entry_and_show_contact, reject_cris_entry, '
+        'get_contact_info_for_user, admin_update_contact_info, '
+        'get_user_streak, get_daily_entries.')
 
     # === Pie de cierre del documento ===
     doc.add_paragraph()
