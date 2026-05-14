@@ -1,22 +1,4 @@
 {
-  // ================================================================
-  // package.json — Dependencias y scripts de MindMood Web
-  // Scripts principales:
-  //   dev     — Inicia servidor de desarrollo Vite
-  //   build   — Compila para producción con Vite
-  //   preview — Previsualiza la build de producción
-  //
-  // Dependencias clave:
-  //   react / react-dom / react-router-dom — UI y enrutamiento
-  //   @supabase/supabase-js — Backend y autenticación
-  //   framer-motion — Animaciones declarativas
-  //   recharts — Gráficos (pastel, barras)
-  //   lucide-react — Iconos SVG
-  //   date-fns — Formateo de fechas (locale ES/EN)
-  //   @radix-ui/* — Componentes headless accesibles
-  //   tailwindcss / @tailwindcss/vite — Estilos utilitarios
-  //   vite / @vitejs/plugin-react — Bundler y compilador
-  // ================================================================
   "name": "mindmood-web",
   "private": true,
   "version": "1.0.0",

@@ -82,10 +82,6 @@ export default function Profile() {
   const handleLogout = async () => { try { await signOut(); window.location.href = "/"; } catch (_) { window.location.href = "/"; } };
 
   return (
-    {/*
-      Fondo principal con decoraciones de blur efecto glass.
-      Capa fija de orbes difuminados que no interfieren con clicks.
-    */}
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 relative overflow-hidden">
       <BackgroundDecor />
 
