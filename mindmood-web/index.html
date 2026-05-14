@@ -1,15 +1,28 @@
 <!doctype html>
+<!-- ================================================================ -->
+<!-- index.html — Punto de entrada HTML de MindMood Web               -->
+<!-- Define la estructura base del documento, metadatos SEO/PWA,      -->
+<!-- y el punto de montaje para React (Vite).                         -->
+<!-- ================================================================ -->
 <html lang="es">
   <head>
+    <!-- Codificación de caracteres UTF-8 para soporte multilingüe -->
     <meta charset="UTF-8" />
+    <!-- Favicon de la aplicación (PNG) -->
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <!-- Viewport responsivo: escala 1:1, ancho = dispositivo -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Color del tema para la barra de navegación del navegador (oscuro) -->
     <meta name="theme-color" content="#020617" />
+    <!-- Meta descripción para SEO y vista previa en redes sociales -->
     <meta name="description" content="MindMood - Tu espacio seguro de salud mental" />
+    <!-- Título de la página (se muestra en la pestaña del navegador) -->
     <title>MindMood</title>
   </head>
   <body>
+    <!-- Punto de montaje para la aplicación React -->
     <div id="root"></div>
+    <!-- Script de entrada: Vite compila y sirve /src/main.jsx -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

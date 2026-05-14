@@ -1,32 +1,41 @@
+/* ==========================================================================
+   StreakModal.jsx — MODAL DE RACHA (Streak) para MindMood
+   Celebra la racha de días consecutivos del usuario con un diseño
+   motivacional: ícono de llama grande, número de días y mensaje
+   de felicitación. Se usa como "logro" al completar X días seguidos.
+   ========================================================================== */
+
+// Íconos de lucide-react: llama (racha) y equis (cerrar)
 import { Flame, X } from "lucide-react";
+
+// Contexto de tema para colores dinámicos
 import { useTheme } from "../theme/ThemeContext";
 
+/**
+ * StreakModal — Modal de celebración de racha.
+ *
+ * @prop {boolean}  visible — Controla visibilidad
+ * @prop {number}   streak  — Número de días consecutivos
+ * @prop {Function} onClose — Callback al cerrar
+ */
 export default function StreakModal({ visible, streak, onClose }) {
   const { themeStyles } = useTheme();
 
   if (!visible) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-5"
-      style={{ backgroundColor: "rgba(15, 10, 30, 0.85)" }}
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-sm rounded-[40px] p-8 flex flex-col items-center"
-        style={{
-          background: `linear-gradient(135deg, ${themeStyles.cardGradient[0] || themeStyles.card}, ${themeStyles.cardGradient[1] || themeStyles.card})`,
-          boxShadow: `0 12px 30px ${themeStyles.shadow}`,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 bg-transparent border-none cursor-pointer"
-        >
+    /* Fondo oscuro semi-transparente */
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-5" style={{ backgroundColor: "rgba(15, 10, 30, 0.85)" }} onClick={onClose}>
+      {/* Contenedor del modal con degradado de fondo dinámico */}
+      <div className="relative w-full max-w-sm rounded-[40px] p-8 flex flex-col items-center"
+        style={{ background: `linear-gradient(135deg, ${themeStyles.cardGradient[0] || themeStyles.card}, ${themeStyles.cardGradient[1] || themeStyles.card})`, boxShadow: `0 12px 30px ${themeStyles.shadow}` }}
+        onClick={(e) => e.stopPropagation()}>
+        {/* Botón de cerrar */}
+        <button onClick={onClose} className="absolute top-4 right-4 bg-transparent border-none cursor-pointer">
           <X size={24} color={themeStyles.secondaryText} />
         </button>
 
+        {/* Ícono de llama con doble anillo decorativo */}
         <div className="mb-6 flex items-center justify-center">
           <div className="p-6 rounded-full" style={{ backgroundColor: "rgba(245, 158, 11, 0.15)" }}>
             <div className="p-[18px] rounded-full" style={{ backgroundColor: "rgba(245, 158, 11, 0.25)" }}>
@@ -35,27 +44,18 @@ export default function StreakModal({ visible, streak, onClose }) {
           </div>
         </div>
 
-        <p
-          className="text-[26px] font-black text-center mb-2"
-          style={{ color: themeStyles.text }}
-        >
-          ¡Increíble Racha!
-        </p>
-        <p className="text-[56px] font-black mb-[18px]" style={{ color: "#F59E0B" }}>
-          {streak} Días
-        </p>
-        <p
-          className="text-base text-center leading-6 mb-8 px-2"
-          style={{ color: themeStyles.secondaryText }}
-        >
+        {/* Título motivacional */}
+        <p className="text-[26px] font-black text-center mb-2" style={{ color: themeStyles.text }}>¡Increíble Racha!</p>
+        {/* Número de días (grande y en ambar) */}
+        <p className="text-[56px] font-black mb-[18px]" style={{ color: "#F59E0B" }}>{streak} Días</p>
+        {/* Mensaje de apoyo */}
+        <p className="text-base text-center leading-6 mb-8 px-2" style={{ color: themeStyles.secondaryText }}>
           Has mantenido tu bienestar como prioridad por {streak} días consecutivos. ¡Sigue así, tu mente te lo agradece!
         </p>
 
-        <button
-          onClick={onClose}
-          className="w-full py-[18px] rounded-[22px] text-white text-[17px] font-extrabold cursor-pointer border-none"
-          style={{ backgroundColor: "#F59E0B", boxShadow: "0 6px 12px rgba(245,158,11,0.4)" }}
-        >
+        {/* Botón de acción */}
+        <button onClick={onClose} className="w-full py-[18px] rounded-[22px] text-white text-[17px] font-extrabold cursor-pointer border-none"
+          style={{ backgroundColor: "#F59E0B", boxShadow: "0 6px 12px rgba(245,158,11,0.4)" }}>
           ¡Entendido!
         </button>
       </div>

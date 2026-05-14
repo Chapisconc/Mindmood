@@ -1,3 +1,11 @@
+/* ================================================================== */
+/* spacing.js — Sistema de diseño (Design System) de MindMood         */
+/* Define tokens de espaciado, bordes redondeados, tamaños de fuente, */
+/* pesos tipográficos, sombras y colores temáticos.                   */
+/* Diseñado para ser usado con React Native / estilo inline.          */
+/* ================================================================== */
+
+/* Escala de espaciado (padding/margin) en píxeles */
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -9,6 +17,7 @@ export const spacing = {
   xxxxl: 32,
 };
 
+/* Radios de borde (border-radius) en píxeles */
 export const borderRadius = {
   sm: 8,
   md: 12,
@@ -19,6 +28,7 @@ export const borderRadius = {
   full: 9999,
 };
 
+/* Tamaños de fuente (font-size) en píxeles */
 export const fontSize = {
   xs: 10,
   sm: 12,
@@ -31,6 +41,7 @@ export const fontSize = {
   hero: 32,
 };
 
+/* Pesos de fuente (font-weight) como strings CSS */
 export const fontWeight = {
   regular: "400",
   medium: "500",
@@ -40,6 +51,8 @@ export const fontWeight = {
   black: "900",
 };
 
+/* Sombras predefinidas para diferentes profundidades (sm/md/lg/xl) */
+/* Además una función glow() que genera sombra con color personalizado */
 export const shadows = {
   sm: {
     shadowColor: "#000",
@@ -78,6 +91,7 @@ export const shadows = {
   }),
 };
 
+/* Colores del sistema: paleta "unicornio" y fondos claro/oscuro */
 export const colors = {
   unicorn: {
     purple: "#7C3AED",

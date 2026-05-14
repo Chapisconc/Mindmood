@@ -1,3 +1,11 @@
+/* ==========================================================================
+   Icon.jsx — COMPONENTE DE ÍCONOS UNIVERSAL para MindMood
+   Traduce nombres de íconos (compatibles con Ionicons / Material)
+   a componentes de lucide-react mediante un diccionario MAPPING.
+   Renderiza <Icon name="heart-outline" size={20} color="#xxx" />.
+   ========================================================================== */
+
+/* Importación de todos los íconos de lucide-react usados en la app */
 import {
   Heart, Moon, Sun, Mail, Lock, Eye, EyeOff, PlusCircle,
   ChevronRight, Menu, Calendar, Clock, LogOut, Users, BookOpen,
@@ -11,6 +19,11 @@ import {
   Send, Trash2, Edit3, Info, Settings,
 } from "lucide-react";
 
+/**
+ * MAPPING — Diccionario que asigna nombres de íconos
+ * (estilo Ionicons, ej. "heart-outline") a componentes de lucide-react.
+ * Permite mantener compatibilidad con código previo.
+ */
 const MAPPING = {
   "heart-outline": Heart,
   "moon-outline": Moon,
@@ -103,6 +116,15 @@ const MAPPING = {
   "warning-outline": AlertTriangle,
 };
 
+/**
+ * Icon — Componente que renderiza un ícono de lucide-react
+ * a partir de un nombre "compatible Ionicons".
+ *
+ * @prop {string} name      — Nombre del ícono (ej. "heart-outline")
+ * @prop {number} size      — Tamaño en píxeles (default: 20)
+ * @prop {string} color     — Color CSS (default: "currentColor")
+ * @prop {string} className — Clases adicionales Tailwind
+ */
 export default function Icon({ name, size = 20, color = "currentColor", className = "" }) {
   const mapped = MAPPING[name] || MAPPING[name.toLowerCase()];
   if (!mapped) return null;

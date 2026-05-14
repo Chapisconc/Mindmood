@@ -1,9 +1,79 @@
+/* ================================================================== */
+/* index.css — Estilos globales de MindMood                           */
+/* Incluye: Directivas Tailwind, variables CSS (claro/oscuro),        */
+/* reset de estilos base, animaciones personalizadas.                 */
+/* ================================================================== */
+
+/* @tailwindcss — Importa los estilos base, componentes y utilidades  */
+/* de Tailwind CSS v4.                                                */
 @import "tailwindcss";
+
+/* Variante personalizada "dark" para aplicar estilos cuando el       */
+/* elemento <html> tiene la clase .dark.                              */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* @theme inline — Define tokens de diseño para Tailwind.             */
+/* Los colores se vinculan a variables CSS para soportar temas.       */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius: 0.625rem;
+}
+
+/* Tema claro (predeterminado) — Variables CSS globales               */
 :root {
+  --bg: #F8FAFC;
+  --card-bg: #FFFFFF;
+  --text: #0F172A;
+  --secondary: #6366F1;
+  --accent: #6366F1;
+  --border: #E2E8F0;
+  --error: #EF4444;
+  --success: #10B981;
+  --glow: #F472B6;
+  --soft-accent: rgba(99, 102, 241, 0.08);
+
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
+  --primary: #6366F1;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F1F5F9;
+  --secondary-foreground: #0F172A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #6366F1;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --input: #E2E8F0;
+  --ring: #6366F1;
+}
+
+/* Tema oscuro — Sobrescribe variables CSS cuando .dark está presente  */
+.dark {
   --bg: #020617;
-  --card: #1E293B;
+  --card-bg: #1E293B;
   --text: #F8FAFC;
   --secondary: #818CF8;
   --accent: #818CF8;
@@ -12,8 +82,28 @@
   --success: #34D399;
   --glow: #F472B6;
   --soft-accent: rgba(129, 140, 248, 0.12);
+
+  --background: #020617;
+  --foreground: #F8FAFC;
+  --card: #1E293B;
+  --card-foreground: #F8FAFC;
+  --popover: #1E293B;
+  --popover-foreground: #F8FAFC;
+  --primary: #818CF8;
+  --primary-foreground: #FFFFFF;
+  --secondary: #1E293B;
+  --secondary-foreground: #F8FAFC;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: #818CF8;
+  --accent-foreground: #FFFFFF;
+  --destructive: #F87171;
+  --destructive-foreground: #FFFFFF;
+  --input: #334155;
+  --ring: #818CF8;
 }
 
+/* Reset y estilos base del body */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -22,24 +112,29 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Box-sizing universal para evitar desbordamientos */
 * {
   box-sizing: border-box;
 }
 
+/* Hereda la fuente en inputs, textareas y botones */
 input, textarea, button {
   font-family: inherit;
 }
 
+/* Color de selección de texto personalizado (violeta) */
 ::selection {
   background: #818CF8;
   color: white;
 }
 
+/* Animación de pulso para dots indicadores */
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
 
+/* Clase utilitaria para aplicar la animación pulse-dot */
 .animate-pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
 }

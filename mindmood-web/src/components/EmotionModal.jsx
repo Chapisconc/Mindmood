@@ -1,137 +1,136 @@
-import { X } from "lucide-react";
-import Icon from "./Icon";
+/* ==========================================================================
+   EmotionModal.jsx — MODAL DE EMOCIÓN / CRISIS para MindMood
+   Muestra un anillo SVG (MoodRing) con el color del estado de ánimo
+   predominante y el total de entradas. En caso de crisis, muestra
+   líneas de ayuda telefónica (Línea Cero Suicidios, Línea de la Vida, SAPTEL).
+   ========================================================================== */
 
+// Ícono de cerrar (lucide-react)
+import { X } from "lucide-react";
+
+/**
+ * MOOD_COLORS — Mapa de colores asociados a cada estado de ánimo.
+ * Usado para el anillo, acentos y fondos del modal.
+ */
 const MOOD_COLORS = {
-  Excelente: "#10B981",
-  Feliz: "#EC4899",
-  Agradecido: "#FBBF24",
-  Sorpresa: "#06B6D4",
-  Neutral: "#A78BFA",
-  Enojo: "#F97316",
-  Ansiedad: "#8B5CF6",
-  Miedo: "#7C3AED",
-  Triste: "#F43F5E",
-  Asco: "#84CC16",
-  Crisis: "#EF4444",
-  Indeterminado: "#64748B",
+  Excelente: "#10B981", Feliz: "#EC4899", Agradecido: "#FBBF24",
+  Sorpresa: "#06B6D4", Neutral: "#A78BFA", Enojo: "#F97316",
+  Ansiedad: "#8B5CF6", Miedo: "#7C3AED", Triste: "#F43F5E",
+  Asco: "#84CC16", Crisis: "#EF4444", Indeterminado: "#64748B",
 };
 
-const MoodPills = ({ moods, accent }) =>
-  moods?.length > 0 ? (
-    <div className="flex flex-wrap gap-2 justify-center">
-      {moods.map((m) => {
-        const c = MOOD_COLORS[m] || accent;
-        return (
-          <span key={m} className="px-4 py-2 rounded-full text-[13px] font-extrabold text-white" style={{ backgroundColor: c }}>
-            {m}
-          </span>
-        );
-      })}
-    </div>
-  ) : null;
+/**
+ * MoodRingSVG — Componente SVG que dibuja un anillo circular
+ * con progreso (stroke-dashoffset) del color del ánimo.
+ * Simula un "anillo de estado de ánimo" animado.
+ *
+ * @prop {string} color   — Color del anillo (hex)
+ * @prop {number} percent — Porcentaje de progreso (0-100)
+ * @prop {number} size    — Diámetro del SVG en píxeles
+ */
+function MoodRingSVG({ color, percent, size = 120 }) {
+  const cx = size / 2, cy = size / 2;
+  const r = size * 0.4;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference - (percent / 100) * circumference;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {/* Anillo de fondo (gris oscuro) */}
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1E293B" strokeWidth="6" />
+      {/* Anillo de progreso animado con el color del ánimo */}
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="6"
+        strokeDasharray={circumference} strokeDashoffset={offset}
+        strokeLinecap="round" transform={`rotate(-90 ${cx} ${cy})`}
+        style={{ transition: "stroke-dashoffset 0.8s ease" }} />
+    </svg>
+  );
+}
 
-export default function EmotionModal({ visible, onClose, type, summary, primaryMood, selectedMoods, userMoods, aiMoods }) {
+/**
+ * EmotionModal — Modal flotante que muestra:
+ *   - En modo normal: anillo con color del ánimo + total de entradas
+ *   - En modo crisis: ícono 🆘 + líneas de ayuda con botones para llamar
+ *
+ * @prop {boolean} visible       — Controla si el modal se muestra
+ * @prop {Function} onClose      — Callback al cerrar
+ * @prop {string}   type         — Tipo de modal ("crisis" o normal)
+ * @prop {string}   primaryMood  — Estado de ánimo predominante (clave de MOOD_COLORS)
+ * @prop {number}   totalEntries — Total de entradas del usuario
+ */
+export default function EmotionModal({ visible, onClose, type, primaryMood, totalEntries }) {
+  /* Determina si es un modal de crisis */
   const isCrisis = type === "crisis";
+
+  /* Color del acento basado en el ánimo predominante */
   const accent = MOOD_COLORS[primaryMood] || MOOD_COLORS.Neutral;
+
+  /* Porcentaje para el anillo: módulo 100 del total (default 75%) */
+  const percent = totalEntries ? ((totalEntries % 100) || 100) : 75;
 
   if (!visible) return null;
 
+  // Fondo oscuro semi-transparente con blur
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[2.5rem] p-8 flex flex-col items-center border"
-        style={{
-          backgroundColor: `${accent}15`,
-          borderColor: `${accent}40`,
-          backdropFilter: "blur(32px)",
-          WebkitBackdropFilter: "blur(32px)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button onClick={onClose} className="absolute top-4 right-4 bg-transparent border-none cursor-pointer">
-          <X size={24} className="text-white/60" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="relative w-full max-w-sm rounded-3xl px-8 pt-10 pb-6 flex flex-col items-center"
+        style={{ backgroundColor: "#0F0A1A", border: `1px solid ${accent}40` }}
+        onClick={(e) => e.stopPropagation()}>
+        {/* Botón de cerrar (X) */}
+        <button onClick={onClose} className="absolute top-4 right-4 bg-transparent border-none cursor-pointer p-1">
+          <X size={20} color="#64748B" />
         </button>
 
-        <div
-          className="w-[90px] h-[90px] rounded-full flex items-center justify-center mb-7"
-          style={{ backgroundColor: accent, boxShadow: `0 12px 24px ${accent}80` }}
-        >
-          <Icon name={isCrisis ? "heart-outline" : "auto-fix"} size={40} color="#FFF" />
-        </div>
+        {/* Contenido superior: ícono de alerta o anillo de ánimo */}
+        {isCrisis ? (
+          /* Modo crisis: ícono 🆘 con sombra */
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ backgroundColor: accent, boxShadow: `0 8px 16px ${accent}60` }}>
+            <span className="text-2xl">🆘</span>
+          </div>
+        ) : (
+          /* Modo normal: anillo SVG con total de entradas superpuesto */
+          <div className="relative mb-4">
+            <MoodRingSVG color={accent} percent={percent} size={130} />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-lg font-black text-white">{totalEntries || "—"}</span>
+              <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">entradas</span>
+            </div>
+          </div>
+        )}
 
-        <p className="text-[28px] font-black text-center mb-2 text-white">
-          {isCrisis ? "No estás solo" : primaryMood || "Análisis Mental"}
+        {/* Título del modal */}
+        <p className="text-xl font-black text-center text-white mb-6">
+          {isCrisis ? "No estás solo" : primaryMood || "Analizado"}
         </p>
 
-        {(userMoods?.length > 0 || aiMoods?.length > 0) && (
-          <div className="w-full mb-6 space-y-4">
-            {userMoods?.length > 0 && (
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-wider mb-2 text-white/40 text-center">
-                  Tus emociones
-                </p>
-                <MoodPills moods={userMoods} accent={accent} />
-              </div>
-            )}
-            {aiMoods?.length > 0 && (
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-wider mb-2 text-white/40 text-center">
-                  IA detectó
-                </p>
-                <MoodPills moods={aiMoods} accent={accent} />
-              </div>
-            )}
-          </div>
-        )}
-
-        {(!userMoods?.length && !aiMoods?.length && selectedMoods?.length > 0) && (
-          <div className="w-full mb-6">
-            <p className="text-xs font-black uppercase tracking-wider mb-3 text-white/50 text-center">
-              Emociones detectadas
-            </p>
-            <MoodPills moods={selectedMoods} accent={accent} />
-          </div>
-        )}
-
-        {summary && (
-          <p className="text-sm text-center leading-[24px] font-semibold mb-8 px-1 text-white/60">
-            {summary}
-          </p>
-        )}
-
+        {/* En crisis: muestra líneas de ayuda con botones para llamar */}
         {isCrisis && (
-          <div className="w-full mb-7 flex flex-col gap-3">
+          <div className="w-full mb-5 flex flex-col gap-2.5">
             {[
-              { name: "Linea Cero Suicidios", number: "075" },
-              { name: "Linea de la Vida", number: "800-911-2000" },
+              { name: "Línea Cero Suicidios", number: "075" },
+              { name: "Línea de la Vida", number: "800-911-2000" },
               { name: "SAPTEL", number: "55-5603-0000" },
             ].map((h) => (
-              <button
-                key={h.number}
+              /* Botón que abre el teléfono con el número de la línea */
+              <button key={h.number}
                 onClick={() => window.open(`tel:${h.number}`, "_self")}
-                className="w-full flex items-center p-5 rounded-3xl border cursor-pointer bg-red-500/15 border-red-500/30"
-              >
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mr-4 bg-red-500 shadow-lg shadow-red-500/40">
-                  <Icon name="phone-outline" size={22} color="#FFF" />
+                className="w-full flex items-center gap-3 p-4 rounded-2xl border cursor-pointer"
+                style={{ backgroundColor: `${accent}12`, borderColor: `${accent}30` }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: accent }}>
+                  <span className="text-lg">📞</span>
                 </div>
-                <div className="flex-1 text-left">
-                  <p className="text-white text-[17px] font-extrabold">{h.name}</p>
-                  <p className="text-red-300 text-[15px] font-black mt-0.5">{h.number}</p>
+                <div className="text-left">
+                  <p className="text-sm font-bold text-white">{h.name}</p>
+                  <p className="text-xs font-black mt-0.5" style={{ color: `${accent}AA` }}>{h.number}</p>
                 </div>
-                <Icon name="chevron-right" size={22} color="#94A3B8" />
               </button>
             ))}
           </div>
         )}
 
-        <button
-          onClick={onClose}
-          className="w-full py-[22px] rounded-3xl text-white text-lg font-black tracking-[0.8px] cursor-pointer border-none"
-          style={{ backgroundColor: accent }}
-        >
+        {/* Botón de acción principal */}
+        <button onClick={onClose}
+          className="w-full py-3.5 rounded-2xl text-sm font-bold border-none cursor-pointer text-white"
+          style={{ backgroundColor: accent }}>
           {isCrisis ? "Entendido" : "Cerrar"}
         </button>
       </div>

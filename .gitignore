@@ -65,5 +65,11 @@ mindmood-web/dist/
 # Skills lock
 skills-lock.json
 
+# Generated document artifacts
+*.docx
+
+# Test evidence reports
+tests/*.json
+
 .vercel
 .env*.local

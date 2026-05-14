@@ -1,3 +1,16 @@
+/* ================================================================== */
+/* emotions.js — Mapa de emociones de MindMood                        */
+/* Define 12 emociones con nombre, color (hex), ícono y valor núm.   */
+/* Valor positivo = emociones agradables, negativo = desagradables.   */
+/* ================================================================== */
+
+/* Lista maestra de emociones ordenadas de positiva a negativa.       */
+/* Cada entrada tiene:                                                */
+/*   name  - Nombre visible en español                                */
+/*   color - Color HEX asociado (para gráficos y badges)              */
+/*   icon  - Identificador de icono (compatible con Ionicons)         */
+/*   desc  - Descripción breve                                        */
+/*   value - Puntuación numérica (-1 a 1) para promedios              */
 export const EMOTIONS_MAP = [
   { name: "Excelente", color: "#10B981", icon: "star", desc: "Plenitud total.", value: 1 },
   { name: "Feliz", color: "#EC4899", icon: "happy-outline", desc: "Bienestar y paz.", value: 0.7 },
@@ -13,6 +26,9 @@ export const EMOTIONS_MAP = [
   { name: "Indeterminado", color: "#64748B", icon: "help-circle", desc: "Sentimiento ambiguo.", value: 0 },
 ];
 
+/* Busca una emoción por su nombre; fallback a "Sorpresa" (índice 3) */
 export const getEmotionByName = (name) =>
   EMOTIONS_MAP.find((e) => e.name === name) || EMOTIONS_MAP[3];
+
+/* Atajo para obtener solo el color de una emoción por nombre */
 export const getEmotionColor = (name) => getEmotionByName(name).color;

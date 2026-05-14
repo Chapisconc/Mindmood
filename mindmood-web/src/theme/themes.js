@@ -1,4 +1,13 @@
+/* ================================================================== */
+/* themes.js — Definiciones de temas claro y oscuro para MindMood     */
+/* Exporta un objeto `themes` con dos variantes (light/dark).         */
+/* Cada tema contiene colores para fondo, tarjetas, texto, bordes,    */
+/* gradientes, sombras, inputs y placeholders.                        */
+/* Usado por ThemeContext.jsx para proveer estilos a la app.          */
+/* ================================================================== */
+
 export const themes = {
+  /* Tema claro — Colores base: slate claro + indigo como acento */
   light: {
     background: "#F8FAFC",
     card: "#FFFFFF",
@@ -21,6 +30,7 @@ export const themes = {
     inputBg: "#F8FAFC",
     placeholder: "#94A3B8",
   },
+  /* Tema oscuro — Colores base: slate oscuro + indigo claro como acento */
   dark: {
     background: "#020617",
     card: "#1E293B",
