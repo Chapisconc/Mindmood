@@ -311,10 +311,10 @@ def diagrama_clases_uml(doc, clases, titulo="Diagrama de Clases"):
     if not _HAS_MPL:
         doc.add_paragraph(f'[Diagrama no disponible: instalar matplotlib]')
         return
-    n = len(clases)  # Cantidad de clases a dibujar
-    fig, ax = plt.subplots(figsize=(min(n * 4 + 2, 16), 5))  # Tamano dinamico segun numero de clases
-    ax.set_xlim(0, n * 4 + 2)  # Limite horizontal proporcional
-    ax.set_ylim(0, 6)  # Altura fija
+    n = len(clases)
+    fig, ax = plt.subplots(figsize=(min(n * 6 + 2, 18), 6))
+    ax.set_xlim(0, n * 6 + 2)
+    ax.set_ylim(0, 7)
     ax.axis('off')  # Ocultar ejes
     ax.set_title(titulo, fontsize=14, fontweight='bold', pad=15)
 
@@ -1355,12 +1355,17 @@ def diagrama_flujo_pipeline_ia(doc, titulo="Pipeline de IA - 10 Etapas"):
     ax.axis('off')
     ax.set_title(titulo, fontsize=15, fontweight='bold', pad=20, color='#6366F1')
 
-    box_w, box_h = 2.2, 1.4
+    box_w, box_h = 2.3, 1.4
+    col_gap, row_gap = 5.8, 1.8
+    start_x, start_y = 1.5, 8.5
+    positions = []
+
     for i, (texto, color) in enumerate(etapas):
         col = i % 2
         row = i // 2
-        x = 1.8 + col * 5.5
-        y = 8.5 - row * 1.8
+        x = start_x + col * col_gap
+        y = start_y - row * row_gap
+        positions.append((x, y, color))
 
         rect = mpatches.FancyBboxPatch((x, y), box_w, box_h,
                boxstyle="round,pad=0.15", edgecolor=color,
@@ -1369,14 +1374,25 @@ def diagrama_flujo_pipeline_ia(doc, titulo="Pipeline de IA - 10 Etapas"):
         ax.text(x + box_w/2, y + box_h/2, texto, ha='center', va='center',
                 fontsize=7.5, fontweight='bold', color=color)
 
-        if i < len(etapas) - 1:
-            next_col = (i + 1) % 2
-            next_row = (i + 1) // 2
-            nx, ny = 1.8 + next_col * 5.5, 8.5 - next_row * 1.8
-            sx, sy = x + box_w, y + box_h/2
-            ex, ey = nx, ny + box_h/2
-            ax.annotate('', xy=(ex, ey), xytext=(sx, sy),
-                       arrowprops=dict(arrowstyle='->', color='#94A3B8', lw=1.5))
+    # Draw arrows AFTER all boxes, with proper routing
+    for i in range(len(etapas) - 1):
+        x, y, c = positions[i]
+        nx, ny, nc = positions[i + 1]
+        if i % 2 == 0:
+            # Same row: col 0 -> col 1, horizontal arrow between boxes
+            ax.annotate('', xy=(nx - 0.15, ny + box_h/2),
+                       xytext=(x + box_w + 0.15, y + box_h/2),
+                       arrowprops=dict(arrowstyle='->', color='#64748B', lw=2.0))
+        else:
+            # Cross row: col 1 -> next row col 0, L-shaped path that goes OUTSIDE boxes
+            # Go right from box, then down, then left into next box
+            corner_x = x + box_w + 0.5
+            corner_y = ny + box_h/2
+            ax.plot([x + box_w, corner_x, corner_x, nx],
+                    [y + box_h/2, y + box_h/2, corner_y, corner_y],
+                    color='#64748B', lw=2.0)
+            ax.annotate('', xy=(nx, corner_y), xytext=(nx - 0.01, corner_y),
+                       arrowprops=dict(arrowstyle='->', color='#64748B', lw=2.0))
 
     plt.tight_layout()
     buf = _fig_to_png(fig)

@@ -1,19 +1,11 @@
-/* ================================================================== */
-/* index.css — Estilos globales de MindMood                           */
-/* Incluye: Directivas Tailwind, variables CSS (claro/oscuro),        */
-/* reset de estilos base, animaciones personalizadas.                 */
-/* ================================================================== */
-
-/* @tailwindcss — Importa los estilos base, componentes y utilidades  */
-/* de Tailwind CSS v4.                                                */
+/*
+ * index.css — MindMood "Unicorn Mode" Global Styles
+ * Animated gradients, glassmorphism, glow effects, shimmer loading
+ */
 @import "tailwindcss";
-
-/* Variante personalizada "dark" para aplicar estilos cuando el       */
-/* elemento <html> tiene la clase .dark.                              */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* @theme inline — Define tokens de diseño para Tailwind.             */
-/* Los colores se vinculan a variables CSS para soportar temas.       */
+/* === Tailwind Design Tokens === */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -37,104 +29,117 @@
   --radius: 0.625rem;
 }
 
-/* Tema claro (predeterminado) — Variables CSS globales               */
+/* === Light Theme === */
 :root {
-  --bg: #F8FAFC;
-  --card-bg: #FFFFFF;
-  --text: #0F172A;
-  --secondary: #6366F1;
-  --accent: #6366F1;
-  --border: #E2E8F0;
-  --error: #EF4444;
-  --success: #10B981;
-  --glow: #F472B6;
+  --bg: #F8FAFC; --card-bg: #FFFFFF; --text: #0F172A;
+  --secondary: #6366F1; --accent: #6366F1; --border: #E2E8F0;
+  --error: #EF4444; --success: #10B981; --glow: #F472B6;
   --soft-accent: rgba(99, 102, 241, 0.08);
-
-  --background: #F8FAFC;
-  --foreground: #0F172A;
-  --card: #FFFFFF;
-  --card-foreground: #0F172A;
-  --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
-  --primary: #6366F1;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F1F5F9;
-  --secondary-foreground: #0F172A;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --accent: #6366F1;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
-  --input: #E2E8F0;
-  --ring: #6366F1;
+  --background: #F8FAFC; --foreground: #0F172A;
+  --card: #FFFFFF; --card-foreground: #0F172A;
+  --popover: #FFFFFF; --popover-foreground: #0F172A;
+  --primary: #6366F1; --primary-foreground: #FFFFFF;
+  --secondary-var: #F1F5F9; --secondary-foreground: #0F172A;
+  --muted: #F1F5F9; --muted-foreground: #64748B;
+  --accent-var: #6366F1; --accent-foreground: #FFFFFF;
+  --destructive: #EF4444; --destructive-foreground: #FFFFFF;
+  --input: #E2E8F0; --ring: #6366F1;
+  --gradient-1: #6366F1; --gradient-2: #EC4899; --gradient-3: #F59E0B;
 }
 
-/* Tema oscuro — Sobrescribe variables CSS cuando .dark está presente  */
+/* === Dark Theme === */
 .dark {
-  --bg: #020617;
-  --card-bg: #1E293B;
-  --text: #F8FAFC;
-  --secondary: #818CF8;
-  --accent: #818CF8;
-  --border: #334155;
-  --error: #F87171;
-  --success: #34D399;
-  --glow: #F472B6;
+  --bg: #020617; --card-bg: #1E293B; --text: #F8FAFC;
+  --secondary: #818CF8; --accent: #818CF8; --border: #334155;
+  --error: #F87171; --success: #34D399; --glow: #F472B6;
   --soft-accent: rgba(129, 140, 248, 0.12);
-
-  --background: #020617;
-  --foreground: #F8FAFC;
-  --card: #1E293B;
-  --card-foreground: #F8FAFC;
-  --popover: #1E293B;
-  --popover-foreground: #F8FAFC;
-  --primary: #818CF8;
-  --primary-foreground: #FFFFFF;
-  --secondary: #1E293B;
-  --secondary-foreground: #F8FAFC;
-  --muted: #1E293B;
-  --muted-foreground: #94A3B8;
-  --accent: #818CF8;
-  --accent-foreground: #FFFFFF;
-  --destructive: #F87171;
-  --destructive-foreground: #FFFFFF;
-  --input: #334155;
-  --ring: #818CF8;
+  --background: #020617; --foreground: #F8FAFC;
+  --card: #1E293B; --card-foreground: #F8FAFC;
+  --popover: #1E293B; --popover-foreground: #F8FAFC;
+  --primary: #818CF8; --primary-foreground: #FFFFFF;
+  --secondary-var: #1E293B; --secondary-foreground: #F8FAFC;
+  --muted: #1E293B; --muted-foreground: #94A3B8;
+  --accent-var: #818CF8; --accent-foreground: #FFFFFF;
+  --destructive: #F87171; --destructive-foreground: #FFFFFF;
+  --input: #334155; --ring: #818CF8;
+  --gradient-1: #818CF8; --gradient-2: #F472B6; --gradient-3: #38BDF8;
 }
 
-/* Reset y estilos base del body */
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: var(--bg);
-  color: var(--text);
-  -webkit-font-smoothing: antialiased;
+/* === Base Styles === */
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; }
+input, textarea, button { font-family: inherit; }
+::selection { background: #818CF8; color: white; }
+
+/* === Animated Gradient Background === */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
-/* Box-sizing universal para evitar desbordamientos */
-* {
-  box-sizing: border-box;
+@keyframes gradient-x {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
-/* Hereda la fuente en inputs, textareas y botones */
-input, textarea, button {
-  font-family: inherit;
+@keyframes float-blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(20px, -30px) scale(1.05); }
+  50% { transform: translate(-10px, -20px) scale(0.95); }
+  75% { transform: translate(-25px, 15px) scale(1.02); }
 }
 
-/* Color de selección de texto personalizado (violeta) */
-::selection {
-  background: #818CF8;
-  color: white;
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 0 40px rgba(236, 72, 153, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.5), 0 0 60px rgba(236, 72, 153, 0.2); }
 }
 
-/* Animación de pulso para dots indicadores */
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-/* Clase utilitaria para aplicar la animación pulse-dot */
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* === Utility Classes === */
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 6s ease infinite;
+}
+
+.animate-float-blob {
+  animation: float-blob 20s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
 .animate-pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* === Glassmorphism === */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(51, 65, 85, 0.4);
+}
+
+/* === Shimmer Skeleton === */
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
 }

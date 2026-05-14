@@ -987,23 +987,80 @@ def create_tesis():
         style='List Bullet')
 
     # ==========================================================================
-    # 5. RIESGOS
+    # 5. RIESGOS (color-coded con semaforo)
     # ==========================================================================
     doc.add_heading('5. Riesgos', level=1)
-    add_pro_table(doc, ['Riesgo', 'Probabilidad', 'Impacto', 'Mitigacion'], [
-        ['Bajo rendimiento del modelo de IA',
-         'Media', 'Alto', 'Usar modelos ligeros (Robertuito ~500MB) y cacheo de respuestas'],
-        ['Falsos positivos en deteccion de crisis',
-         'Media', 'Critico', 'Sistema de 3 capas con validacion cruzada y umbrales ajustables'],
-        ['Disponibilidad del API de HuggingFace',
-         'Baja', 'Alto', 'Implementar fallback local con cache de ultimos resultados'],
-        ['Perdida de datos de usuarios',
-         'Baja', 'Critico', 'Backups automaticos de Supabase y RLS para integridad'],
-        ['Desviacion del cronograma',
-         'Media', 'Alto', 'Metodologia agil con entregables semanales y priorizacion MVP'],
-        ['Baja adopcion de usuarios',
-         'Alta', 'Medio', 'Interfaz intuitiva, PWA sin instalacion y feedback emocional inmediato'],
-    ])
+
+    # Semáforo / Leyenda de colores
+    p = doc.add_paragraph()
+    r = p.add_run('Leyenda de Severidad: ')
+    r.bold = True
+    r.font.size = Pt(9)
+    for color_hex, label in [('10B981', ' Baja '), ('F59E0B', ' Media '), ('F97316', ' Alta '), ('EF4444', ' Critica ')]:
+        run = p.add_run('  ■')
+        run.font.color.rgb = RGBColor(*[int(color_hex[i:i+2], 16) for i in (0, 2, 4)])
+        run.font.size = Pt(10)
+        run = p.add_run(label)
+        run.font.size = Pt(8)
+        run.font.color.rgb = C_SLATE
+
+    # Tabla de riesgos con filas coloreadas por impacto
+    riesgos = [
+        ['Bajo rendimiento del modelo de IA', 'Media', 'Alto', 'Usar modelos ligeros (Robertuito ~500MB) y cacheo'],
+        ['Falsos positivos en deteccion de crisis', 'Media', 'Critico', 'Sistema de 3 capas con validacion cruzada'],
+        ['Disponibilidad del API de HuggingFace', 'Baja', 'Alto', 'Fallback local con cache de ultimos resultados'],
+        ['Perdida de datos de usuarios', 'Baja', 'Critico', 'Backups automaticos de Supabase y RLS'],
+        ['Desviacion del cronograma del proyecto', 'Media', 'Alto', 'Metodologia agil, entregables semanales, MVP'],
+        ['Baja adopcion de usuarios finales', 'Alta', 'Medio', 'Interfaz intuitiva, PWA sin instalacion'],
+        ['Incompatibilidad con navegadores antiguos', 'Media', 'Medio', 'Soporte para Chrome/Safari/Firefox ultimas 2 versiones'],
+        ['Exposicion de datos sensibles en logs', 'Baja', 'Critico', 'Enmascarar texto original, logs solo WARNING+'],
+        ['Fallo en la normalizacion de jerga mexicana', 'Alta', 'Medio', 'Dataset de 70+ expresiones con actualizacion periodica'],
+        ['Rate limiting afecta pruebas automatizadas', 'Alta', 'Bajo', 'Limpiar _rate_store en setup de pruebas (PS-005 fix)'],
+        ['Dependencia de servicio externo (Supabase)', 'Baja', 'Alto', 'Cache local en localStorage, modo offline parcial'],
+        ['Cold start del modelo HuggingFace (>10s)', 'Alta', 'Medio', 'Pre-carga de modelos al iniciar servidor'],
+        ['Vulnerabilidades en dependencias npm/pip', 'Media', 'Alto', 'npm audit / pip audit semanal, actualizar parches'],
+        ['Perdida de conexion durante escritura de entrada', 'Alta', 'Medio', 'Guardar borrador en localStorage, reintentar'],
+        ['CORS mal configurado en produccion', 'Media', 'Alto', 'allow_origin_regex para *.vercel.app y ngrok'],
+        ['Token JWT expirado durante sesion activa', 'Baja', 'Medio', 'Supabase auto-refresh token habilitado'],
+        ['Saturacion de la base de datos por entradas masivas', 'Baja', 'Medio', 'Rate limiting en RPC, paginacion en queries'],
+        ['Inyeccion SQL via campos de texto no sanitizados', 'Baja', 'Critico', 'Pydantic validators + RLS + parametros preparados'],
+    ]
+
+    rtable = doc.add_table(rows=len(riesgos) + 1, cols=4)
+    rtable.style = 'Table Grid'
+    rtable.alignment = 1
+    rtable.autofit = True
+
+    for i, h in enumerate(['Riesgo', 'Probabilidad', 'Impacto', 'Mitigacion']):
+        cell = rtable.rows[0].cells[i]
+        cell.text = h
+        for p2 in cell.paragraphs:
+            p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            for run in p2.runs:
+                run.bold = True; run.font.size = Pt(8); run.font.color.rgb = RGBColor(255,255,255)
+        shading = OxmlElement('w:shd'); shading.set(qn('w:fill'), '6366F1'); shading.set(qn('w:val'), 'clear')
+        cell._tc.get_or_add_tcPr().append(shading)
+
+    color_map = {'Bajo': '10B981', 'Media': 'F59E0B', 'Alto': 'F97316', 'Critico': 'EF4444'}
+
+    for ri, row in enumerate(riesgos):
+        impacto = row[2]
+        bg = color_map.get(impacto, 'FFFFFF')
+        for ci, val in enumerate(row):
+            cell = rtable.rows[ri + 1].cells[ci]
+            cell.text = str(val)
+            for p2 in cell.paragraphs:
+                for run in p2.runs:
+                    run.font.size = Pt(7.5); run.font.name = 'Calibri'
+            shading = OxmlElement('w:shd'); shading.set(qn('w:fill'), bg)
+            if bg in ('EF4444', 'F97316', 'F59E0B'):
+                shading.set(qn('w:fill'), bg + '20')
+            else:
+                shading.set(qn('w:fill'), bg + '18')
+            shading.set(qn('w:val'), 'clear')
+            cell._tc.get_or_add_tcPr().append(shading)
+
+    doc.add_paragraph()
 
     # ==========================================================================
     # 6. TABLA DE REQUERIMIENTOS

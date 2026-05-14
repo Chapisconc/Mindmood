@@ -136,9 +136,14 @@ export default function NewEntry() {
             body: JSON.stringify({ text }),                                      // Envía el texto al backend
             signal: controller.signal,
           });
-          clearTimeout(timeoutId);                                                // Cancela el timeout si respondió
-          if (response.ok) aiData = await response.json();                        // Parsear respuesta exitosa
-        } catch (_err) {}  // Silencia errores de red/timeout — usa valores por defecto
+          clearTimeout(timeoutId);
+          if (!response.ok) throw new Error(`API error: ${response.status}`);
+          const data = await response.json();
+          if (!data || typeof data.mood !== "string") throw new Error("Respuesta invalida del API");
+          aiData = data;
+        } catch (apiErr) {
+          console.error("API call failed:", apiErr.message || apiErr);
+        }
       }
 
       // Obtiene el usuario actual desde Supabase Auth
@@ -170,7 +175,11 @@ export default function NewEntry() {
         totalEntries: count || 0,
       });
       setModalVisible(true);                               // Muestra el modal
-    } catch (e) { alert(e.message); }                       // Error inesperado
+    } catch (e) {
+      console.error("Save entry failed:", e);
+      setModalData({ type: "crisis", summary: "Error: " + (e.message || "No se pudo guardar"), primaryMood: "Neutral", totalEntries: 0 });
+      setModalVisible(true);
+    }
     finally { setLoading(false); }                           // Desactiva spinner
   };
 

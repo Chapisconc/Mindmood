@@ -1,13 +1,4 @@
-/* ================================================================== */
-/* themes.js — Definiciones de temas claro y oscuro para MindMood     */
-/* Exporta un objeto `themes` con dos variantes (light/dark).         */
-/* Cada tema contiene colores para fondo, tarjetas, texto, bordes,    */
-/* gradientes, sombras, inputs y placeholders.                        */
-/* Usado por ThemeContext.jsx para proveer estilos a la app.          */
-/* ================================================================== */
-
 export const themes = {
-  /* Tema claro — Colores base: slate claro + indigo como acento */
   light: {
     background: "#F8FAFC",
     card: "#FFFFFF",
@@ -15,6 +6,7 @@ export const themes = {
     secondaryText: "#6366F1",
     accent: "#6366F1",
     accentGradient: ["#6366F1", "#EC4899", "#F59E0B"],
+    glowColor: "rgba(99, 102, 241, 0.4)",
     border: "#E2E8F0",
     header: "#FFFFFF",
     tabBar: "#FFFFFF",
@@ -26,11 +18,12 @@ export const themes = {
     softAccent: "rgba(99, 102, 241, 0.08)",
     shadow: "rgba(99, 102, 241, 0.15)",
     glassBg: "rgba(255, 255, 255, 0.75)",
-    glow: "#818CF8",
+    glow: "#F472B6",
     inputBg: "#F8FAFC",
     placeholder: "#94A3B8",
+    meshColors: ["#6366F1", "#EC4899", "#F59E0B", "#06B6D4"],
+    meshOpacity: "0.06",
   },
-  /* Tema oscuro — Colores base: slate oscuro + indigo claro como acento */
   dark: {
     background: "#020617",
     card: "#1E293B",
@@ -38,6 +31,7 @@ export const themes = {
     secondaryText: "#818CF8",
     accent: "#818CF8",
     accentGradient: ["#818CF8", "#F472B6", "#38BDF8"],
+    glowColor: "rgba(244, 114, 182, 0.3)",
     border: "#334155",
     header: "#0F172A",
     tabBar: "#0F172A",
@@ -52,5 +46,7 @@ export const themes = {
     glow: "#F472B6",
     inputBg: "#0F172A",
     placeholder: "#64748B",
+    meshColors: ["#818CF8", "#F472B6", "#38BDF8", "#A78BFA"],
+    meshOpacity: "0.10",
   },
 };

@@ -25,6 +25,7 @@ import {
 import { useTheme } from "../theme/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../services/supabase";
+import DarkModeToggle from "./DarkModeToggle";
 
 /* Páginas cargadas bajo demanda para reducir el bundle */
 const HomePage = lazy(() => import("../pages/Home"));
@@ -257,6 +258,7 @@ export default function Layout() {
 
       {/* BottomNav visible solo en rutas no-admin */}
       {!isAdminRoute && <BottomNav currentPath={currentPath} navigate={navigate} />}
+      <DarkModeToggle />
     </div>
   );
 }

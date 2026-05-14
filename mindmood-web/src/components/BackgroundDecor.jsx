@@ -1,56 +1,57 @@
 import { motion } from "framer-motion";
+import { useTheme } from "../theme/ThemeContext";
 
 export default function BackgroundDecor({ variant = "default" }) {
-  const variants = {
-    default: (
-      <>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.5 }}
-          className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-indigo-500/5 blur-[120px] rounded-full"
-        />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.5, delay: 0.3 }}
-          className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-fuchsia-500/5 blur-[100px] rounded-full"
-        />
-      </>
-    ),
-    auth: (
-      <>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 2 }}
-          className="absolute -top-20 -left-20 w-[600px] h-[600px] bg-indigo-500/[0.03] blur-[150px] rounded-full"
-        />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 2, delay: 0.5 }}
-          className="absolute -bottom-20 -right-20 w-[500px] h-[500px] bg-fuchsia-500/[0.03] blur-[130px] rounded-full"
-        />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 2, delay: 0.8 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-amber-500/[0.03] blur-[100px] rounded-full"
-        />
-      </>
-    ),
-    dark: (
-      <>
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-indigo-500/10 blur-[120px] rounded-full" />
-        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] bg-fuchsia-500/10 blur-[100px] rounded-full" />
-      </>
-    ),
-  };
+  const { themeStyles } = useTheme();
+  const colors = themeStyles.meshColors;
+  const opacity = themeStyles.meshOpacity;
+
+  const blobs = [
+    { color: colors[0], w: 500, h: 500, x: "-15%", y: "-20%", delay: 0 },
+    { color: colors[1], w: 400, h: 400, x: "70%", y: "-10%", delay: 5 },
+    { color: colors[2], w: 450, h: 450, x: "50%", y: "60%", delay: 10 },
+    { color: colors[3], w: 350, h: 350, x: "-10%", y: "55%", delay: 15 },
+  ];
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden">
-      {variants[variant] || variants.default}
+      {blobs.map((blob, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0 }}
+          animate={{
+            opacity: [0.5, 0.8, 0.5],
+            x: [0, 30, -20, 0],
+            y: [0, -20, 15, 0],
+            scale: [1, 1.05, 0.95, 1],
+          }}
+          transition={{
+            opacity: { duration: 8, repeat: Infinity, delay: blob.delay, ease: "easeInOut" },
+            x: { duration: 25, repeat: Infinity, delay: blob.delay, ease: "easeInOut" },
+            y: { duration: 20, repeat: Infinity, delay: blob.delay, ease: "easeInOut" },
+            scale: { duration: 18, repeat: Infinity, delay: blob.delay, ease: "easeInOut" },
+          }}
+          className="absolute rounded-full blur-[120px]"
+          style={{
+            left: blob.x,
+            top: blob.y,
+            width: blob.w,
+            height: blob.h,
+            backgroundColor: blob.color,
+            opacity: opacity,
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      ))}
+      {/* Mesh gradient overlay for depth */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at 30% 30%, ${colors[0]}08 0%, transparent 60%),
+                       radial-gradient(circle at 70% 60%, ${colors[1]}06 0%, transparent 60%),
+                       radial-gradient(circle at 50% 80%, ${colors[2]}04 0%, transparent 50%)`,
+        }}
+      />
     </div>
   );
 }

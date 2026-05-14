@@ -55,8 +55,8 @@ export default function Login() {
    */
   const gradientColors =
     theme === "dark"
-      ? "linear-gradient(180deg, #0F0A1E, #2E1065, #0F0A1E)"
-      : "linear-gradient(180deg, #FAF5FF, #F3E8FF, #FAF5FF)";
+      ? "linear-gradient(135deg, #0F0A1E 0%, #2E1065 30%, #1E1B4B 50%, #0F172A 70%, #020617 100%)"
+      : "linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 30%, #EEF2FF 50%, #F8FAFC 70%, #FFFFFF 100%)";
 
   /**
    * signInWithEmail:  Autentica al usuario con Supabase Auth.
