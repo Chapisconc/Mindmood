@@ -39,7 +39,7 @@ export default function Login() {
       const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (signInError) { setError(signInError.message); return; }
       if (!user) { setError("Usuario no encontrado"); return; }
-      supabase.rpc("update_own_profile", { theme }).then(() => {}, () => {});
+      supabase.from("profiles").update({ theme }).eq("id", user.id).then().catch(() => {});
       const { data: isAdmin } = await supabase.rpc("is_admin");
       if (isAdmin) navigate("/admin-dashboard");
       else navigate("/home");
