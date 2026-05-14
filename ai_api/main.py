@@ -37,19 +37,24 @@ def read_root():
 # ============================================================================
 # 🌐 CORS RESTRINGIDO (solo orígenes conocidos)
 # ============================================================================
-ALLOWED_ORIGINS = os.environ.get("CORS_ORIGINS", "").split(",") if os.environ.get("CORS_ORIGINS") else [
-    "http://127.0.0.1:8000",
-    "http://localhost:5173",
-    "http://localhost:4173",
-    "https://mindmood.vercel.app",
-    "https://mindmood-web.vercel.app",
-]
+ALLOWED_ORIGINS = (
+    [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
+    if os.environ.get("CORS_ORIGINS")
+    else [
+        "http://127.0.0.1:8000",
+        "http://localhost:5173",
+        "http://localhost:4173",
+        "https://mindmood.vercel.app",
+        "https://mindmood-web.vercel.app",
+    ]
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=False,
     allow_methods=["POST", "GET", "OPTIONS"],
-    allow_headers=["Content-Type", "ngrok-skip-browser-warning"],
+    allow_headers=["*"],
 )
 
 # ============================================================================
