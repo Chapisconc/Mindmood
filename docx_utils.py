@@ -45,8 +45,58 @@ from docx.oxml.ns import qn  # Calificador de espacio de nombres XML
 from docx.enum.style import WD_STYLE_TYPE  # Tipos de estilo (parrafo, caracter, etc.)
 
 # === IMPORTS: Estandar de Python ===
-import io  # Entrada/salida en memoria (para buffers de imagenes)
-import os  # Rutas de archivos del sistema operativo
+import io
+import os
+import base64
+import zlib
+import urllib.request
+
+# ========================================================
+# MERMAID.JS — Diagrams as Code (estandar de la industria)
+# Renderiza via mermaid.ink API → PNG insertado en Word
+# ========================================================
+
+def _mermaid_encode(code):
+    """Codifica codigo Mermaid para la API mermaid.ink (base64url + deflate)."""
+    compressed = zlib.compress(code.encode('utf-8'), 9)
+    encoded = base64.urlsafe_b64encode(compressed).decode('ascii').rstrip('=')
+    return encoded
+
+def _mermaid_to_png(code):
+    """Convierte codigo Mermaid a PNG via mermaid.ink API."""
+    encoded = _mermaid_encode(code)
+    url = f'https://mermaid.ink/img/{encoded}'
+    try:
+        with urllib.request.urlopen(url, timeout=15) as resp:
+            return io.BytesIO(resp.read())
+    except Exception:
+        return None
+
+def insertar_diagrama_mermaid(doc, code, titulo="", ancho_cm=16):
+    """
+    Inserta un diagrama Mermaid en el documento Word via mermaid.ink.
+
+    Parametros:
+        doc: documento Word
+        code: string con codigo Mermaid (graph TD, erDiagram, sequenceDiagram, etc.)
+        titulo: texto descriptivo opcional debajo del diagrama
+        ancho_cm: ancho de la imagen en cm
+    """
+    buf = _mermaid_to_png(code)
+    if buf:
+        doc.add_picture(buf, width=Cm(ancho_cm))
+        buf.close()
+        if titulo:
+            p = doc.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            r = p.add_run(titulo)
+            r.font.size = Pt(9)
+            r.font.color.rgb = RGBColor(100, 116, 139)
+            r.italic = True
+            p.paragraph_format.space_before = Pt(4)
+    else:
+        doc.add_paragraph(f'[Diagrama Mermaid no disponible: {titulo or code[:50]}...]')
+
 
 # === IMPORTS CONDICIONALES: Matplotlib para graficos y diagramas cientificos ===
 try:

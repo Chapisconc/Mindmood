@@ -664,13 +664,27 @@ def create_code_review():
     # Diagrama del proceso de pruebas
     doc.add_paragraph()
     p = doc.add_paragraph()
+    p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r = p.add_run('Diagrama del proceso de pruebas')
     r.bold = True
     r.font.color.rgb = C_INDIGO
     try:
-        diagrama_flujo_pruebas(doc, 'Proceso de ejecucion de las '
-                               + str(TOTAL_TESTS) + ' pruebas')
+        insertar_diagrama_mermaid(doc, '''flowchart LR
+    A["pytest.ini\nConfiguracion"] --> B["test_mindmood.py\n15 casos de prueba"]
+    B --> C["TestClient\nSimula HTTP"]
+    C --> D["main.py\nPipeline IA"]
+    D --> E["Response JSON\nResultados"]
+    E --> F["run_all_tests.py\nGenera reporte"]
+    F --> G["test_evidence_report.json\nEvidencia"]
+    style A fill:#6366F1,color:#fff
+    style B fill:#EC4899,color:#fff
+    style C fill:#10B981,color:#fff
+    style D fill:#F59E0B,color:#333
+    style E fill:#EF4444,color:#fff
+    style F fill:#8B5CF6,color:#fff
+    style G fill:#06B6D4,color:#fff''',
+        'Diagrama del proceso de ejecucion de pruebas — Mermaid.js')
     except Exception:
         doc.add_paragraph('[Diagrama de flujo no disponible]')
 
@@ -1192,50 +1206,51 @@ def create_tesis():
     doc.add_heading('6. Tabla de requerimientos', level=1)
     doc.add_paragraph(
         'La siguiente tabla presenta los requerimientos funcionales (RF) y no '
-        'funcionales (RNF) del sistema, mapeados a los casos de prueba '
-        'correspondientes para su verificacion.')
-    req_headers = ['Id', 'Tipo', 'Funcionalidad', 'Requerimiento', 'Prioridad',
-                   'Comentarios', 'Id_Test_Case_Satisfied']
+        'funcionales (RNF) del sistema. Cada requerimiento describe exactamente '
+        'QUE funcionalidad se evalua y COMO se verifica mediante el caso de '
+        'prueba correspondiente (Id_Test_Case_Satisfied).')
+    req_headers = ['Id', 'Tipo', 'Funcionalidad Evaluada', 'Descripcion Exacta del Requerimiento', 'Prioridad',
+                   'Metodo de Verificacion', 'Id_Test_Case_Satisfied']
     req_rows = [
-        ['RF-001', 'Funcional', 'Emoji Removal',
-         'El sistema debe eliminar emojis del texto antes del analisis',
-         'Alta', 'Evita que emojis alteren el score de sentimiento', 'PM001'],
-        ['RF-002', 'Funcional', 'Normalizacion de jerga',
-         'El sistema debe normalizar jerga mexicana a espanol estandar',
-         'Alta', 'Soporta 70+ expresiones mexicanas', 'PM002, PI003'],
-        ['RF-003', 'Funcional', 'Deteccion de crisis',
-         'El sistema debe detectar indicadores de crisis en 3 capas',
-         'Critica', 'Keywords + fuzzy SequenceMatcher >80% + regex', 'PM003, PI004'],
-        ['RF-004', 'Funcional', 'Intensificadores',
-         'El sistema debe aplicar multiplicadores por palabras intensificadoras',
-         'Media', 'Tope maximo de 1.5x para evitar sobrecorreccion', 'PM004'],
-        ['RF-005', 'Funcional', 'Deteccion de negacion',
-         'El sistema debe invertir polaridad ante palabras de negacion',
-         'Media', 'Detecta "no", "nunca", "jamas", etc.', 'PM005'],
-        ['RF-006', 'Funcional', 'Pipeline completo',
-         'El sistema debe ejecutar pipeline de 10 etapas en POST /analyze',
-         'Alta', 'Endpoint unico de analisis de texto', 'PI001, PI002'],
-        ['RF-007', 'Funcional', 'Crisis integrada',
-         'El sistema debe integrar deteccion de crisis en el pipeline',
-         'Critica', 'Retorna requires_help y crisis_level', 'PI004'],
-        ['RF-008', 'Funcional', 'Health check',
-         'El sistema debe exponer GET /health con estado del servidor',
-         'Baja', 'Endpoint de monitoreo y verificacion', 'PS001'],
-        ['RNF-001', 'No Funcional', 'Longitud minima',
-         'El sistema debe validar longitud minima de 3 caracteres',
-         'Media', 'Rechazar textos menores a 3 caracteres (HTTP 422)', 'PS002'],
-        ['RNF-002', 'No Funcional', 'Longitud maxima',
-         'El sistema debe rechazar textos mayores a 2000 caracteres',
-         'Media', 'Proteger contra entradas excesivamente grandes', 'PS003'],
-        ['RNF-003', 'No Funcional', 'Esquema de respuesta',
-         'La respuesta JSON debe contener 6 campos obligatorios',
-         'Alta', 'mood, all_moods, score, confidence, requires_help, crisis_level', 'PS004'],
-        ['RNF-004', 'No Funcional', 'Rendimiento',
-         'El sistema debe responder en menos de 5 segundos',
-         'Alta', 'SLA de rendimiento para experiencia de usuario', 'PS005'],
-        ['RNF-005', 'No Funcional', 'Orden del pipeline',
-         'Los emojis no deben afectar el score del analisis',
-         'Media', 'Bug conocido: reordenar refuerzo emocional', 'PI005 (XFAIL)'],
+        ['RF-001', 'Funcional', 'Eliminacion de emojis del texto de entrada',
+         'Se verifica que emoji.replace_emoji() elimine correctamente todos los caracteres emoji del texto antes de pasarlo al pipeline de analisis.',
+         'Alta', 'Prueba unitaria: se ingresa texto con emojis y se verifica que los emojis ya no esten presentes en el resultado.', 'PM001'],
+        ['RF-002', 'Funcional', 'Normalizacion de jerga mexicana a espanol estandar',
+         'Se verifica que el dataset mexican_slang_dataset.json se cargue correctamente (70+ entradas) y que palabras como "chido" se mapeen a "excelente". El pipeline integra esta normalizacion antes del analisis.',
+         'Alta', 'PM002: carga y validacion del dataset. PI003: integracion del slang en el pipeline completo.', 'PM002, PI003'],
+        ['RF-003', 'Funcional', 'Deteccion de indicadores de crisis en 3 niveles',
+         'Se verifica que la funcion has_crisis_indicators() detecte frases de crisis ("me quiero morir" -> True) y no genere falsos positivos ("hoy fue un buen dia" -> False). Los 3 niveles son: keywords directas, fuzzy matching >80% y patrones regex.',
+         'Critica', 'PM003: deteccion unitaria sin falsos positivos. PI004: integracion con requires_help=True y crisis_level="critical".', 'PM003, PI004'],
+        ['RF-004', 'Funcional', 'Aplicacion de multiplicadores por intensificadores del lenguaje',
+         'Se verifica que get_intensifier_multiplier() calcule correctamente: "muy feliz" devuelve >1.0, "algo normal" devuelve =1.0, y "muy extremadamente super" no excede el tope de 1.5x.',
+         'Media', 'Prueba unitaria con 3 casos: palabra intensificadora, palabra neutra y acumulacion con tope maximo.', 'PM004'],
+        ['RF-005', 'Funcional', 'Deteccion de palabras de negacion para inversion de polaridad',
+         'Se verifica que detect_negation() identifique correctamente negaciones: "no estoy bien" devuelve True, "estoy bien" devuelve False.',
+         'Media', 'Prueba unitaria comparando texto con y sin palabra de negacion.', 'PM005'],
+        ['RF-006', 'Funcional', 'Ejecucion del pipeline completo de 10 etapas via POST /analyze',
+         'Se verifica que el endpoint POST /analyze ejecute correctamente todo el pipeline: recibe texto, lo procesa en 10 etapas y devuelve JSON con mood, score, confidence, requires_help y crisis_level.',
+         'Alta', 'PI001: verifica score>0 para texto positivo. PI002: verifica score<0 para texto negativo. Ambas validan HTTP 200.', 'PI001, PI002'],
+        ['RF-007', 'Funcional', 'Integracion de deteccion de crisis en el pipeline completo',
+         'Se verifica que el pipeline active requiere_help=True y crisis_level="critical" cuando el texto contiene indicadores de crisis ("Ya no quiero vivir, quiero desaparecer").',
+         'Critica', 'PI004: envio de texto con ideacion suicida, verificacion de respuesta con banderas de crisis activadas.', 'PI004'],
+        ['RF-008', 'Funcional', 'Exposicion del endpoint de monitoreo GET /health',
+         'Se verifica que GET /health responda HTTP 200 con status="healthy", version y lista de features del sistema.',
+         'Baja', 'PS001: llamada al endpoint health y verificacion del campo status en la respuesta JSON.', 'PS001'],
+        ['RNF-001', 'No Funcional', 'Validacion de longitud minima de 3 caracteres en la entrada de texto',
+         'Se verifica que el endpoint /analyze rechace con HTTP 422 textos con menos de 3 caracteres, cumpliendo la validacion Pydantic min_length=3.',
+         'Media', 'PS002: envio de texto de 2 caracteres ("ab"), verificacion de codigo HTTP 422.', 'PS002'],
+        ['RNF-002', 'No Funcional', 'Validacion de longitud maxima de 2000 caracteres en la entrada de texto',
+         'Se verifica que el endpoint /analyze rechace con HTTP 422 textos con mas de 2000 caracteres, protegiendo el servidor contra entradas excesivas.',
+         'Media', 'PS003: envio de texto de ~3000 caracteres, verificacion de codigo HTTP 422.', 'PS003'],
+        ['RNF-003', 'No Funcional', 'Cumplimiento del esquema de respuesta JSON con 6 campos obligatorios',
+         'Se verifica que la respuesta del endpoint /analyze contenga TODOS los campos del contrato API: mood, all_moods, score, confidence, requires_help y crisis_level.',
+         'Alta', 'PS004: analisis de respuesta JSON verificando presencia de los 6 campos requeridos.', 'PS004'],
+        ['RNF-004', 'No Funcional', 'Tiempo de respuesta menor a 5 segundos (SLA de rendimiento)',
+         'Se verifica que el endpoint /analyze responda en menos de 5 segundos para una entrada tipica. Incluye limpieza de rate_store para evitar falsos negativos por acumulacion de pruebas previas.',
+         'Alta', 'PS005: medicion de tiempo de respuesta con time.time(), limpieza previa de _rate_store.', 'PS005'],
+        ['RNF-005', 'No Funcional', 'Independencia del score respecto a emojis en el texto de entrada',
+         'Se verifica que los emojis NO alteren el score del analisis. "Estoy bien" y "Estoy bien 😊😊" deben producir el mismo score. Bug conocido (xfail): analyze_emotional_reinforcement() se ejecuta con texto que aun contiene emojis.',
+         'Media', 'PI005: comparacion de scores de mismo texto con y sin emojis. Marcada como XFAIL por bug documentado.', 'PI005 (XFAIL)'],
     ]
     add_tabla_requerimientos(doc, req_headers, req_rows)
 
@@ -1300,27 +1315,36 @@ def create_tesis():
     # ==========================================================================
     # 9. DIAGRAMA DE SECUENCIA
     # ==========================================================================
-    doc.add_heading('9. Diagrama de Secuencia', level=1)
-    doc.add_paragraph(
-        'El diagrama de secuencia ilustra el flujo completo de una solicitud '
-        'de analisis de entrada, desde que el usuario escribe su texto hasta '
-        'que recibe el resultado emocional. El pipeline de 10 etapas se ejecuta '
-        'en el backend de forma secuencial.')
+    doc.add_heading('9. Diagrama de Secuencia (Mermaid)', level=1)
+    doc.add_paragraph('Flujo completo de analisis de una entrada del diario:')
     try:
-        diagrama_secuencia_matplotlib(doc, [
-            'Usuario -> Frontend: Escribe texto',
-            'Frontend -> Backend: POST /analyze',
-            'Backend -> Modelo: robertuito-sentiment',
-            'Backend -> Modelo: robertuito-emotion',
-            'Backend -> Crisis: 3-capas detect',
-            'Backend -> Keywords: 10 categorias',
-            'Backend -> Summary: texto empatico',
-            'Backend -> Frontend: JSON response',
-            'Frontend -> Supabase: save entry',
-            'Frontend -> Usuario: show modal',
-        ], titulo='Diagrama de secuencia - Flujo de analisis de entrada')
+        insertar_diagrama_mermaid(doc, '''sequenceDiagram
+    actor U as Usuario
+    participant F as React Frontend
+    participant B as FastAPI Backend
+    participant M as Modelos IA
+    participant S as Supabase DB
+    U->>F: Escribe entrada de diario
+    F->>B: POST /analyze (texto)
+    B->>B: 1. Limpieza de emojis
+    B->>B: 2. Normalizacion de jerga
+    B->>M: 3. Sentiment Analysis
+    M-->>B: POS/NEG/NEU + score
+    B->>B: 4. Refuerzo emocional
+    B->>B: 5. Deteccion de crisis
+    B->>M: 6. Emotion Analysis
+    M-->>B: 7 categorias de emocion
+    B->>B: 7. Keyword reinforcement
+    B->>B: 8. Calculo de confianza
+    B->>B: 9. Generacion de resumen
+    B-->>F: JSON (mood, score, summary)
+    F->>S: Guardar entrada
+    F-->>U: Mostrar resultado''',
+        'Diagrama de Secuencia — Flujo de analisis de entrada (Mermaid.js)')
     except Exception:
         doc.add_paragraph('[Diagrama de secuencia no disponible]')
+
+nible]')
 
     # ==========================================================================
     # 10. DIAGRAMA DE CLASES DE LA ARQUITECTURA
@@ -1337,24 +1361,73 @@ def create_tesis():
     except Exception:
         doc.add_paragraph('[Diagrama de clases no disponible]')
 
-    doc.add_heading('10.1 Diagrama Entidad-Relacion (ER)', level=2)
-    doc.add_paragraph(
-        'El diagrama Entidad-Relacion muestra la estructura de la base de datos, '
-        'incluyendo las claves primarias (PK), foraneas (FK) y las relaciones '
-        'entre las tablas.')
+    doc.add_heading('10.1 Diagrama Entidad-Relacion (Mermaid)', level=2)
+    doc.add_paragraph('Diagrama ER profesional con tipos de datos y cardinalidad real:')
     try:
-        diagrama_er_database(doc)
+        insertar_diagrama_mermaid(doc, '''erDiagram
+    PROFILES ||--o{ ENTRIES : "crea"
+    PROFILES ||--o{ CONTACT_REQUESTS : "solicita"
+    ENTRIES ||--o{ CONTACT_REQUESTS : "genera"
+    PROFILES {
+        uuid id PK
+        text email
+        text nombre
+        text avatar
+        text tema
+        text idioma
+        timestamptz created_at
+    }
+    ENTRIES {
+        uuid id PK
+        uuid user_id FK
+        text texto
+        text mood
+        float score
+        boolean requires_help
+        timestamptz created_at
+    }
+    CONTACT_REQUESTS {
+        uuid id PK
+        uuid user_id FK
+        uuid admin_id FK
+        uuid entry_id FK
+        text status
+        text mensaje
+        timestamptz created_at
+    }''',
+        'Diagrama ER con cardinalidad ||--o{ (1:N) y tipos SQL — Mermaid.js')
     except Exception:
         doc.add_paragraph('[Diagrama ER no disponible]')
 
-    doc.add_heading('10.2 Diagrama de Despliegue', level=2)
-    doc.add_paragraph(
-        'El diagrama de despliegue muestra como se distribuye el sistema '
-        'en las diferentes capas de infraestructura.')
+    doc.add_heading('10.2 Diagrama de Arquitectura (Mermaid)', level=2)
+    doc.add_paragraph('Diagrama profesional generado con Mermaid.js — estandar de Diagrams as Code:')
     try:
-        diagrama_despliegue_sistema(doc)
+        insertar_diagrama_mermaid(doc, '''graph TD
+    subgraph PL["Capa de Presentacion"]
+        A["React 19 SPA + Vite 6"]
+        B["TailwindCSS v4 + shadcn/ui"]
+        C["PWA Service Worker"]
+    end
+    subgraph BL["Capa de Negocio"]
+        D["FastAPI + Uvicorn"]
+        E["Pipeline IA 10 etapas"]
+        F["2 Modelos HuggingFace"]
+        G["Rate Limiter"]
+    end
+    subgraph DL["Capa de Datos"]
+        H[("PostgreSQL DB")]
+        I["Row Level Security"]
+        J["Auth JWT + PKCE"]
+        K["12 funciones RPC"]
+    end
+    A <-->|"HTTP/JSON"| D
+    D <-->|"SQL/RPC"| H
+    J -.->|"Valida"| A
+    I -.->|"Protege"| H
+    C -.->|"Cache offline"| A''',
+        'Diagrama de Arquitectura 3 Capas — Mermaid.js (Diagrams as Code)')
     except Exception:
-        doc.add_paragraph('[Diagrama de despliegue no disponible]')
+        doc.add_paragraph('[Diagrama de arquitectura no disponible]')
 
     # ==========================================================================
     # 11. DIAGRAMA DE MAQUINAS DE ESTADO
