@@ -1333,23 +1333,7 @@ def create_tesis():
         'expone sus atributos y metodos principales, con relaciones de '
         'dependencia entre ellas.')
     try:
-        diagrama_clases_uml(doc, [
-            {'nombre': 'React Frontend',
-             'atributos': ['Pages: 9 (Home, NewEntry, History, Stats, Profile, Inbox, Admin, Login, Register)',
-                           'Components: 15+ (shadcn/ui, EmotionModal, Layout, etc.)',
-                           'Hooks: 3 (useAuth, useJournalEntry, useStats)'],
-             'metodos': ['render()', 'handleSave()', 'fetchData()', 'analyzeMood()']},
-            {'nombre': 'FastAPI Backend',
-             'atributos': ['Endpoints: 3 (/, /analyze, /health)',
-                           'Pipeline: 10 etapas secuenciales',
-                           'Modelos: 2 (robertuito-sentiment, robertuito-emotion)'],
-             'metodos': ['analyze()', 'health()', 'validate()', 'detectCrisis()']},
-            {'nombre': 'Supabase DB',
-             'atributos': ['Tables: 3 (profiles, entries, contact_requests)',
-                           'RPCs: 12 funciones SECURITY DEFINER',
-                           'RLS: Row Level Security habilitado'],
-             'metodos': ['queries()', 'rpc()', 'triggers()', 'policies()']},
-        ], titulo='Diagrama de clases - Arquitectura de tres capas')
+        diagrama_clases_uml(doc, [], titulo='Diagrama de Clases UML - MindMood')
     except Exception:
         doc.add_paragraph('[Diagrama de clases no disponible]')
 

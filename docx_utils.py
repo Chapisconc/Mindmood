@@ -333,37 +333,111 @@ def diagrama_pastel_matplotlib(datos, titulo=""):
     return fig
 
 def diagrama_clases_uml(doc, clases, titulo="Diagrama de Clases"):
-    """Arquitectura 3 capas profesional con sub-componentes y capas etiquetadas."""
+    """Diagrama de Clases UML profesional con notacion estandar (- privado, + publico, # protegido).
+    Cada bloque representa una clase real con atributos y metodos propios.
+    Flechas de asociacion (->) e interfaces entre capas."""
     import matplotlib.patches as mpatches
+    import numpy as np
     if not _HAS_MPL: return
-    n=len(clases);fig,ax=plt.subplots(figsize=(18,7))
-    ax.set_xlim(0,18);ax.set_ylim(0,7.5);ax.axis('off')
-    ax.set_title(titulo,fontsize=14,fontweight='bold',pad=15,color=PALETTA['primario'])
-    # Layer backgrounds
-    for i,(xl,xr,label,clr) in enumerate([(0.2,17.8,'Presentation Layer',PALETTA['primario']),(0.2,17.8,'Application Layer',PALETTA['info']),(0.2,17.8,'Data Layer',PALETTA['exito'])]):
-        yy=5.8-i*2.2
-        ax.axhspan(yy-1.0,yy+1.0,xmin=xl/18,xmax=xr/18,facecolor=clr+'08',zorder=0,alpha=0.7)
-        ax.text(0.5,yy,label,fontsize=7.5,fontweight='bold',color=clr,rotation=90,va='center')
-    # Draw classes with proper UML format
-    for i,cls in enumerate(clases):
-        x=i*5.8+0.8;y=5.8-i//1*2.2;w=5.2
-        header=cls['nombre']
-        attrs=chr(10).join([f'- {a}' for a in cls.get('atributos',[])])
-        methods=chr(10).join([f'+ {m}()' for m in cls.get('metodos',[])])
-        text=f"{header}{chr(10)}{chr(9472)*26}{chr(10)}{attrs}{chr(10)}{chr(9472)*26}{chr(10)}{methods}"
-        box=mpatches.FancyBboxPatch((x,y),w,1.8,boxstyle="round,pad=0.15",edgecolor=PALETTA['primario'],facecolor='#EEF2FF',linewidth=1.8)
-        ax.add_patch(box)
-        ax.text(x+w/2,y+0.9,text,ha='center',va='center',fontsize=7.5,fontfamily='monospace',linespacing=1.4,color=PALETTA['texto_oscuro'])
-        if i<2:
-            ax.annotate('',xy=(x+w+0.3,y+0.9),xytext=(x+w-0.1,y+0.9),arrowprops=dict(arrowstyle='->',color=PALETTA['secundario'],lw=2.0))
-            ax.annotate('',xy=(x+w+0.8,y+0.4),xytext=(x+w+0.1,y+0.4),arrowprops=dict(arrowstyle='->',color=PALETTA['info'],lw=2.0))
-    # Protocol annotations
-    ax.text(9,6.8,'REST API (JSON)',ha='center',fontsize=7.5,fontweight='bold',color=PALETTA['secundario'])
-    ax.text(9,4.6,'Supabase SDK / SQL',ha='center',fontsize=7.5,fontweight='bold',color=PALETTA['info'])
-    plt.tight_layout()
-    buf=_fig_to_png(fig);doc.add_picture(buf,width=Cm(16));plt.close(fig);buf.close()
-    doc.add_paragraph('Figura: Arquitectura de 3 capas con separacion clara de responsabilidades. Presentation Layer maneja la UI React, Application Layer contiene la logica de negocio en FastAPI, y Data Layer gestiona la persistencia en Supabase. La comunicacion entre capas se realiza via REST API y Supabase SDK.')
 
+    # Define proper UML classes per layer
+    capas = [
+        ("PRESENTACION", [
+            ("App", ["- router: BrowserRouter", "- themeCtx: ThemeContext"], ["+ render()", "+ mountRoutes()"]),
+            ("EntryForm", ["- text: string", "- loading: bool", "- mood: string"], ["+ handleSubmit()", "+ analyzeMood()", "+ saveDraft()"]),
+            ("Dashboard", ["- entries: Entry[]", "- streak: int", "- notifs: int"], ["+ fetchEntries()", "+ showStreakModal()"]),
+            ("EmotionModal", ["- visible: bool", "- primaryMood: string", "- summary: string"], ["+ show()", "+ hide()", "+ renderRing()"]),
+        ], PALETTA['primario']),
+        ("APLICACION", [
+            ("AIEngine", ["- sentimentModel: Pipeline", "- emotionModel: Pipeline"], ["+ analyze(text): AnalysisResult", "+ healthCheck(): dict"]),
+            ("CrisisDetector", ["- keywords: List[str]", "- patterns: List[Regex]", "- spell: SpellChecker"], ["+ detect(text): bool", "+ fuzzyMatch(w): bool"]),
+            ("SlangNormalizer", ["- slangDict: Dict[str,str]", "- compiled: List[Pattern]"], ["+ normalize(text): str", "+ loadDataset(): dict"]),
+            ("RateLimiter", ["- store: DefaultDict", "- window: int", "- maxReq: int"], ["+ allowRequest(ip): bool", "+ clean(): void"]),
+        ], PALETTA['info']),
+        ("DATOS", [
+            ("EntryRepository", ["- client: SupabaseClient", "- table: str"], ["+ insert(data): Entry", "+ findByUser(uid): Entry[]", "+ countByUser(uid): int"]),
+            ("UserRepository", ["- client: SupabaseClient"], ["+ getProfile(uid): Profile", "+ updateProfile(d): void"]),
+            ("ContactRepository", ["- client: SupabaseClient"], ["+ create(req): ContactReq", "+ findByUser(uid): Req[]", "+ accept(rid): void"]),
+        ], PALETTA['exito']),
+    ]
+
+    fig, ax = plt.subplots(figsize=(20, 10))
+    ax.set_xlim(0, 20); ax.set_ylim(0, 11)
+    ax.axis('off')
+    ax.set_title(titulo, fontsize=15, fontweight='bold', pad=15, color=PALETTA['primario'])
+
+    # Layer backgrounds
+    layer_ys = {0: (7.2, 10.2), 1: (3.8, 6.8), 2: (0.5, 3.5)}
+    layer_names = ["Presentation Layer (React 19)", "Application Layer (FastAPI)", "Data Layer (Supabase)"]
+    for li, (y0, y1) in layer_ys.items():
+        ax.axhspan(y0, y1, xmin=0.01, xmax=0.99, facecolor=capas[li][2]+'06', zorder=0, alpha=0.7)
+        ax.text(0.3, (y0+y1)/2, layer_names[li], fontsize=7.5, fontweight='bold', color=capas[li][2],
+                rotation=90, va='center', ha='center')
+
+    # Draw each class box
+    class_positions = []
+    for li, (layer_name, cls_list, layer_color) in enumerate(capas):
+        y0, y1 = layer_ys[li]
+        n = len(cls_list)
+        box_w = 4.2
+        gap = 0.3
+        total_w = n * box_w + (n - 1) * gap
+        start_x = (20 - total_w) / 2
+
+        for ci, (cname, attrs, methods) in enumerate(cls_list):
+            x = start_x + ci * (box_w + gap)
+            max_lines = max(len(attrs), len(methods), 1)
+            box_h = 0.45 + max_lines * 0.31 + 0.55
+            y = (y0 + y1) / 2 - box_h / 2
+            class_positions.append((x, y, box_w, box_h, cname))
+
+            # Box
+            rect = mpatches.FancyBboxPatch((x, y), box_w, box_h,
+                   boxstyle="round,pad=0.08", edgecolor=layer_color, facecolor='#FFFFFF',
+                   linewidth=1.6, zorder=2)
+            ax.add_patch(rect)
+
+            # Header: class name
+            ax.text(x + box_w/2, y + box_h - 0.18, cname, ha='center', va='center',
+                    fontsize=8, fontweight='bold', color=layer_color, fontfamily='monospace', zorder=3)
+            ax.axhline(y=y + box_h - 0.35, xmin=(x+0.1)/20, xmax=(x+box_w-0.1)/20, color=layer_color, linewidth=1, zorder=2)
+
+            # Attributes
+            attr_y = y + box_h - 0.45
+            for a in attrs:
+                ax.text(x + 0.35, attr_y, a, ha='left', va='center',
+                        fontsize=6.2, fontfamily='monospace', color=PALETTA['texto_oscuro'], zorder=3)
+                attr_y -= 0.31
+
+            # Methods (with separator line)
+            method_start = y + box_h - 0.45 - len(attrs) * 0.31 - 0.05
+            ax.axhline(y=method_start, xmin=(x+0.1)/20, xmax=(x+box_w-0.1)/20, color=layer_color+'60', linewidth=0.8, zorder=2)
+            method_y = method_start - 0.22
+            for m in methods:
+                ax.text(x + 0.35, method_y, m, ha='left', va='center',
+                        fontsize=6.2, fontfamily='monospace', color=PALETTA['texto_claro'], zorder=3)
+                method_y -= 0.31
+
+    # Protocol arrows between layers
+    mid = (layer_ys[0][1] + layer_ys[1][0]) / 2
+    ax.annotate('', xy=(2, layer_ys[1][1] + 0.1), xytext=(2, layer_ys[0][0] - 0.1),
+               arrowprops=dict(arrowstyle='<->', color=PALETTA['primario'], lw=1.5))
+    ax.text(2.5, mid, 'REST\nAPI', ha='center', fontsize=7, fontweight='bold', color=PALETTA['primario'])
+
+    mid2 = (layer_ys[1][1] + layer_ys[2][0]) / 2
+    ax.annotate('', xy=(2, layer_ys[2][1] + 0.1), xytext=(2, layer_ys[1][0] - 0.1),
+               arrowprops=dict(arrowstyle='<->', color=PALETTA['exito'], lw=1.5))
+    ax.text(2.5, mid2, 'SDK', ha='center', fontsize=7, fontweight='bold', color=PALETTA['exito'])
+
+    plt.tight_layout()
+    buf = _fig_to_png(fig)
+    doc.add_picture(buf, width=Cm(17))
+    plt.close(fig); buf.close()
+    doc.add_paragraph(
+        'Figura: Diagrama de Clases UML con notacion estandar. La capa de Presentacion (React) contiene 4 clases '
+        'que manejan la UI. La capa de Aplicacion (FastAPI) contiene el motor de IA y detectores. La capa de Datos '
+        '(Supabase) implementa el patron Repository para abstraer la persistencia. Las flechas de protocolo indican '
+        'las interfaces entre capas (REST API y Supabase SDK).')
 
 def diagrama_secuencia_matplotlib(doc, pasos, titulo="Diagrama de Secuencia"):
     """
