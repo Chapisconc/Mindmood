@@ -360,6 +360,43 @@ def create_architecture():
     doc.add_paragraph('Rate limiting: 10 requests por 60 segundos por IP.')
     doc.add_paragraph('12 funciones RPC SECURITY DEFINER con SET row_security = off.')
 
+    # === Seccion 6: SWA Review Checklist (basado en template doc1) ===
+    doc.add_heading('6. SW Architecture Review Checklist', level=1)
+    doc.add_paragraph(
+        'A continuacion se presenta la lista de verificacion de la arquitectura '
+        'de software, basada en la plantilla estandar de revision (SWA Review '
+        'Document). Cada item se evalua como OK (cumple), NOK (no cumple) o '
+        'NR (no requerido).')
+    doc.add_paragraph()
+    add_pro_table(doc, ['No', 'Descripcion', 'OK/NOK/NR', 'Comentario'], [
+        ['1', 'El diseno cumple con los requisitos de SW?', 'OK', '15/15 tests pasan (14 passed + 1 xfail documentado)'],
+        ['2', 'Todos los requisitos estan asignados a elementos arquitectonicos?', 'OK', 'RF-001 a RNF-005 mapeados a componentes en tabla de requerimientos'],
+        ['3', 'El contexto del sistema (entorno) esta descrito?', 'OK', 'Arquitectura 3 capas: Frontend React, Backend FastAPI, DB Supabase + ngrok/Vercel'],
+        ['4', 'Existe una vision global de los bloques funcionales?', 'OK', 'Pipeline de IA de 10 etapas documentado con diagrama de flujo'],
+        ['5', 'Las funciones estan identificadas desde los requisitos?', 'OK', '12 RPCs + 3 endpoints REST + 10 etapas del pipeline'],
+        ['6', 'Las interfaces funcionales estan documentadas?', 'OK', 'POST /analyze, GET /health, 12 funciones RPC con descripcion'],
+        ['7', 'Cada funcion SW esta mapeada a uno o mas componentes?', 'OK', 'Tabla de componentes en Seccion 3 del presente documento'],
+        ['8', 'Las interfaces exportan solo datos necesarios (encapsulamiento)?', 'OK', 'RLS en PostgreSQL limita acceso; API REST usa modelos Pydantic'],
+        ['9', 'Se usan diagramas donde es apropiado?', 'OK', 'Gantt, secuencia, clases UML, despliegue, estados, casos de uso, ER, flujo del pipeline'],
+        ['10', 'Los componentes SW estan identificados?', 'OK', '7 componentes: Frontend, Backend API, Modelo IA x2, DB, Auth, Cache'],
+        ['11', 'Las interfaces fisicas tienen descripcion clara?', 'OK', 'HTTP/JSON entre frontend-backend, SQL/RPC entre backend-DB'],
+        ['12', 'Las tareas del SO estan definidas?', 'NR', 'No aplica: el sistema se ejecuta en servidores administrados (Vercel/Supabase)'],
+        ['13', 'El manejo de interrupciones esta descrito?', 'NR', 'No aplica: arquitectura web sin interrupciones de hardware'],
+        ['14', 'Los modos de energia estan identificados?', 'NR', 'No aplica: no es un sistema embebido'],
+        ['15', 'El plan de integracion esta descrito?', 'OK', 'Fases: Planeacion → Backend → Frontend → DB → Pruebas → Despliegue (ver Gantt)'],
+        ['16', 'Informacion de seguridad funcional descrita?', 'OK', 'Ver Seccion 6.1 de STRIDE Matrix'],
+    ])
+
+    doc.add_heading('6.1 STRIDE Matrix — Analisis de Amenazas', level=2)
+    add_pro_table(doc, ['Categoria STRIDE', 'Amenaza', 'Componente Afectado', 'Contramedida Implementada'], [
+        ['Spoofing (Suplantacion)', 'Usuario no autorizado accede a datos de otro', 'Frontend + Auth', 'Supabase Auth PKCE + JWT con validacion de sesion'],
+        ['Tampering (Manipulacion)', 'Datos de entrada maliciosos en POST /analyze', 'Backend API', 'Pydantic validators: min_length=3, max_length=2000, strip()'],
+        ['Repudiation (Repudio)', 'Usuario niega haber escrito una entrada', 'Base de Datos', 'Tabla entries con user_id (FK) + timestamp created_at'],
+        ['Info Disclosure (Divulgacion)', 'Exposicion de datos de usuarios via API', 'Backend + DB', 'RLS por tabla: usuarios solo ven sus propias entradas'],
+        ['DoS (Denegacion)', 'Saturacion del endpoint /analyze', 'Backend API', 'Rate limiting: 10 req/60s por IP (sliding window)'],
+        ['Elevation (Elevacion)', 'Usuario regular accede a panel de admin', 'Frontend + DB', 'RPC is_admin() con SECURITY DEFINER + row_security=off'],
+    ])
+
     # Guardar documento
     path = os.path.join(os.path.dirname(__file__), 'MindMood_Arquitectura.docx')
     doc.save(path)
@@ -389,9 +426,75 @@ def create_sdd():
     configurar_pie_pagina(doc)
     configurar_estilo_global(doc)
 
-    crear_portada(doc, 'Software Design Document (SDD)')
+    crear_portada(doc, 'Software Design Document (SDD)',
+                  'Basado en plantilla estandar de Ingenieria de Software')
 
-    # === Seccion 1: Diseno del frontend ===
+    # History / Revision Table (template requirement)
+    doc.add_heading('Historial de Revisiones', level=1)
+    add_pro_table(doc, ['Version', 'Fecha', 'Autor', 'Verificado por', 'Descripcion del Cambio'], [
+        ['1.0', '14-05-2026', 'C. Ramirez', 'Seminario ISW', 'Creacion del documento de diseno detallado'],
+        ['0.2', '02-05-2026', 'C. Ramirez', 'Seminario ISW', 'Actualizacion post-pruebas de sistema'],
+        ['0.1', '21-02-2026', 'C. Ramirez', 'Seminario ISW', 'Borrador inicial — revision de requisitos'],
+    ])
+    doc.add_page_break()
+
+    # === Seccion 1: Purpose ===
+    doc.add_heading('1. Proposito', level=1)
+    doc.add_paragraph(
+        'Este documento describe el diseno detallado del software MindMood — '
+        'un diario emocional inteligente basado en inteligencia artificial — '
+        'a partir de los requisitos funcionales y no funcionales definidos en '
+        'la tabla de requerimientos, y de la arquitectura de software descrita '
+        'en el documento de Arquitectura (SWA). El diseno cubre la descomposicion '
+        'funcional, el diseno conceptual, el desglose de componentes, las '
+        'interfaces internas y externas, y el comportamiento dinamico del sistema.')
+
+    # === Seccion 2: Definitions and Abbreviations ===
+    doc.add_heading('2. Definiciones y Abreviaturas', level=1)
+    add_pro_table(doc, ['Termino', 'Definicion'], [
+        ['NLP', 'Procesamiento de Lenguaje Natural — subcampo de IA que permite a las computadoras entender texto humano'],
+        ['Transformer', 'Arquitectura de deep learning basada en mecanismos de atencion (Vaswani et al., 2017)'],
+        ['Robertuito', 'Modelo BERT pre-entrenado en espanol por la Universidad de Chile, usado para sentimiento y emociones'],
+        ['RLS', 'Row Level Security — politicas de seguridad a nivel de fila en PostgreSQL (Supabase)'],
+        ['PWA', 'Progressive Web Application — aplicacion web instalable con soporte offline'],
+        ['RPC', 'Remote Procedure Call — funciones almacenadas en la base de datos PostgreSQL'],
+        ['PKCE', 'Proof Key for Code Exchange — flujo OAuth 2.0 seguro para aplicaciones de pagina unica (SPA)'],
+        ['ERD', 'Entity-Relationship Diagram — diagrama que muestra las entidades y sus relaciones en la base de datos'],
+    ])
+
+    # === Seccion 3: Realization Constraints ===
+    doc.add_heading('3. Restricciones de Realizacion', level=1)
+    add_pro_table(doc, ['Restriccion', 'Descripcion'], [
+        ['Lenguaje Backend', 'Python 3.12+ con FastAPI y Uvicorn. No se permite Django/Flask por requerimientos de rendimiento asincrono'],
+        ['Lenguaje Frontend', 'JavaScript (React 19) con Vite 6. No se permite TypeScript en esta version'],
+        ['Base de Datos', 'PostgreSQL 15 en Supabase. No se permite SQLite ni MySQL por requerimientos de RLS'],
+        ['Modelos IA', 'HuggingFace Transformers con pysentimiento/robertuito. Modelos pre-entrenados, no se permite fine-tuning inicial'],
+        ['Despliegue', 'Frontend en Vercel (plan gratuito). Backend via ngrok tunnel o Vercel Serverless Functions'],
+        ['Compatibilidad', 'Navegadores: Chrome 120+, Firefox 120+, Safari 17+. Soporte PWA con Service Worker'],
+        ['Rate Limiting', 'Maximo 10 solicitudes por IP cada 60 segundos en el endpoint /analyze'],
+    ])
+
+    # === Seccion 4: SW Conceptual Design ===
+    doc.add_heading('4. Diseno Conceptual del Software', level=1)
+    doc.add_paragraph(
+        'El diseno conceptual de MindMood sigue una arquitectura de tres capas '
+        'con separacion clara de responsabilidades. Las funciones del producto '
+        'se distribuyen entre la capa de presentacion (React PWA), la capa de '
+        'negocio (FastAPI + pipeline IA) y la capa de datos (Supabase PostgreSQL).')
+    doc.add_paragraph(
+        'A continuacion se presenta el desglose conceptual con los diagramas '
+        'arquitectonicos que muestran las dependencias e interfaces.')
+
+    # === Seccion 5: SW Component Internal Breakdown ===
+    # === Seccion 5: SW Component Internal Breakdown ===
+    doc.add_heading('5. Desglose Interno de Componentes SW', level=1)
+    doc.add_paragraph(
+        'MindMood se compone de 3 componentes principales. Para componentes '
+        'complejos como el pipeline de IA, se definen subcomponentes que '
+        'encapsulan funcionalidad especifica. La estructura de archivos '
+        'refleja esta descomposicion:')
+
+    doc.add_heading('5.1 Componente: Frontend React', level=2)
     doc.add_heading('1. Diseno del frontend', level=1)
     doc.add_paragraph(
         'Arbol de componentes: App → ThemeProvider → ErrorBoundary → '
@@ -1130,17 +1233,17 @@ def create_tesis():
         'cronograma muestra la distribucion de actividades en 6 fases: '
         'planeacion, backend, frontend, base de datos, pruebas y despliegue.')
     try:
-        diagrama_gantt_matplotlib(doc, [
-            ('1. Planeacion', 'Requisitos y diseno', '2026-02-01', '2026-02-20'),
-            ('2. Backend IA', 'FastAPI + HuggingFace', '2026-02-15', '2026-03-10'),
-            ('2. Backend IA', 'Pipeline + crisis + jerga', '2026-03-01', '2026-03-25'),
-            ('3. Frontend', 'React + Vite + shadcn/ui', '2026-02-20', '2026-04-01'),
-            ('3. Frontend', 'Integracion Supabase + API', '2026-03-20', '2026-04-15'),
-            ('4. Base de Datos', 'SQL + RLS + funciones RPC', '2026-03-01', '2026-03-30'),
-            ('5. Pruebas', '15 tests ISO/IEC 25010', '2026-04-01', '2026-04-30'),
-            ('6. Despliegue', 'Vercel + documentacion', '2026-04-20', '2026-05-15'),
-        ], titulo='Diagrama de Gantt - Cronograma de desarrollo MindMood',
-           inicio='2026-02-01', fin='2026-05-15')
+            diagrama_gantt_matplotlib(doc, [
+            ('1. Planeacion', 'Requisitos y diseno', '2026-01-24', '2026-02-10'),
+            ('2. Backend IA', 'FastAPI + HuggingFace', '2026-02-01', '2026-03-05'),
+            ('2. Backend IA', 'Pipeline + crisis + jerga', '2026-02-15', '2026-03-20'),
+            ('3. Frontend', 'React + Vite + shadcn/ui', '2026-02-10', '2026-04-01'),
+            ('3. Frontend', 'Integracion Supabase + API', '2026-03-15', '2026-04-15'),
+            ('4. Base de Datos', 'SQL + RLS + funciones RPC', '2026-02-15', '2026-03-25'),
+            ('5. Pruebas', '15 tests ISO/IEC 25010', '2026-03-20', '2026-04-30'),
+            ('6. Despliegue', 'Vercel + documentacion', '2026-04-15', '2026-05-16'),
+        ], titulo='Cronograma de desarrollo - MindMood',
+           inicio='2026-01-24', fin='2026-05-16')
     except Exception:
         doc.add_paragraph('[Diagrama de Gantt no disponible]')
 

@@ -50,13 +50,53 @@ import os  # Rutas de archivos del sistema operativo
 
 # === IMPORTS CONDICIONALES: Matplotlib para graficos y diagramas cientificos ===
 try:
-    import matplotlib  # Libreria principal de graficos
-    import matplotlib.pyplot as plt  # Submodulo pyplot para figuras
-    matplotlib.rcParams['font.family'] = 'sans-serif'  # Configurar fuente sans-serif por defecto
-    _HAS_MPL = True  # Bandera: matplotlib disponible
+    import matplotlib
+    import matplotlib.pyplot as plt
+    matplotlib.rcParams['font.family'] = 'sans-serif'
+    _HAS_MPL = True
 except ImportError:
-    _HAS_MPL = False  # Bandera: matplotlib no instalado
-    plt = None  # Referencia nula para evitar errores de NameError
+    _HAS_MPL = False
+    plt = None
+
+if _HAS_MPL:
+    plt.rcParams.update({
+        'font.size': 10,
+        'font.family': 'Calibri',
+        'axes.titlesize': 13,
+        'axes.titleweight': 'bold',
+        'axes.titlecolor': '#212529',
+        'axes.labelcolor': '#495057',
+        'axes.labelweight': '600',
+        'axes.facecolor': '#F8F9FA',
+        'axes.edgecolor': '#DEE2E6',
+        'axes.grid': True,
+        'grid.color': '#D1D5DB',
+        'grid.linestyle': '--',
+        'grid.alpha': 0.5,
+        'figure.facecolor': 'white',
+        'figure.dpi': 150,
+        'savefig.dpi': 200,
+        'savefig.bbox': 'tight',
+        'xtick.labelsize': 9,
+        'ytick.labelsize': 9,
+        'lines.linewidth': 2,
+        'patch.edgecolor': 'white',
+        'patch.linewidth': 0.5,
+    })
+
+PALETTA = {
+    "primario": "#4361EE",
+    "secundario": "#F72585",
+    "exito": "#06D6A0",
+    "advertencia": "#FFB703",
+    "peligro": "#EF476F",
+    "info": "#118AB2",
+    "neutro": "#6C757D",
+    "fondo_claro": "#F8F9FA",
+    "fondo_medio": "#E9ECEF",
+    "texto_oscuro": "#212529",
+    "texto_claro": "#495057",
+}
 
 # ============================================================================
 # 1. GRAFICOS NATIVOS DE WORD (si la version de python-docx lo soporta)
@@ -1070,63 +1110,59 @@ def diagrama_matriz_confusion(doc, titulo="Matriz de Confusion - Robertuito Emot
     doc.add_paragraph(f'Exactitud del modelo: {exactitud:.1f}% ({aciertos}/{total} predicciones correctas). '
                        'La diagonal principal muestra aciertos; los valores fuera de ella son confusiones del modelo.')
 
-def diagrama_gantt_matplotlib(doc, tareas, titulo="Diagrama de Gantt", inicio="2026-02-01", fin="2026-05-15"):
+def diagrama_gantt_matplotlib(doc, tareas, titulo="Diagrama de Gantt", inicio="2026-01-24", fin="2026-05-16"):
     """
-    Genera un diagrama de Gantt para visualizar el cronograma del proyecto.
+    Genera un diagrama de Gantt profesional con hitos (milestones).
 
-    Cada tarea tiene: fase, nombre, fecha inicio, fecha fin.
-    Las fases se colorean con una paleta predefinida.
-    Incluye lineas verticales punteadas para cada mes.
-
-    Parametros:
-        doc (Document): Objeto Documento destino.
-        tareas (list): Lista de tuplas (fase, actividad, fecha_inicio, fecha_fin)
-                       donde las fechas son strings en formato 'YYYY-MM-DD'.
-        titulo (str, opcional): Titulo del diagrama.
-        inicio (str, opcional): Fecha de inicio del eje X (defecto: '2026-02-01').
-        fin (str, opcional): Fecha de fin del eje X (defecto: '2026-05-15').
-
-    Efectos secundarios:
-        Requiere pandas y matplotlib.dates.
-        Dibuja barras horizontales con etiquetas de actividad.
-        Oculta las etiquetas del eje Y para un aspecto mas limpio.
-        Inserta la imagen en el documento.
+    Incluye lineas verticales de milestone en fechas clave y barras coloreadas por fase.
+    Milestones: 21-feb (Revision), 28-mar (Integracion), 2-may (Pruebas), 16-may (Presentacion).
     """
-    import pandas as pd  # Para generacion de rangos de fechas
+    import pandas as pd
     import matplotlib.dates as mdates
     from datetime import datetime, timedelta
     if not _HAS_MPL:
         doc.add_paragraph(f'[Diagrama no disponible: instalar matplotlib]')
         return
-    start = datetime.strptime(inicio, '%Y-%m-%d')  # Convertir fecha inicio a objeto datetime
-    end = datetime.strptime(fin, '%Y-%m-%d')  # Convertir fecha fin a objeto datetime
-    total_days = (end - start).days  # Duracion total en dias
-    fig, ax = plt.subplots(figsize=(14, len(tareas) * 0.5 + 2))  # Alto dinamico segun tareas
-    # Paleta de colores por numero de fase
-    colores_fase = {'1': '#6366F1', '2': '#EC4899', '3': '#10B981', '4': '#F59E0B', '5': '#EF4444', '6': '#8B5CF6'}
+    start = datetime.strptime(inicio, '%Y-%m-%d')
+    end = datetime.strptime(fin, '%Y-%m-%d')
+    total_days = (end - start).days
+    fig, ax = plt.subplots(figsize=(15, len(tareas) * 0.5 + 2.5))
+    colores_fase = {'1': PALETTA['primario'], '2': PALETTA['info'], '3': PALETTA['exito'],
+                    '4': PALETTA['advertencia'], '5': PALETTA['peligro'], '6': PALETTA['secundario']}
     for i, (fase, actividad, f_inicio, f_fin) in enumerate(tareas):
-        y = len(tareas) - i - 1  # Posicion Y (invertida para que la primera tarea este arriba)
+        y = len(tareas) - i - 1
         d_inicio = datetime.strptime(f_inicio, '%Y-%m-%d')
         d_fin = datetime.strptime(f_fin, '%Y-%m-%d')
-        dias = (d_fin - d_inicio).days  # Duracion de la tarea en dias
-        color = colores_fase.get(fase.split('.')[0], '#6366F1')  # Color segun numero de fase
-        # Barra horizontal desde (d_inicio - start) con duracion 'dias'
-        ax.barh(y, dias, left=(d_inicio - start).days, height=0.6, color=color, edgecolor='white', linewidth=0.5, alpha=0.85)
-        # Etiqueta de la actividad blanca dentro de la barra
-        ax.text((d_inicio - start).days + 0.3, y, f'{actividad} ({fase})', va='center', fontsize=7.5, fontweight='bold', color='white')
-    # Lineas verticales por mes
-    meses = pd.date_range(start=start, end=end, freq='MS')  # 'MS' = Month Start
+        dias = (d_fin - d_inicio).days
+        color = colores_fase.get(fase.split('.')[0], PALETTA['primario'])
+        ax.barh(y, dias, left=(d_inicio - start).days, height=0.6, color=color, edgecolor='white', linewidth=0.5, alpha=0.88)
+        ax.text((d_inicio - start).days + 0.3, y, f'{actividad} (F{fase.split(".")[0]})', va='center', fontsize=7.5, fontweight='bold', color='white')
+
+    meses = pd.date_range(start=start, end=end, freq='MS')
     for m in meses:
-        ax.axvline(x=(m - start).days, color='#CBD5E1', linewidth=0.5, linestyle='--', alpha=0.5)
+        ax.axvline(x=(m - start).days, color=PALETTA['fondo_medio'], linewidth=0.5, linestyle='--', alpha=0.5)
+
+    # Milestones
+    hitos = [
+        (datetime(2026, 2, 21), 'Rev. Requisitos', PALETTA['info']),
+        (datetime(2026, 3, 28), 'Integracion', PALETTA['advertencia']),
+        (datetime(2026, 5, 2), 'Cierre Pruebas', PALETTA['exito']),
+        (datetime(2026, 5, 16), 'Presentacion', PALETTA['peligro']),
+    ]
+    for h_fecha, h_label, h_color in hitos:
+        dx = (h_fecha - start).days
+        ax.axvline(x=dx, color=h_color, linewidth=2, linestyle='-.', alpha=0.8)
+        ax.text(dx + 0.5, len(tareas) - 0.5, h_label, fontsize=6.5, color=h_color, fontweight='bold', rotation=90, va='top')
+
     ax.set_yticks(range(len(tareas)))
-    ax.set_yticklabels([''] * len(tareas))  # Ocultar nombres en eje Y (ya estan en las barras)
+    ax.set_yticklabels([''] * len(tareas))
     ax.set_xlim(0, total_days)
-    # Marcas semanales en eje X con formato dia/mes
+
     weeks = pd.date_range(start=start, end=end, freq='W')
     ax.set_xticks([(w - start).days for w in weeks])
-    ax.set_xticklabels([w.strftime('%d/%m') for w in weeks], fontsize=7)
-    ax.set_xlabel('Febrero - Mayo 2026', fontsize=9)
-    ax.set_title(titulo, fontsize=13, fontweight='bold', pad=12)
+    ax.set_xticklabels([w.strftime('%d/%m') for w in weeks], fontsize=6.5)
+    ax.set_xlabel('Enero - Mayo 2026', fontsize=9)
+    ax.set_title(titulo, fontsize=13, fontweight='bold', pad=12, color=PALETTA['primario'])
     ax.spines['top'].set_visible(False); ax.spines['right'].set_visible(False)
     ax.tick_params(axis='y', length=0)
     plt.tight_layout()
