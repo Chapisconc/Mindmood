@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "../theme/ThemeContext";
 
 const MOOD_COLORS = {
   Excelente: "#10B981", Feliz: "#EC4899", Agradecido: "#FBBF24",
@@ -15,32 +16,34 @@ const MOOD_EMOJI = {
   Asco: "🤢", Crisis: "💔", Indeterminado: "🤔",
 };
 
-function MoodRingSVG({ color, percent, size = 130 }) {
-  const cx = size / 2, cy = size / 2, r = size * 0.38;
+function MoodRingSVG({ color, percent, size = 110 }) {
+  const cx = size / 2, cy = size / 2, r = size * 0.4;
   const circumference = 2 * Math.PI * r;
   const offset = circumference - (percent / 100) * circumference;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <defs>
-        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={color} stopOpacity="0.2" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.4" />
-        </linearGradient>
-      </defs>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke={`${color}20`} strokeWidth="7" />
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="7"
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={`${color}18`} strokeWidth="6" />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="6"
         strokeDasharray={circumference} strokeDashoffset={offset}
         strokeLinecap="round" transform={`rotate(-90 ${cx} ${cy})`}
-        style={{ transition: "stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1)", filter: `drop-shadow(0 0 8px ${color}60)` }} />
+        style={{ transition: "stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1)", filter: `drop-shadow(0 0 6px ${color}50)` }} />
     </svg>
   );
 }
 
 export default function EmotionModal({ visible, onClose, type, primaryMood, totalEntries, summary }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const isCrisis = type === "crisis";
   const accent = MOOD_COLORS[primaryMood] || MOOD_COLORS.Neutral;
   const emoji = MOOD_EMOJI[primaryMood] || "😌";
   const percent = totalEntries ? Math.min(((totalEntries % 100) || 100), 100) : 75;
+
+  const bgBase = isDark ? "#0F0A1A" : "#F8FAFC";
+  const cardBg = isDark ? `${accent}0A` : `#FFFFFFE0`;
+  const cardBorder = isDark ? `${accent}25` : `${accent}20`;
+  const textColor = isDark ? "#F8FAFC" : "#0F172A";
+  const subColor = isDark ? `${accent}CC` : `${accent}99`;
 
   return (
     <AnimatePresence>
@@ -50,91 +53,98 @@ export default function EmotionModal({ visible, onClose, type, primaryMood, tota
           className="fixed inset-0 z-50 flex items-center justify-center p-6"
           onClick={onClose}
         >
-          {/* Backdrop con blur del color de la emoción */}
           <div className="absolute inset-0"
-            style={{ background: `radial-gradient(circle at center, ${accent}25 0%, ${accent}08 40%, #0F0A1A 100%)`, backdropFilter: "blur(40px)" }} />
+            style={{
+              background: isDark
+                ? `radial-gradient(circle at center, ${accent}20 0%, ${accent}06 40%, #0F0A1A 100%)`
+                : `radial-gradient(circle at center, ${accent}12 0%, ${accent}04 40%, #F8FAFC 100%)`,
+              backdropFilter: "blur(40px)",
+            }} />
 
           <motion.div
-            initial={{ scale: 0.85, opacity: 0, y: 20 }}
+            initial={{ scale: 0.9, opacity: 0, y: 24 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.85, opacity: 0, y: 20 }}
+            exit={{ scale: 0.9, opacity: 0, y: 24 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="relative w-full max-w-sm rounded-[2.5rem] px-8 pt-10 pb-7 flex flex-col items-center"
+            className="relative w-full max-w-sm rounded-[2.5rem] px-8 pt-12 pb-8 flex flex-col items-center gap-5"
             style={{
-              backgroundColor: `${accent}08`,
-              border: `1.5px solid ${accent}30`,
+              backgroundColor: cardBg,
+              border: `1.5px solid ${cardBorder}`,
               backdropFilter: "blur(20px)",
-              boxShadow: `0 0 80px ${accent}20, 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 ${accent}15`,
+              boxShadow: isDark
+                ? `0 0 80px ${accent}18, 0 30px 60px rgba(0,0,0,0.35), inset 0 1px 0 ${accent}12`
+                : `0 0 60px ${accent}12, 0 20px 40px rgba(0,0,0,0.08), inset 0 1px 0 ${accent}10`,
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <button onClick={onClose}
               className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center border-0 cursor-pointer transition-all hover:scale-110"
-              style={{ backgroundColor: `${accent}15`, border: `1px solid ${accent}25` }}>
+              style={{ backgroundColor: `${accent}12`, border: `1px solid ${accent}20` }}>
               <X size={14} color={accent} />
             </button>
 
-            {/* Emoji animado */}
+            {/* Emoji above ring - separated with margin */}
             <motion.div
-              initial={{ scale: 0, rotate: -20 }}
+              initial={{ scale: 0, rotate: -15 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 400, damping: 15 }}
-              className="relative mb-5"
+              transition={{ delay: 0.15, type: "spring", stiffness: 350, damping: 14 }}
             >
               {isCrisis ? (
-                <div className="w-[120px] h-[120px] rounded-full flex items-center justify-center"
-                  style={{ background: `radial-gradient(circle, ${accent}40 0%, ${accent}10 70%, transparent 100%)`, boxShadow: `0 0 40px ${accent}40, 0 0 80px ${accent}20` }}>
-                  <span className="text-5xl" style={{ filter: `drop-shadow(0 0 10px ${accent})` }}>{emoji}</span>
+                <div className="w-[100px] h-[100px] rounded-full flex items-center justify-center"
+                  style={{ background: `radial-gradient(circle, ${accent}30 0%, ${accent}08 70%, transparent 100%)`, boxShadow: `0 0 35px ${accent}30` }}>
+                  <span className="text-4xl">{emoji}</span>
                 </div>
               ) : (
-                <div className="relative">
-                  <MoodRingSVG color={accent} percent={percent} size={130} />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-4xl" style={{ filter: `drop-shadow(0 0 8px ${accent}60)` }}>{emoji}</span>
-                    <span className="text-2xl font-black text-white mt-0.5">{totalEntries || "—"}</span>
-                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] mt-0.5" style={{ color: `${accent}99` }}>entradas</span>
-                  </div>
-                </div>
+                <span className="text-[42px] leading-none block">{emoji}</span>
               )}
             </motion.div>
 
+            {/* Ring with entry count below emoji - not overlapping */}
+            {!isCrisis && (
+              <div className="relative">
+                <MoodRingSVG color={accent} percent={percent} size={110} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-xl font-black" style={{ color: textColor }}>{totalEntries || "—"}</span>
+                  <span className="text-[8px] font-bold uppercase tracking-[0.2em]" style={{ color: subColor }}>entradas</span>
+                </div>
+              </div>
+            )}
+
             {/* Mood name */}
             <motion.h2
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className="text-2xl font-black text-white text-center mb-2"
-              style={{ textShadow: `0 0 20px ${accent}40` }}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+              className="text-xl font-black text-center leading-tight"
+              style={{ color: accent, textShadow: isDark ? `0 0 20px ${accent}30` : 'none' }}
             >
-              {isCrisis ? "No estás solo" : primaryMood || "Analizado"}
+              {isCrisis ? "No estas solo" : primaryMood || "Analizado"}
             </motion.h2>
 
-            {/* Summary text */}
             {summary && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-                className="text-sm text-center font-medium leading-relaxed mb-6 max-w-[280px]"
-                style={{ color: `${accent}AA` }}
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+                className="text-sm text-center font-medium leading-relaxed max-w-[280px] m-0"
+                style={{ color: isDark ? `${accent}CC` : '#475569' }}
               >
                 {summary}
               </motion.p>
             )}
 
-            {/* Crisis helplines */}
             {isCrisis && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-                className="w-full mb-5 flex flex-col gap-2">
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                className="w-full flex flex-col gap-2">
                 {[
-                  { name: "Línea Cero Suicidios", number: "075", emoji: "📞" },
-                  { name: "Línea de la Vida", number: "800-911-2000", emoji: "🏥" },
-                  { name: "SAPTEL", number: "55-5603-0000", emoji: "💬" },
+                  { name: "Linea Cero Suicidios", number: "075", icon: "📞" },
+                  { name: "Linea de la Vida", number: "800-911-2000", icon: "🏥" },
+                  { name: "SAPTEL", number: "55-5603-0000", icon: "💬" },
                 ].map((h) => (
                   <button key={h.number}
                     onClick={() => window.open(`tel:${h.number}`, "_self")}
-                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02]"
+                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all hover:scale-[1.01]"
                     style={{ backgroundColor: `${accent}10`, borderColor: `${accent}25` }}>
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg" style={{ backgroundColor: `${accent}25` }}>
-                      {h.emoji}
+                      {h.icon}
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-bold text-white">{h.name}</p>
+                      <p className="text-sm font-bold" style={{ color: textColor }}>{h.name}</p>
                       <p className="text-xs font-black mt-0.5" style={{ color: accent }}>{h.number}</p>
                     </div>
                   </button>
@@ -142,16 +152,16 @@ export default function EmotionModal({ visible, onClose, type, primaryMood, tota
               </motion.div>
             )}
 
-            {/* CTA button */}
             <motion.button
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
               onClick={onClose}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full py-3.5 rounded-2xl text-sm font-bold border-0 cursor-pointer text-white transition-all"
+              className="w-full py-3.5 rounded-2xl text-sm font-bold border-0 cursor-pointer transition-all"
               style={{
                 background: `linear-gradient(135deg, ${accent}, ${accent}CC)`,
-                boxShadow: `0 8px 30px ${accent}40`,
+                color: '#FFFFFF',
+                boxShadow: `0 8px 25px ${accent}35`,
               }}>
               {isCrisis ? "Entendido" : "Cerrar"}
             </motion.button>

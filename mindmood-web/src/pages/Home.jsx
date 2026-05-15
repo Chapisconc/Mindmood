@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 // Animaciones de entrada y transiciones
 import { motion } from "framer-motion";
 // Iconos: racha, campana, destellos, pluma, corazón, etc.
-import { Flame, Bell, Sparkles, PenLine, Heart, BarChart3, CalendarDays } from "lucide-react";
+import { Flame, Bell, Sparkles, PenLine, Heart, BarChart3, CalendarDays, Shield, Brain, AlertTriangle } from "lucide-react";
 // Cliente Supabase para consultas a la BD
 import { supabase } from "../services/supabase";
 // Hook personalizado del tema (claro/oscuro)
@@ -206,6 +206,35 @@ export default function Home() {
             <PenLine size={20} />
             Escribir mi primera entrada
           </button>
+        </motion.div>
+
+        {/* Caracteristicas personalizadas de MindMood */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
+        >
+          {[
+            { icon: Brain, color: "#8B5CF6", title: "IA Avanzada", desc: "Dos modelos Robertuito analizan sentimiento y 7 categorias de emociones en tu texto" },
+            { icon: AlertTriangle, color: "#EF4444", title: "Deteccion de Crisis", desc: "Sistema de 3 capas (keywords + fuzzy + regex) que alerta si necesitas apoyo" },
+            { icon: Shield, color: "#10B981", title: "Privacidad Total", desc: "Tus datos estan protegidos con Row Level Security y autenticacion segura JWT" },
+          ].map((item, i) => (
+            <div key={i}
+              className="relative group overflow-hidden rounded-2xl p-5 border backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] cursor-default"
+              style={{
+                backgroundColor: `${item.color}08`,
+                borderColor: `${item.color}20`,
+                boxShadow: `0 4px 20px ${item.color}08`,
+              }}
+            >
+              <div className="absolute -right-6 -top-6 w-20 h-20 rounded-full opacity-20" style={{ backgroundColor: item.color }} />
+              <div className="relative z-10">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: `${item.color}18` }}>
+                  <item.icon size={20} style={{ color: item.color }} />
+                </div>
+                <h3 className="text-sm font-black dark:text-white mb-1.5">{item.title}</h3>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+              </div>
+            </div>
+          ))}
         </motion.div>
 
         {/* Footer: aviso de privacidad */}
