@@ -94,10 +94,12 @@ function Sidebar({ currentPath, navigate }) {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border-none cursor-pointer text-left"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 border-none cursor-pointer text-left hover:scale-[1.02]"
               style={{
-                backgroundColor: active ? `${themeStyles.accent}18` : "transparent",
+                backgroundColor: active ? `${themeStyles.accent}15` : "transparent",
                 color: active ? themeStyles.accent : themeStyles.secondaryText,
+                boxShadow: active ? `0 0 20px ${themeStyles.accent}20, inset 0 1px 0 ${themeStyles.accent}15` : 'none',
+                transform: active ? 'scale(1.02)' : 'scale(1)',
               }}
             >
               {/* Contenedor del ícono con fondo dinámico */}

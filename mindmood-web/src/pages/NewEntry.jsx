@@ -226,13 +226,23 @@ export default function NewEntry() {
               className="relative w-full h-[28rem] p-8 md:p-10 bg-white/80 dark:bg-slate-900/70 backdrop-blur-2xl rounded-[2rem] border border-slate-200/50 dark:border-slate-800/50 outline-none text-lg md:text-xl font-medium tracking-tight text-slate-800 dark:text-white resize-none shadow-lg transition-all duration-300 placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:shadow-2xl"
             />
 
-            {/* Indicadores flotantes en esquina inferior derecha: contador de caracteres + badge IA */}
+            {/* Indicadores flotantes en esquina inferior derecha: contador + barra de progreso */}
             <div className="absolute bottom-5 right-5 flex items-center gap-4">
-              {/* Contador de caracteres (cambia a rojo cuando quedan < 100) */}
-              <span className={`text-[11px] font-bold ${charsLeft < 100 ? "text-rose-500" : "text-slate-400"}`}>
+              {/* Barra de progreso sutil con gradiente de color */}
+              <div className="w-20 h-1.5 rounded-full overflow-hidden bg-slate-200/50 dark:bg-slate-700/50">
+                <motion.div
+                  animate={{ width: `${Math.min((text.length / MAX_CHARS) * 100, 100)}%` }}
+                  className="h-full rounded-full transition-colors duration-500"
+                  style={{
+                    backgroundColor: charsLeft > 500 ? '#10B981' : charsLeft > 100 ? '#F59E0B' : '#EF4444',
+                  }}
+                />
+              </div>
+              <span
+                className="text-[11px] font-black tabular-nums transition-colors duration-300"
+                style={{ color: charsLeft > 500 ? '#10B981' : charsLeft > 100 ? '#F59E0B' : '#EF4444' }}>
                 {charsLeft}
               </span>
-              {/* Badge que indica análisis por IA */}
               <div className="flex items-center gap-2 py-2 px-4 bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-full border border-slate-200/50 dark:border-slate-700/50">
                 <Sparkles className="w-4 h-4 text-indigo-500" />
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">IA</span>
