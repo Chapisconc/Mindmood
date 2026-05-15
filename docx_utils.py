@@ -1381,91 +1381,106 @@ def diagrama_pastel_resultados(doc, passed, failed, xfailed=0, titulo="Distribuc
 
 def diagrama_flujo_pipeline_ia(doc, titulo="Pipeline de IA - 10 Etapas"):
     """
-    Genera un diagrama de flujo (flowchart) del pipeline de inteligencia artificial
-    de MindMood, mostrando las 10 etapas secuenciales con colores y conexiones.
-
-    Etapas visualizadas:
-        1. Recepcion de texto -> 2. Limpieza de emojis -> 3. Normalizacion de jerga
-        -> 4. Sentiment Analysis -> 5. Refuerzo emocional -> 6. Crisis Detection
-        -> 7. Emotion Analysis -> 8. Keyword Reinforcement -> 9. Calculo de confianza
-        -> 10. Generacion de resumen
-
-    Parametros:
-        doc (Document): Objeto Documento destino.
-        titulo (str, opcional): Titulo del diagrama.
+    Diagrama de flujo profesional del pipeline de IA.
+    Layout vertical de una sola columna con capas semanticas y colores significativos.
+    - Azul: Entrada
+    - Verde: Preprocesamiento (limpieza, normalizacion)
+    - Purpura/Naranja: IA / Modelos (sentiment, emotion, crisis)
+    - Rosa: Salida / Resultado
     """
     import matplotlib.patches as mpatches
     if not _HAS_MPL: return
 
     etapas = [
-        ("1.\nRecepcion\nde texto", "#6366F1"),
-        ("2.\nLimpieza\nde emojis", "#EC4899"),
-        ("3.\nNormalizacion\nde jerga", "#10B981"),
-        ("4.\nSentiment\nAnalysis", "#F59E0B"),
-        ("5.\nRefuerzo\nemocional", "#EF4444"),
-        ("6.\nCrisis\nDetection", "#7C3AED"),
-        ("7.\nEmotion\nAnalysis", "#06B6D4"),
-        ("8.\nKeyword\nReinforcement", "#F97316"),
-        ("9.\nCalculo de\nconfianza", "#84CC16"),
-        ("10.\nGeneracion de\nresumen", "#EC4899"),
+        ("1. Recepcion de texto\nPOST /analyze", PALETTA['primario'], "ENTRADA"),
+        ("2. Limpieza de emojis\nemoji.replace_emoji()", PALETTA['exito'], "PREPROCESO"),
+        ("3. Normalizacion de jerga\n70+ expresiones mexicanas", PALETTA['exito'], "PREPROCESO"),
+        ("4. Analisis de Sentimiento\nRobertuito POS/NEG/NEU", PALETTA['info'], "MODELO IA"),
+        ("5. Refuerzo Emocional\nIntensificadores + Mayusculas", PALETTA['advertencia'], "MODELO IA"),
+        ("6. Deteccion de Crisis\nKeywords + Fuzzy + Regex", PALETTA['peligro'], "MODELO IA"),
+        ("7. Analisis de Emociones\nRobertuito 7 categorias", PALETTA['info'], "MODELO IA"),
+        ("8. Refuerzo por Keywords\n200+ palabras clave", PALETTA['advertencia'], "MODELO IA"),
+        ("9. Calculo de Confianza\nScore -1.0 a +1.0", PALETTA['advertencia'], "EVALUACION"),
+        ("10. Resumen Empatico\nTexto personalizado", PALETTA['secundario'], "SALIDA"),
     ]
 
-    fig, ax = plt.subplots(figsize=(16, 9))
-    ax.set_xlim(0, 14); ax.set_ylim(0, 10)
+    capas_colors = {
+        'ENTRADA': PALETTA['primario'] + '15',
+        'PREPROCESO': PALETTA['exito'] + '12',
+        'MODELO IA': PALETTA['info'] + '10',
+        'EVALUACION': PALETTA['advertencia'] + '10',
+        'SALIDA': PALETTA['secundario'] + '12',
+    }
+
+    n = len(etapas)
+    fig, ax = plt.subplots(figsize=(12, n * 0.95 + 2))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, n * 0.95 + 2.5)
     ax.axis('off')
-    ax.set_title(titulo, fontsize=15, fontweight='bold', pad=20, color='#6366F1')
+    ax.set_title(titulo, fontsize=15, fontweight='bold', pad=20, color=PALETTA['primario'])
 
-    box_w, box_h = 2.3, 1.4
-    col_gap, row_gap = 5.8, 1.8
-    start_x, start_y = 1.5, 8.5
+    box_w, box_h = 5.5, 0.75
+    cx = 5.0
+
+    # Dibujar fondos de capa
+    last_capa = None
+    capa_start_y = None
+    capa_rows = []
+    for i, (_, _, capa) in enumerate(etapas):
+        y = (n - i) * 0.95 + 0.5
+        if capa != last_capa:
+            if last_capa and capa_start_y is not None:
+                rect_h = capa_start_y - y + 0.9
+                if rect_h > 0:
+                    bg_rect = mpatches.FancyBboxPatch((0.3, y - 0.2), 9.4, rect_h,
+                               boxstyle="round,pad=0.1", edgecolor='none',
+                               facecolor=capas_colors.get(last_capa, '#F8F9FA'), linewidth=0)
+                    ax.add_patch(bg_rect)
+                    ax.text(0.6, y + (rect_h / 2) - 0.1, last_capa, fontsize=7, fontweight='bold',
+                           color=PALETTA['neutro'], rotation=90, va='center', ha='center')
+            last_capa = capa
+            capa_start_y = y
+    if last_capa and capa_start_y:
+        bottom_y = (n - (n - 1)) * 0.95 + 0.5 - 0.85
+        rect_h = capa_start_y - bottom_y + 0.5
+        if rect_h > 0:
+            bg_rect = mpatches.FancyBboxPatch((0.3, bottom_y - 0.2), 9.4, rect_h,
+                       boxstyle="round,pad=0.1", edgecolor='none',
+                       facecolor=capas_colors.get(last_capa, '#F8F9FA'), linewidth=0)
+            ax.add_patch(bg_rect)
+            ax.text(0.6, bottom_y + (rect_h / 2) - 0.1, last_capa, fontsize=7, fontweight='bold',
+                   color=PALETTA['neutro'], rotation=90, va='center', ha='center')
+
+    # Dibujar cajas y flechas
     positions = []
-
-    for i, (texto, color) in enumerate(etapas):
-        col = i % 2
-        row = i // 2
-        x = start_x + col * col_gap
-        y = start_y - row * row_gap
+    for i, (texto, color, _) in enumerate(etapas):
+        y = (n - i) * 0.95 + 0.5
+        x = cx - box_w / 2
         positions.append((x, y, color))
 
         rect = mpatches.FancyBboxPatch((x, y), box_w, box_h,
-               boxstyle="round,pad=0.15", edgecolor=color,
-               facecolor=f'{color}20', linewidth=2)
+               boxstyle="round,pad=0.12", edgecolor=color,
+               facecolor=f'{color}18', linewidth=2)
         ax.add_patch(rect)
-        ax.text(x + box_w/2, y + box_h/2, texto, ha='center', va='center',
-                fontsize=7.5, fontweight='bold', color=color)
+        ax.text(cx, y + box_h / 2, texto, ha='center', va='center',
+                fontsize=7.5, fontweight='bold', color=color, linespacing=1.3)
 
-    # Draw arrows AFTER all boxes, with proper routing
-    for i in range(len(etapas) - 1):
-        x, y, c = positions[i]
-        nx, ny, nc = positions[i + 1]
-        if i % 2 == 0:
-            # Same row: col 0 -> col 1, horizontal arrow between boxes
-            ax.annotate('', xy=(nx - 0.15, ny + box_h/2),
-                       xytext=(x + box_w + 0.15, y + box_h/2),
-                       arrowprops=dict(arrowstyle='->', color='#64748B', lw=2.0))
-        else:
-            # Cross row: col 1 -> next row col 0, L-shaped path that goes OUTSIDE boxes
-            # Go right from box, then down, then left into next box
-            corner_x = x + box_w + 0.5
-            corner_y = ny + box_h/2
-            ax.plot([x + box_w, corner_x, corner_x, nx],
-                    [y + box_h/2, y + box_h/2, corner_y, corner_y],
-                    color='#64748B', lw=2.0)
-            ax.annotate('', xy=(nx, corner_y), xytext=(nx - 0.01, corner_y),
-                       arrowprops=dict(arrowstyle='->', color='#64748B', lw=2.0))
+        if i > 0:
+            prev_y = positions[i - 1][1] + box_h
+            curr_y = y
+            ax.annotate('', xy=(cx, curr_y), xytext=(cx, prev_y),
+                       arrowprops=dict(arrowstyle='->', color=PALETTA['neutro'], lw=2.0))
 
     plt.tight_layout()
     buf = _fig_to_png(fig)
-    doc.add_picture(buf, width=Cm(16))
+    doc.add_picture(buf, width=Cm(15))
     plt.close(fig); buf.close()
     doc.add_paragraph(
-        'Explicacion: El pipeline de IA de MindMood ejecuta 10 etapas secuenciales '
-        'que transforman el texto crudo del usuario en un analisis emocional completo. '
-        'Las etapas 4 y 7 utilizan modelos HuggingFace Robertuito pre-entrenados en '
-        'espanol para clasificar sentimiento (POS/NEG/NEU) y emociones (7 categorias). '
-        'La etapa 6 implementa deteccion de crisis en 3 niveles: keywords directas, '
-        'fuzzy matching para errores ortograficos y patrones regex. La etapa 10 genera '
-        'un resumen empatico personalizado basado en el estado emocional detectado.')
+        'Figura: Pipeline de IA de MindMood. Las 10 etapas se organizan en 5 capas: '
+        'Entrada (recepción del texto), Preprocesamiento (limpieza y normalización de jerga), '
+        'Modelo IA (análisis de sentimiento, detección de crisis y emociones con Robertuito), '
+        'Evaluación (cálculo de confianza y refuerzo), y Salida (resumen empático). '
+        'El flujo es estrictamente secuencial de arriba hacia abajo.')
 
 def diagrama_er_database(doc, titulo="Diagrama Entidad-Relacion - Base de Datos"):
     """

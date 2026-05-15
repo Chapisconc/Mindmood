@@ -1150,22 +1150,38 @@ def create_tesis():
         shading = OxmlElement('w:shd'); shading.set(qn('w:fill'), '6366F1'); shading.set(qn('w:val'), 'clear')
         cell._tc.get_or_add_tcPr().append(shading)
 
-    color_map = {'Bajo': '10B981', 'Media': 'F59E0B', 'Alto': 'F97316', 'Critico': 'EF4444'}
+    color_map = {
+        'Baja': '10B981', 'Bajo': '10B981',
+        'Media': 'F59E0B', 'Medio': 'F59E0B',
+        'Alta': 'F97316', 'Alto': 'F97316',
+        'Critica': 'EF4444', 'Critico': 'EF4444',
+    }
+
+    dark_colors = {'EF4444', 'F97316'}
 
     for ri, row in enumerate(riesgos):
-        impacto = row[2]
-        bg = color_map.get(impacto, 'FFFFFF')
+        impacto_val = row[2]
+        prob_val = row[1]
+        bg = color_map.get(impacto_val, 'FFFFFF')
         for ci, val in enumerate(row):
             cell = rtable.rows[ri + 1].cells[ci]
             cell.text = str(val)
             for p2 in cell.paragraphs:
+                p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                text_color = RGBColor(255, 255, 255) if bg in dark_colors else RGBColor(15, 23, 42)
                 for run in p2.runs:
-                    run.font.size = Pt(8); run.font.name = 'Calibri'
-            # Color the entire row for impacto column, light tint for others
+                    run.font.size = Pt(7.5); run.font.name = 'Calibri'
+                    if ci == 2:
+                        run.font.color.rgb = text_color
+                        run.bold = True
+            # Color impact column with full color, other columns with light tint
             if ci == 2:
-                shading = OxmlElement('w:shd'); shading.set(qn('w:fill'), bg); shading.set(qn('w:val'), 'clear')
+                shading = OxmlElement('w:shd')
+                shading.set(qn('w:fill'), bg)
             else:
-                shading = OxmlElement('w:shd'); shading.set(qn('w:fill'), bg + '15'); shading.set(qn('w:val'), 'clear')
+                shading = OxmlElement('w:shd')
+                shading.set(qn('w:fill'), bg + '18')
+            shading.set(qn('w:val'), 'clear')
             cell._tc.get_or_add_tcPr().append(shading)
 
     doc.add_paragraph()
