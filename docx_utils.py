@@ -333,75 +333,37 @@ def diagrama_pastel_matplotlib(datos, titulo=""):
     return fig
 
 def diagrama_clases_uml(doc, clases, titulo="Diagrama de Clases"):
-    """
-    Genera un diagrama de clases UML usando matplotlib y lo inserta en el documento.
-
-    Parametros:
-        doc (Document): Objeto Documento destino.
-        clases (list): Lista de diccionares con la estructura:
-            [{'nombre': str, 'atributos': [str], 'metodos': [str]}, ...]
-        titulo (str, opcional): Titulo del diagrama (defecto: 'Diagrama de Clases').
-
-    Efectos secundarios:
-        Dibuja rectangulos UML con nombre, atributos y metodos por cada clase.
-        Agrega flechas de herencia (gris) y asociacion (morada) entre clases consecutivas.
-        Inserta la imagen en el documento y un parrafo descriptivo.
-    """
-    import matplotlib.patches as mpatches  # Import para formas personalizadas (rectangulos redondeados)
-    if not _HAS_MPL:
-        doc.add_paragraph(f'[Diagrama no disponible: instalar matplotlib]')
-        return
-    n = len(clases)
-    fig, ax = plt.subplots(figsize=(min(n * 6 + 2, 18), 6))
-    ax.set_xlim(0, n * 6 + 2)
-    ax.set_ylim(0, 7)
-    ax.axis('off')  # Ocultar ejes
-    ax.set_title(titulo, fontsize=14, fontweight='bold', pad=15)
-
-    # === Primer pase: dibujar rectangulos de clase ===
-    for i, cls in enumerate(clases):
-        x = i * 4 + 0.5  # Posicion X de cada clase (espaciado de 4 unidades)
-        y = 1.5  # Posicion Y base
-        w = 3.5  # Ancho del rectangulo UML
-        # Formatear texto: cabecera, separador, atributos, separador, metodos
-        header = cls['nombre']  # Nombre de la clase en la cabecera
-        attrs = '\n'.join([f'- {a}' for a in cls.get('atributos', [])])  # Atributos con prefijo '-'
-        methods = '\n'.join([f'+ {m}()' for m in cls.get('metodos', [])])  # Metodos con prefijo '+'
-        # Texto completo del rectangulo UML con separadores Unicode
-        text = f"{header}\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n{attrs}\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n{methods}"
-
-        # Rectangulo redondeado con borde gris oscuro y fondo gris claro
-        box = mpatches.FancyBboxPatch((x, y), w, 3.5, boxstyle="round,pad=0.1",
-                                        edgecolor='#334155', facecolor='#F1F5F9',
-                                        linewidth=1.2)
-        ax.add_patch(box)  # Agregar rectangulo al eje
-        # Texto centrado dentro del rectangulo en fuente monoespaciada
-        ax.text(x + w/2, y + 3.5/2, text, ha='center', va='center',
-                fontsize=7, fontfamily='monospace', linespacing=1.5)
-
-        if i < n - 1:
-            ax.annotate('', xy=(x + w + 0.3, y + 3.5/2),
-                        xytext=(x + w - 0.1, y + 3.5/2),
-                        arrowprops=dict(arrowstyle='->', color='#6366F1', lw=1.8))
-
-    # === Segundo pase: flechas de asociacion (desplazadas hacia abajo) ===
-    for i, cls in enumerate(clases):
-        x = i * 4 + 0.5
-        y = 1.5
-        w = 3.5
-        if i < n - 1:
-            ax.annotate('', xy=(x + w + 0.8, y + 3.5/2 - 0.5),
-                        xytext=(x + w + 0.1, y + 3.5/2 - 0.5),
-                        arrowprops=dict(arrowstyle='->', color='#EC4899', lw=1.8))
-
+    """Arquitectura 3 capas profesional con sub-componentes y capas etiquetadas."""
+    import matplotlib.patches as mpatches
+    if not _HAS_MPL: return
+    n=len(clases);fig,ax=plt.subplots(figsize=(18,7))
+    ax.set_xlim(0,18);ax.set_ylim(0,7.5);ax.axis('off')
+    ax.set_title(titulo,fontsize=14,fontweight='bold',pad=15,color=PALETTA['primario'])
+    # Layer backgrounds
+    for i,(xl,xr,label,clr) in enumerate([(0.2,17.8,'Presentation Layer',PALETTA['primario']),(0.2,17.8,'Application Layer',PALETTA['info']),(0.2,17.8,'Data Layer',PALETTA['exito'])]):
+        yy=5.8-i*2.2
+        ax.axhspan(yy-1.0,yy+1.0,xmin=xl/18,xmax=xr/18,facecolor=clr+'08',zorder=0,alpha=0.7)
+        ax.text(0.5,yy,label,fontsize=7.5,fontweight='bold',color=clr,rotation=90,va='center')
+    # Draw classes with proper UML format
+    for i,cls in enumerate(clases):
+        x=i*5.8+0.8;y=5.8-i//1*2.2;w=5.2
+        header=cls['nombre']
+        attrs=chr(10).join([f'- {a}' for a in cls.get('atributos',[])])
+        methods=chr(10).join([f'+ {m}()' for m in cls.get('metodos',[])])
+        text=f"{header}{chr(10)}{chr(9472)*26}{chr(10)}{attrs}{chr(10)}{chr(9472)*26}{chr(10)}{methods}"
+        box=mpatches.FancyBboxPatch((x,y),w,1.8,boxstyle="round,pad=0.15",edgecolor=PALETTA['primario'],facecolor='#EEF2FF',linewidth=1.8)
+        ax.add_patch(box)
+        ax.text(x+w/2,y+0.9,text,ha='center',va='center',fontsize=7.5,fontfamily='monospace',linespacing=1.4,color=PALETTA['texto_oscuro'])
+        if i<2:
+            ax.annotate('',xy=(x+w+0.3,y+0.9),xytext=(x+w-0.1,y+0.9),arrowprops=dict(arrowstyle='->',color=PALETTA['secundario'],lw=2.0))
+            ax.annotate('',xy=(x+w+0.8,y+0.4),xytext=(x+w+0.1,y+0.4),arrowprops=dict(arrowstyle='->',color=PALETTA['info'],lw=2.0))
+    # Protocol annotations
+    ax.text(9,6.8,'REST API (JSON)',ha='center',fontsize=7.5,fontweight='bold',color=PALETTA['secundario'])
+    ax.text(9,4.6,'Supabase SDK / SQL',ha='center',fontsize=7.5,fontweight='bold',color=PALETTA['info'])
     plt.tight_layout()
-    buf = _fig_to_png(fig)
-    doc.add_picture(buf, width=Cm(16))
-    plt.close(fig)
-    buf.close()
-    # Parrafo descriptivo del diagrama debajo de la imagen
-    doc.add_paragraph(f'Diagrama: {titulo}. Muestra las clases del sistema con sus atributos y metodos,'
-                       ' flechas de herencia (gris) y asociacion (morada).')
+    buf=_fig_to_png(fig);doc.add_picture(buf,width=Cm(16));plt.close(fig);buf.close()
+    doc.add_paragraph('Figura: Arquitectura de 3 capas con separacion clara de responsabilidades. Presentation Layer maneja la UI React, Application Layer contiene la logica de negocio en FastAPI, y Data Layer gestiona la persistencia en Supabase. La comunicacion entre capas se realiza via REST API y Supabase SDK.')
+
 
 def diagrama_secuencia_matplotlib(doc, pasos, titulo="Diagrama de Secuencia"):
     """
@@ -1380,181 +1342,103 @@ def diagrama_pastel_resultados(doc, passed, failed, xfailed=0, titulo="Distribuc
 # ============================================================================
 
 def diagrama_flujo_pipeline_ia(doc, titulo="Pipeline de IA - 10 Etapas"):
-    """
-    Diagrama de flujo profesional del pipeline de IA.
-    Layout vertical de una sola columna con capas semanticas y colores significativos.
-    - Azul: Entrada
-    - Verde: Preprocesamiento (limpieza, normalizacion)
-    - Purpura/Naranja: IA / Modelos (sentiment, emotion, crisis)
-    - Rosa: Salida / Resultado
-    """
+    """Pipeline profesional sin flechas: circulos numerados, swimlanes, linea vertical."""
     import matplotlib.patches as mpatches
     if not _HAS_MPL: return
-
     etapas = [
-        ("1. Recepcion de texto\nPOST /analyze", PALETTA['primario'], "ENTRADA"),
-        ("2. Limpieza de emojis\nemoji.replace_emoji()", PALETTA['exito'], "PREPROCESO"),
-        ("3. Normalizacion de jerga\n70+ expresiones mexicanas", PALETTA['exito'], "PREPROCESO"),
-        ("4. Analisis de Sentimiento\nRobertuito POS/NEG/NEU", PALETTA['info'], "MODELO IA"),
-        ("5. Refuerzo Emocional\nIntensificadores + Mayusculas", PALETTA['advertencia'], "MODELO IA"),
-        ("6. Deteccion de Crisis\nKeywords + Fuzzy + Regex", PALETTA['peligro'], "MODELO IA"),
-        ("7. Analisis de Emociones\nRobertuito 7 categorias", PALETTA['info'], "MODELO IA"),
-        ("8. Refuerzo por Keywords\n200+ palabras clave", PALETTA['advertencia'], "MODELO IA"),
-        ("9. Calculo de Confianza\nScore -1.0 a +1.0", PALETTA['advertencia'], "EVALUACION"),
-        ("10. Resumen Empatico\nTexto personalizado", PALETTA['secundario'], "SALIDA"),
+        ("1. Recepcion de texto\n(POST /analyze)", PALETTA['primario'], "ENTRADA"),
+        ("2. Limpieza de emojis\n(emoji.replace_emoji)", PALETTA['exito'], "PREPROCESO"),
+        ("3. Normalizacion de jerga\n(70+ expresiones)", PALETTA['exito'], "PREPROCESO"),
+        ("4. Analisis de Sentimiento\n(Robertuito POS/NEG/NEU)", PALETTA['info'], "MODELO IA"),
+        ("5. Refuerzo Emocional\n(Intensificadores + Mayusculas)", PALETTA['advertencia'], "MODELO IA"),
+        ("6. Deteccion de Crisis\n(Keywords + Fuzzy + Regex)", PALETTA['peligro'], "MODELO IA"),
+        ("7. Analisis de Emociones\n(Robertuito 7 categorias)", PALETTA['info'], "MODELO IA"),
+        ("8. Refuerzo por Keywords\n(200+ palabras clave)", PALETTA['advertencia'], "EVALUACION"),
+        ("9. Calculo de Confianza\n(Score -1.0 a +1.0)", PALETTA['advertencia'], "EVALUACION"),
+        ("10. Resumen Empatico\n(Texto personalizado)", PALETTA['secundario'], "SALIDA"),
     ]
-
-    capas_colors = {
-        'ENTRADA': PALETTA['primario'] + '15',
-        'PREPROCESO': PALETTA['exito'] + '12',
-        'MODELO IA': PALETTA['info'] + '10',
-        'EVALUACION': PALETTA['advertencia'] + '10',
-        'SALIDA': PALETTA['secundario'] + '12',
-    }
-
-    n = len(etapas)
-    row_h = 1.35
-    fig, ax = plt.subplots(figsize=(12, n * row_h + 3))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, n * row_h + 3.5)
-    ax.axis('off')
-    ax.set_title(titulo, fontsize=15, fontweight='bold', pad=20, color=PALETTA['primario'])
-
-    box_w, box_h = 5.5, 0.75
-    cx = 5.0
-
-    # Dibujar fondos de capa
-    last_capa = None
-    capa_start_y = None
-    for i, (_, _, capa) in enumerate(etapas):
-        y = (n - i) * row_h + 0.8
-        if capa != last_capa:
-            if last_capa and capa_start_y is not None:
-                rect_h = capa_start_y - y + (box_h + 0.15)
-                if rect_h > 0:
-                    bg_rect = mpatches.FancyBboxPatch((0.15, y - 0.25), 9.7, rect_h,
-                               boxstyle="round,pad=0.15", edgecolor='none',
-                               facecolor=capas_colors.get(last_capa, '#F8F9FA'), linewidth=0)
-                    ax.add_patch(bg_rect)
-                    mid = y + (rect_h / 2) - 0.15
-                    ax.text(0.5, mid, last_capa, fontsize=7.5, fontweight='bold',
-                           color=PALETTA['neutro'], rotation=90, va='center', ha='center')
-            last_capa = capa
-            capa_start_y = y
-
-    # Last capa background
-    if last_capa and capa_start_y:
-        bottom_y = (n - (n - 1)) * row_h + 0.8 - box_h - 0.3
-        rect_h = capa_start_y - bottom_y + (box_h + 0.15)
-        if rect_h > 0:
-            bg_rect = mpatches.FancyBboxPatch((0.15, bottom_y - 0.15), 9.7, rect_h,
-                       boxstyle="round,pad=0.15", edgecolor='none',
-                       facecolor=capas_colors.get(last_capa, '#F8F9FA'), linewidth=0)
-            ax.add_patch(bg_rect)
-            mid = bottom_y + (rect_h / 2)
-            ax.text(0.5, mid, last_capa, fontsize=7.5, fontweight='bold',
-                   color=PALETTA['neutro'], rotation=90, va='center', ha='center')
-
-    # Dibujar cajas con espacio amplio entre ellas
-    arrow_gap = 0.25
-    for i, (texto, color, _) in enumerate(etapas):
-        y = (n - i) * row_h + 0.8
-        x = cx - box_w / 2
-
-        rect = mpatches.FancyBboxPatch((x, y), box_w, box_h,
-               boxstyle="round,pad=0.12", edgecolor=color,
-               facecolor=f'{color}18', linewidth=2)
-        ax.add_patch(rect)
-        ax.text(cx, y + box_h / 2, texto, ha='center', va='center',
-                fontsize=8, fontweight='bold', color=color, linespacing=1.3)
-
-        if i > 0:
-            start_y = y + box_h
-            end_y = y - arrow_gap
-            ax.annotate('', xy=(cx, end_y), xytext=(cx, start_y),
-                       arrowprops=dict(arrowstyle='->', color=PALETTA['neutro'], lw=2.2,
-                                      connectionstyle='arc3,rad=0'))
-
+    capbg = {'ENTRADA':PALETTA['primario']+'10','PREPROCESO':PALETTA['exito']+'0C','MODELO IA':PALETTA['info']+'0C','EVALUACION':PALETTA['advertencia']+'0A','SALIDA':PALETTA['secundario']+'0E'}
+    n=len(etapas); rh=1.3
+    fig,ax=plt.subplots(figsize=(14,n*rh+4))
+    ax.set_xlim(0,14);ax.set_ylim(0,n*rh+4.5);ax.axis('off')
+    ax.set_title(titulo,fontsize=16,fontweight='bold',pad=25,color=PALETTA['primario'])
+    ymin,ymax=n*rh+1.2+0.65,1.2-0.65
+    ax.plot([2.0,2.0],[ymin,ymax],color=PALETTA['neutro']+'60',lw=2.5,zorder=1)
+    lc,csy=None,None
+    for i,(txt,col,capa) in enumerate(etapas):
+        y=(n-i)*rh+1.2
+        if capa!=lc:
+            if lc and csy is not None: ax.axhspan(y-0.15,csy+0.15,xmin=0.02,xmax=0.98,facecolor=capbg.get(lc,'#F8F9FA'),zorder=0,alpha=0.6)
+            lc,capa= capa,y
+        c=plt.Circle((2.0,y),0.28,edgecolor=col,facecolor='white',linewidth=2.2,zorder=3)
+        ax.add_patch(c)
+        ax.text(2.0,y,str(i+1),ha='center',va='center',fontsize=8.5,fontweight='bold',color=col,zorder=4)
+        bx=2.0+0.85;bw=9.3
+        box=mpatches.FancyBboxPatch((bx,y-0.33),bw,0.66,boxstyle="round,pad=0.1",edgecolor=col,facecolor=f'{col}12',linewidth=1.8,zorder=2)
+        ax.add_patch(box)
+        ax.text(bx+bw/2,y,txt,ha='center',va='center',fontsize=7.8,fontweight='bold',color=col,linespacing=1.3,zorder=3)
+        ax.plot([2.0+0.28,bx-0.12],[y,y],color=col+'60',lw=1,zorder=2)
+    if lc and csy is not None: ax.axhspan(1.2-0.75,csy+0.15,xmin=0.02,xmax=0.98,facecolor=capbg.get(lc,'#F8F9FA'),zorder=0,alpha=0.6)
+    for capa_name in ['ENTRADA','PREPROCESO','MODELO IA','EVALUACION','SALIDA']:
+        yi=[(n-i)*rh+1.2 for i,(_,_,c) in enumerate(etapas) if c==capa_name]
+        if yi: ax.text(0.3,(min(yi)+max(yi))/2,capa_name,fontsize=7,fontweight='bold',color=PALETTA['neutro'],rotation=90,va='center',ha='center')
     plt.tight_layout()
-    buf = _fig_to_png(fig)
-    doc.add_picture(buf, width=Cm(15))
-    plt.close(fig); buf.close()
-    doc.add_paragraph(
-        'Figura: Pipeline de IA de MindMood. Las 10 etapas se organizan en 5 capas: '
-        'Entrada (recepción del texto), Preprocesamiento (limpieza y normalización de jerga), '
-        'Modelo IA (análisis de sentimiento, detección de crisis y emociones con Robertuito), '
-        'Evaluación (cálculo de confianza y refuerzo), y Salida (resumen empático). '
-        'El flujo es estrictamente secuencial de arriba hacia abajo.')
+    buf=_fig_to_png(fig);doc.add_picture(buf,width=Cm(16));plt.close(fig);buf.close()
+    doc.add_paragraph('Figura: Pipeline secuencial de 10 etapas con circulos numerados sobre linea vertical central. Sin flechas innecesarias porque el flujo es estrictamente lineal de arriba hacia abajo. Las etapas 4 y 7 utilizan modelos HuggingFace Robertuito. La etapa 6 implementa deteccion de crisis en 3 niveles.')
+
 
 def diagrama_er_database(doc, titulo="Diagrama Entidad-Relacion - Base de Datos"):
-    """
-    Genera un diagrama Entidad-Relacion (ER) de la base de datos PostgreSQL
-    de MindMood, mostrando las 3 tablas principales y sus relaciones.
-
-    Tablas: profiles (6 campos), entries (7 campos), contact_requests (8 campos).
-    Relaciones: profiles 1---N entries, profiles 1---N contact_requests.
-    """
+    """ERD profesional: profiles como tabla padre arriba, entries y contact_requests abajo.
+    PK en morado, FK en ambar, cardinalidad explicita, tipos de datos."""
     import matplotlib.patches as mpatches
     if not _HAS_MPL: return
-
-    tablas = [
-        {"nombre": "profiles", "campos": [
-            "id (PK)", "email", "nombre", "avatar",
-            "tema", "idioma", "created_at"]},
-        {"nombre": "entries", "campos": [
-            "id (PK)", "user_id (FK)", "texto", "mood",
-            "score", "requires_help", "created_at"]},
-        {"nombre": "contact_requests", "campos": [
-            "id (PK)", "user_id (FK)", "admin_id (FK)",
-            "entry_id (FK)", "status", "mensaje", "respuesta", "created_at"]},
+    tablas=[
+        {"nombre":"profiles (Padre)","x":7,"y":6.5,"campos":[
+            ("id","UUID","PK"),("email","TEXT",""),("nombre","TEXT",""),
+            ("avatar","TEXT",""),("tema","TEXT",""),("idioma","TEXT",""),
+            ("created_at","TIMESTAMPTZ","")]},
+        {"nombre":"entries","x":3,"y":3,"campos":[
+            ("id","UUID","PK"),("user_id","UUID","FK"),
+            ("texto","TEXT",""),("mood","TEXT",""),
+            ("score","FLOAT",""),("requires_help","BOOLEAN",""),
+            ("created_at","TIMESTAMPTZ","")]},
+        {"nombre":"contact_requests","x":11,"y":3,"campos":[
+            ("id","UUID","PK"),("user_id","UUID","FK"),
+            ("admin_id","UUID","FK"),("entry_id","UUID","FK"),
+            ("status","TEXT",""),("mensaje","TEXT",""),
+            ("created_at","TIMESTAMPTZ","")]},
     ]
-
-    fig, ax = plt.subplots(figsize=(16, 7))
-    ax.set_xlim(0, 16); ax.set_ylim(0, 8)
-    ax.axis('off')
-    ax.set_title(titulo, fontsize=14, fontweight='bold', pad=15, color='#6366F1')
-    ax.text(8, 7.5, 'RLS: Row Level Security habilitado en todas las tablas | 12 funciones RPC SECURITY DEFINER',
-            ha='center', fontsize=8, color='#64748B', style='italic')
-
-    positions = [(2, 3.5), (8, 3.5), (14, 3.5)]
-
-    for (xx, yy), tabla in zip(positions, tablas):
-        n_campos = len(tabla["campos"])
-        altura = max(n_campos * 0.35 + 0.6, 2.5)
-        rect = mpatches.FancyBboxPatch((xx - 2, yy - altura/2), 4, altura,
-               boxstyle="round,pad=0.1", edgecolor='#6366F1',
-               facecolor='#EEF2FF', linewidth=1.5)
+    fig,ax=plt.subplots(figsize=(16,10));ax.set_xlim(0,16);ax.set_ylim(0,9);ax.axis('off')
+    ax.set_title(titulo,fontsize=14,fontweight='bold',pad=15,color=PALETTA['primario'])
+    colors={'PK':'#7C3AED','FK':'#F59E0B','':'#0F172A'}
+    for t in tablas:
+        nf=len(t['campos']);h=max(nf*0.32+0.5,2.5);w=4.8
+        rect=mpatches.FancyBboxPatch((t['x']-w/2,t['y']-h/2),w,h,boxstyle="round,pad=0.1",
+              edgecolor=PALETTA['primario'],facecolor='#EEF2FF',linewidth=1.8)
         ax.add_patch(rect)
-        ax.text(xx, yy + altura/2 - 0.25, tabla["nombre"],
-                ha='center', fontsize=10, fontweight='bold', color='#6366F1')
-        ax.axhline(y=yy + altura/2 - 0.5, xmin=(xx-1.8)/16, xmax=(xx+1.8)/16,
-                   color='#6366F1', linewidth=1)
-        for j, campo in enumerate(tabla["campos"]):
-            clr = '#0F172A'
-            if '(PK)' in campo: clr = '#7C3AED'
-            elif '(FK)' in campo: clr = '#F59E0B'
-            ax.text(xx, yy + altura/2 - 0.7 - j * 0.35, campo,
-                    ha='center', fontsize=7.5, fontfamily='monospace', color=clr)
-
-    ax.annotate('', xy=(5.8, 3.5), xytext=(4.2, 3.5),
-               arrowprops=dict(arrowstyle='-', color='#F59E0B', lw=1.2))
-    ax.text(5, 4.1, '1:N', ha='center', fontsize=7, color='#F59E0B', fontweight='bold')
-    ax.annotate('', xy=(11.8, 3.5), xytext=(10.2, 3.5),
-               arrowprops=dict(arrowstyle='-', color='#F59E0B', lw=1.2))
-    ax.text(11, 4.1, '1:N', ha='center', fontsize=7, color='#F59E0B', fontweight='bold')
-
+        ax.text(t['x'],t['y']+h/2-0.3,t['nombre'],ha='center',fontsize=10,fontweight='bold',color=PALETTA['primario'])
+        ax.axhline(y=t['y']+h/2-0.55,xmin=(t['x']-2.2)/16,xmax=(t['x']+2.2)/16,color=PALETTA['primario'],linewidth=1.2)
+        for j,(campo,tipo,rol) in enumerate(t['campos']):
+            clr=colors.get(rol,PALETTA['texto_oscuro'])
+            txt=f"{campo}" if not rol else f"{campo} [{rol}]"
+            ax.text(t['x'],t['y']+h/2-0.75-j*0.32,txt,ha='center',fontsize=7.5,fontfamily='monospace',color=clr)
+            if tipo:
+                ax.text(t['x']+w/2-0.4,t['y']+h/2-0.75-j*0.32,tipo,ha='right',fontsize=6.5,fontfamily='monospace',color='#94A3B8')
+    # Relaciones: profiles -> entries (1:N)
+    ax.annotate('',xy=(3,3+1.3),xytext=(7,6.5-1.3),arrowprops=dict(arrowstyle='-',color=PALETTA['advertencia'],lw=1.5))
+    ax.text(5.5,5.2,'1:N',ha='center',fontsize=8,color=PALETTA['advertencia'],fontweight='bold')
+    # profiles -> contact_requests (1:N)
+    ax.annotate('',xy=(11,3+1.3),xytext=(7,6.5-1.3),arrowprops=dict(arrowstyle='-',color=PALETTA['advertencia'],lw=1.5))
+    ax.text(9.5,5.2,'1:N',ha='center',fontsize=8,color=PALETTA['advertencia'],fontweight='bold')
+    # entries -> contact_requests (1:N via entry_id)
+    ax.annotate('',xy=(11-1.5,3+1.3),xytext=(3+1.5,3+1.3),
+        arrowprops=dict(arrowstyle='-',color=PALETTA['peligro'],lw=1.5,connectionstyle='arc3,rad=-0.3'))
+    ax.text(7,3+2.1,'1:N (via entry_id)',ha='center',fontsize=7,color=PALETTA['peligro'],fontweight='bold')
+    ax.text(8,1.2,'[PK] = Primary Key (morado)  |  [FK] = Foreign Key (ambar)',ha='center',fontsize=8,color=PALETTA['neutro'])
     plt.tight_layout()
-    buf = _fig_to_png(fig)
-    doc.add_picture(buf, width=Cm(16))
-    plt.close(fig); buf.close()
-    doc.add_paragraph(
-        'Explicacion: Diagrama Entidad-Relacion de la base de datos Supabase PostgreSQL. '
-        'La tabla profiles almacena los datos de usuario (email, nombre, avatar, '
-        'preferencias de tema e idioma). La tabla entries registra cada entrada del '
-        'diario con su analisis emocional (mood, score, requires_help). La tabla '
-        'contact_requests gestiona las solicitudes de contacto entre administradores '
-        'y usuarios en casos de crisis detectada. Las PK (primary keys) se muestran '
-        'en morado y las FK (foreign keys) en ambar.')
+    buf=_fig_to_png(fig);doc.add_picture(buf,width=Cm(16));plt.close(fig);buf.close()
+    doc.add_paragraph('Figura: Diagrama ER jerarquico con profiles como tabla padre. Las PK se muestran en morado y FK en ambar. La relacion entries -> contact_requests via entry_id se muestra con linea roja discontinua. Los tipos de datos SQL se muestran a la derecha de cada campo.')
+
 
 def diagrama_radar_calidad(doc, valores=None, titulo="Atributos de Calidad ISO/IEC 25010"):
     """
