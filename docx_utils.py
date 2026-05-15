@@ -64,38 +64,54 @@ def _mermaid_encode(code):
 
 def _mermaid_to_png(code):
     """Convierte codigo Mermaid a PNG via mermaid.ink API."""
-    encoded = _mermaid_encode(code)
-    url = f'https://mermaid.ink/img/{encoded}'
+    import struct
     try:
-        with urllib.request.urlopen(url, timeout=15) as resp:
-            return io.BytesIO(resp.read())
+        compressed = zlib.compress(code.encode('utf-8'), 9)[2:-4]
+        encoded = base64.urlsafe_b64encode(compressed).decode().rstrip('=')
+        url = f'https://mermaid.ink/img/pako:{encoded}'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            if resp.status == 200:
+                return io.BytesIO(resp.read())
     except Exception:
-        return None
+        pass
+    return None
 
 def insertar_diagrama_mermaid(doc, code, titulo="", ancho_cm=16):
     """
-    Inserta un diagrama Mermaid en el documento Word via mermaid.ink.
-
-    Parametros:
-        doc: documento Word
-        code: string con codigo Mermaid (graph TD, erDiagram, sequenceDiagram, etc.)
-        titulo: texto descriptivo opcional debajo del diagrama
-        ancho_cm: ancho de la imagen en cm
+    Inserta un diagrama Mermaid en el documento Word.
+    Si la API mermaid.ink falla, muestra el codigo Mermaid como
+    bloque de codigo formateado profesionalmente.
     """
     buf = _mermaid_to_png(code)
     if buf:
         doc.add_picture(buf, width=Cm(ancho_cm))
         buf.close()
-        if titulo:
-            p = doc.add_paragraph()
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            r = p.add_run(titulo)
-            r.font.size = Pt(9)
-            r.font.color.rgb = RGBColor(100, 116, 139)
-            r.italic = True
-            p.paragraph_format.space_before = Pt(4)
     else:
-        doc.add_paragraph(f'[Diagrama Mermaid no disponible: {titulo or code[:50]}...]')
+        # Fallback: formatted code block with border
+        doc.add_paragraph()
+        for line in code.strip().split('\n'):
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            p.paragraph_format.line_spacing = 1.1
+            r = p.add_run('  ' + line)
+            r.font.name = 'Courier New'
+            r.font.size = Pt(8)
+            r.font.color.rgb = RGBColor(30, 41, 59)
+            shading = OxmlElement('w:shd')
+            shading.set(qn('w:fill'), 'F1F5F9')
+            shading.set(qn('w:val'), 'clear')
+            p._element.get_or_add_pPr().append(shading)
+    if titulo:
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r = p.add_run(titulo)
+        r.font.size = Pt(8)
+        r.font.color.rgb = RGBColor(100, 116, 139)
+        r.italic = True
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(8)
 
 
 # === IMPORTS CONDICIONALES: Matplotlib para graficos y diagramas cientificos ===

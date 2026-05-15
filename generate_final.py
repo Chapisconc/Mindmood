@@ -1344,8 +1344,6 @@ def create_tesis():
     except Exception:
         doc.add_paragraph('[Diagrama de secuencia no disponible]')
 
-nible]')
-
     # ==========================================================================
     # 10. DIAGRAMA DE CLASES DE LA ARQUITECTURA
     # ==========================================================================
