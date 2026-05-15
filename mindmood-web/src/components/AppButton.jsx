@@ -1,33 +1,29 @@
-import { Loader } from "lucide-react";
-import { useTheme } from "../theme/ThemeContext";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/theme/ThemeContext";
 
 export default function AppButton({ title, onClick, loading = false, className = "" }) {
   const { themeStyles } = useTheme();
   const gradient = themeStyles.accentGradient;
 
   return (
-    <button
+    <Button
       onClick={onClick}
       disabled={loading}
-      className={`w-full rounded-[28px] relative overflow-hidden transition-all duration-200 active:scale-[0.97] disabled:opacity-60 ${className}`}
+      className={`group relative w-full h-14 text-[17px] font-extrabold tracking-[0.8px] uppercase rounded-[28px] disabled:opacity-60 overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${className}`}
       style={{
-        boxShadow: `0 12px 20px ${gradient[0]}80`,
+        background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]}, ${gradient[2]})`,
+        backgroundSize: "200% 200%",
+        animation: "gradient-x 4s ease infinite",
+        boxShadow: `0 0 30px ${gradient[0]}40, 0 8px 20px ${gradient[1]}30`,
       }}
     >
-      <div
-        className="py-[22px] px-6 flex items-center justify-center min-h-[64px]"
-        style={{
-          background: `linear-gradient(90deg, ${gradient[0]}, ${gradient[1]}, ${gradient[2]})`,
-        }}
-      >
-        {loading ? (
-          <Loader className="animate-spin text-white" size={22} />
-        ) : (
-          <span className="text-white font-extrabold text-[17px] tracking-[0.8px] uppercase">
-            {title}
-          </span>
-        )}
-      </div>
-    </button>
+      {loading ? (
+        <span className="flex items-center gap-2">
+          <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+        </span>
+      ) : (
+        <span className="text-white drop-shadow-sm">{title}</span>
+      )}
+    </Button>
   );
 }

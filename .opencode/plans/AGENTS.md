@@ -1,148 +1,82 @@
-# MindMood Agent Guide
+# MindMood — Diario Inteligente
 
-## Project Structure
-```
-├── ai_api/           # AI backend (FastAPI + HuggingFace)
-│   ├── main.py       # Sentiment analysis + crisis detection
-│   ├── requirements.txt
-│   └── Procfile      # Render deployment
-├── mindmood-web/     # Web app (Vite + React + TailwindCSS)
-│   ├── src/
-│   │   ├── pages/    # All route pages
-│   │   ├── components/  # Reusable components
-│   │   ├── hooks/    # useAuth, useStats, useJournalEntry
-│   │   ├── services/ # Supabase, cache, contact
-│   │   ├── theme/    # Dark/light themes + ThemeContext
-│   │   └── i18n/     # Spanish/English translations
-│   ├── .env.example
-│   ├── vercel.json
-│   └── vite.config.js
-├── docs/             # SQL schemas + migrations
-├── datasets/         # Training data for NLP
-├── tests/            # Pytest tests (API)
-├── render.yaml       # Render.com deployment config
-└── .gitignore
-```
+## Commands
 
-## Quick Start
-
-### Web App
 ```bash
-cd mindmood-web
-npm run dev          # http://localhost:5173
-npm run build        # production build
-npm run preview      # preview build locally
-```
+# Frontend (mindmood-web/)
+npm run dev          # vite dev → http://localhost:5173
+npm run build        # vite build → mindmood-web/dist/
+npm run preview      # preview production build
 
-### AI API (local)
-```bash
-cd ai_api
-python -m venv venv
-.\venv\Scripts\activate
-pip install -r requirements.txt
+# Root (delegates to mindmood-web/)
+npm run dev
+npm run build
+
+# AI API (ai_api/)
+python -m venv venv; .\venv\Scripts\activate; pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+# Tests
+python -m pytest tests/ -v                      # ISO 25010 suite
+python tests/test_sentiments.py                  # manual 87-case runner
 ```
 
-## Environment Variables
+## Structure
 
-### Web App (`mindmood-web/.env`)
-```
-VITE_SUPABASE_URL=https://[project].supabase.co
-VITE_SUPABASE_ANON_KEY=[anon_key]
-VITE_API_TUNNEL_URL=https://your-tunnel.trycloudflare.com
-VITE_API_LOCAL_URL=http://127.0.0.1:8000
-```
+├── mindmood-web/     React 19 + Vite 6 + TailwindCSS v4 + shadcn/ui (JSX, no TS)
+├── ai_api/           FastAPI + HuggingFace transformers
+├── tests/            pytest test suite
+├── docs/sql/         Supabase schema + migrations
+├── datasets/         NLP training data
+├── render.yaml       Render.com deploy config
+├── start_local.ps1   API local launcher
 
-### AI API (`ai_api/.env`)
-```
-SUPABASE_URL=https://[project].supabase.co
-SUPABASE_KEY=[service_role_key]
-CORS_ORIGINS=https://mindmood.vercel.app,http://localhost:5173
-```
+## Architecture
+
+- **Auth**: Supabase PKCE, localStorage adapter. `profiles.role` → admin redirect.
+- **Sentiment**: `pysentimiento/robertuito-sentiment-analysis` + `pysentimiento/robertuito-emotion-analysis`
+- **Crisis**: keyword + regex + fuzzy matching (SequenceMatcher)
+- **Rate limit**: 10 req/60s per IP (in-memory)
+- **UI Library**: shadcn/ui (Radix primitives, `cn()` via `tailwind-merge` + `clsx`)
+- **Dark mode**: `.dark` class on `<html>`, managed via ThemeContext. Tailwind `@custom-variant dark (&:where(.dark, .dark *));` + shadcn CSS vars
+- **PWA**: vite-plugin-pwa, auto-update service worker, Workbox runtime caching
+- **Icons**: lucide-react (also shadcn default icon library)
+- **Animations**: framer-motion
+- **Charts**: recharts
+
+## Gotchas
+
+- **No TypeScript** — pure JSX throughout
+- **No ESLint config** — ESLint is a devDep but no `.eslintrc*` exists
+- **No CI/GitHub Actions** — no `.github/` directory
+- **Root lockfile empty** — real `package-lock.json` is in `mindmood-web/`
+- **Root `vercel.json`** outputs `mindmood-web/dist` — Vercel config at repo root
+- **AI API too heavy for Render free tier** — runs locally (`.\start_local.ps1`)
+- **TailwindCSS v4** — uses `@import "tailwindcss"` (not old `@tailwind` directives)
+- **shadcn/ui JSX** — project has no TypeScript. All shadcn components are in `.jsx` manually converted from `.tsx`
+- **New shadcn components** — use `npx shadcn@latest add <name>`, then convert output `.tsx` → `.jsx` (remove types, change `.tsx` → `.jsx`)
+- **Env files required**: `mindmood-web/.env` (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_LOCAL_URL) and `ai_api/.env` (SUPABASE_URL, SUPABASE_KEY, CORS_ORIGINS)
+
+## API Endpoints (ai_api)
+
+| Path | Method | |
+|------|--------|-|
+| `/analyze` | POST | Main analysis → mood, score, crisis, summary |
+| `/health` | GET | Health check + version |
+| `/` | GET | API root + status |
+
+## Routes (mindmood-web)
+
+`/` → Login (public), `/register` → Register (public), `/home` → Home, `/new-entry`, `/history`, `/stats`, `/profile`, `/inbox`, `/admin-dashboard` (admin only)
+
+## Test Structure
+
+`tests/test_mindmood.py` organized per ISO/IEC 25010:
+- Part 1: Modular (emoji removal, slang normalization, crisis, intensifiers, negation)
+- Part 2: Integration (full pipeline: positive, negative, slang, crisis, emoji)
+- Part 3: System (health check, input validation, schema, performance <5s)
 
 ## Deployment
 
-### Frontend → Vercel
-1. `cd mindmood-web`
-2. `npx vercel --prod`
-3. Set env var in Vercel: `VITE_API_TUNNEL_URL=https://your-tunnel.trycloudflare.com`
-
-### Backend → Local + Cloudflare Tunnel
-The HuggingFace transformer needs too much RAM for free Render tier, so the AI API runs locally.
-
-**Prerequisites:**
-1. Install cloudflared from https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
-2. Create `ai_api/.env` with your Supabase credentials
-
-**Start everything with one command:**
-```powershell
-.\start_local.ps1
-```
-
-This starts the API on `http://127.0.0.1:8000` and exposes it via Cloudflare Tunnel. The tunnel URL (something like `https://mindmood-api.trycloudflare.com`) is shown in the terminal — set that as `VITE_API_TUNNEL_URL` on your Vercel project.
-
-**Or start manually:**
-```bash
-cd ai_api
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-# In another terminal:
-cloudflared tunnel --url http://localhost:8000
-```
-
-## Key Architecture
-
-### Web App
-- **Stack**: Vite + React 19 + TailwindCSS v4 + React Router v7
-- **Charts**: Recharts + custom shadcn-style wrappers
-- **Animations**: Framer Motion
-- **Auth**: Supabase (localStorage adapter)
-- **PWA**: vite-plugin-pwa (service worker auto-update)
-
-### AI API
-- **Sentiment Analysis**: HuggingFace transformers pipeline
-- **Crisis Detection**: Keyword-based + score threshold
-- **Rate Limiting**: In-memory (10 req/60s per IP)
-- **CORS**: Configurable via ALLOWED_ORIGINS env var
-
-### Routes (Web)
-| Path | Page | Auth |
-|------|------|------|
-| `/` | Login | No |
-| `/register` | Register | No |
-| `/home` | Home | Yes |
-| `/new-entry` | NewEntry | Yes |
-| `/history` | History | Yes |
-| `/stats` | Stats | Yes |
-| `/profile` | Profile | Yes |
-| `/inbox` | Inbox | Yes |
-| `/admin-dashboard` | AdminDashboard | Admin |
-
-### Admin Redirect
-After login, checks `profiles.role`. If "admin" → `/admin-dashboard`, else → `/home`.
-
-## Code Conventions
-- **Web**: TailwindCSS classes + inline `style` for dynamic theme colors
-- **Charts**: Use `ChartContainer` wrapper from `components/ui/Chart.jsx`
-- **Icons**: lucide-react (see `components/Icon.jsx` for RN→web mapping)
-- **Animations**: `motion.div` with staggered delays
-- **State**: React hooks + global singleton for auth (useAuth)
-
-## Troubleshooting
-
-### Entries not showing
-- Clear localStorage in DevTools → Application → Clear storage
-- Verify Supabase `entries` table has data for your user_id
-- Check browser console for errors
-
-### API returning 405 on /analyze
-- Endpoint expects POST, not GET
-- Check CORS: ensure web origin is in ALLOWED_ORIGINS
-
-### Admin not redirecting
-- Check `profiles.role` column exists and has value "admin"
-- Default role is NULL → goes to /home
-
-### CORS errors
-- Update `ai_api/main.py` ALLOWED_ORIGINS list
-- Or set `CORS_ORIGINS` env var on Render
+- **Frontend**: `cd mindmood-web && npx vercel --prod`
+- **AI API**: `.\start_local.ps1` starts uvicorn on `http://127.0.0.1:8000`

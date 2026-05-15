@@ -65,5 +65,24 @@ mindmood-web/dist/
 # Skills lock
 skills-lock.json
 
+# Generated document artifacts
+*.docx
+*.doc
+*.xlsx
+*.pptx
+~$*
+
+# Templates and extracted content
+plantillasword/
+
+# Test evidence reports
+tests/*.json
+
+# Vercel + IDE
 .vercel
+.vscode/
+.idea/
 .env*.local
+
+# OpenCode plans (keep skills)
+.opencode/plans/

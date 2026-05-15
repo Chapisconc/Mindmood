@@ -1,0 +1,13 @@
+{
+  // ================================================================
+  // jsconfig.json — Configuración de JavaScript (VSCode)
+  // Define el alias @/* para apuntar a ./src/*. Esto permite imports
+  // como '@/components/Button' en lugar de rutas relativas.
+  // ================================================================
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

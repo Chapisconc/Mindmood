@@ -1,20 +1,41 @@
-import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
-import { ArrowLeft, Bell, Phone, Mail } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useTheme } from "../theme/ThemeContext";
-import { useAuth } from "../hooks/useAuth";
-import { contactService } from "../services/contactService";
-import ContactInfoModal from "../components/ContactInfoModal";
+/* ------------------------------------------------------------------ */
+/* Inbox.jsx — Bandeja de entrada del usuario                         */
+/* Ruta: /inbox                                                       */
+/* Propósito: Mostrar solicitudes de contacto del admin,              */
+/* permitir aceptar/rechazar y ver info de contacto profesional.      */
+/* Requiere autenticación.                                            */
+/* ------------------------------------------------------------------ */
 
+// React hooks para estado, efectos y memoización de callbacks
+import { useState, useEffect, useCallback } from "react";
+// Framer Motion para animaciones de lista y carga
+import { motion } from "framer-motion";
+// Iconos de interfaz: campana, recargar, usuario, teléfono, check, cruz
+import { Bell, RefreshCw, User, Phone, Mail, Check, X } from "lucide-react";
+// Hook de navegación para redirecciones
+import { useNavigate } from "react-router-dom";
+// Hook de autenticación (user)
+import { useAuth } from "../hooks/useAuth";
+// Servicio de contacto: obtener solicitudes, aceptar, rechazar
+import { contactService } from "../services/contactService";
+// Modal que muestra datos del contacto profesional (nombre, email, teléfono)
+import ContactInfoModal from "../components/ContactInfoModal";
+import BackgroundDecor from "../components/BackgroundDecor";
+
+/* Componente principal de la bandeja de entrada */
 export default function Inbox() {
+  /* Hook de navegación (no usado directamente en este componente) */
   const navigate = useNavigate();
-  const { themeStyles } = useTheme();
+  /* Usuario autenticado actual */
   const { user } = useAuth();
+  /* Lista de solicitudes de contacto del admin */
   const [requests, setRequests] = useState([]);
+  /* Indicador de carga inicial */
   const [loading, setLoading] = useState(true);
+  /* Estado del modal de información de contacto */
   const [contactModal, setContactModal] = useState({ visible: false, name: "", email: "", phone: "" });
 
+  /* Obtiene las solicitudes de contacto del usuario desde Supabase */
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     const { data, error } = await contactService.getMyRequests();
@@ -22,8 +43,10 @@ export default function Inbox() {
     setLoading(false);
   }, []);
 
+  /* Efecto inicial: carga las solicitudes al montar el componente */
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
+  /* Acepta una solicitud de contacto y muestra el modal con los datos del admin */
   const handleAccept = async (requestId) => {
     const { data, error } = await contactService.acceptCrisEntry(requestId);
     if (!error && data) {
@@ -32,6 +55,7 @@ export default function Inbox() {
     }
   };
 
+  /* Rechaza una solicitud de contacto tras confirmación del usuario */
   const handleReject = async (requestId) => {
     if (confirm("¿Estás seguro de que deseas declinar esta invitación?")) {
       await contactService.rejectCrisEntry(requestId);
@@ -39,13 +63,14 @@ export default function Inbox() {
     }
   };
 
-  const handleAction = (item) => {
-    if (item.status === "accepted") {
-      const admin = item.admin || {};
-      setContactModal({ visible: true, name: admin.contact_name || "Contacto Profesional", email: admin.contact_email || admin.email || "", phone: admin.contact_phone || "" });
-    }
+  /* Muestra el modal de contacto si la solicitud ya fue aceptada */
+  const handleShowContact = async (item) => {
+    if (item.status !== "accepted") return;
+    const { data } = await contactService.getContactInfo(item.id);
+    if (data) setContactModal({ visible: true, name: data.admin_name || "Contacto Profesional", email: data.admin_email || "", phone: data.admin_phone || "" });
   };
 
+  {/* Spinner de carga mientras se obtienen las solicitudes */}
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -55,87 +80,103 @@ export default function Inbox() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 relative overflow-hidden">
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-500/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 lg:px-12 py-6 lg:py-12 relative z-10 pb-24">
-        <header className="flex items-center gap-4 mb-10">
-          <button onClick={() => navigate("/home")} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors dark:text-white">
-            <ArrowLeft className="w-6 h-6" />
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950">
+      {/*
+        Contenedor principal.
+        pb-24 reserva espacio para la barra de navegación inferior.
+      */}
+      <div className="max-w-3xl mx-auto px-4 lg:px-8 py-6 lg:py-12 pb-24">
+        {/* Encabezado: título y contador de mensajes */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight dark:text-white">Bandeja</h1>
+            <p className="text-slate-400 dark:text-slate-500 font-medium text-sm mt-1">{requests.length > 0 ? `${requests.length} mensaje${requests.length !== 1 ? "s" : ""}` : ""}</p>
+          </div>
+          {/* Botón para recargar solicitudes manualmente */}
+          <button onClick={fetchRequests} className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:scale-105 transition-transform cursor-pointer">
+            <RefreshCw className="w-4 h-4 text-slate-500" />
           </button>
-          <h1 className="text-3xl font-black dark:text-white">Bandeja</h1>
-        </header>
+        </div>
 
+        {/* Estado vacío: no hay mensajes */}
         {requests.length === 0 ? (
-          <div className="flex flex-col items-center mt-20">
-            <Bell size={68} className="text-slate-300 dark:text-slate-600" />
-            <p className="mt-5 text-lg font-semibold text-slate-400">No tienes mensajes aún.</p>
-            <button onClick={async () => { if (user) { await contactService.requestContact(user.id); fetchRequests(); } }}
-              className="mt-8 px-8 py-4 rounded-[22px] text-white text-base font-extrabold cursor-pointer border-none bg-indigo-500 hover:bg-indigo-600 transition-colors">
-              Solicitar Contacto
-            </button>
+          <div className="flex flex-col items-center justify-center pt-24">
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-5">
+              <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+            </div>
+            <p className="text-lg font-bold text-slate-400 dark:text-slate-500">No tienes mensajes aún.</p>
           </div>
         ) : (
-          <div className="grid gap-4 max-w-2xl">
+          /* Lista de solicitudes de contacto */
+          <div className="space-y-3">
             {requests.map((item, i) => {
+              /* Determina estado visual según status de la solicitud */
               const isAccepted = item.status === "accepted";
               const isPending = item.status === "pending";
               const isRejected = item.status === "rejected";
-              const admin = item.admin || {};
+              const statusColor = isAccepted ? "#10B981" : isPending ? "#F59E0B" : "#EF4444";
+              const statusLabel = isAccepted ? "ACEPTADO" : isPending ? "PENDIENTE" : "RECHAZADO";
+
               return (
-                <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="p-6 bg-white dark:bg-slate-800 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 cursor-pointer relative overflow-hidden"
-                  onClick={() => handleAction(item)}
-                  style={{ borderColor: isAccepted ? "#10B981" : undefined }}
+                /* Tarjeta individual con borde izquierdo de color según estado */
+                <motion.div key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                  className="group bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden"
+                  style={{ borderLeft: `3px solid ${statusColor}` }}
                 >
-                  <div className="flex justify-between items-center mb-4">
-                    <div className={`px-3 py-1.5 rounded-xl text-[11px] font-black ${isAccepted ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" : isPending ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" : "bg-red-100 dark:bg-red-900/30 text-red-600"}`}>
-                      {isAccepted ? "ACEPTADO" : isPending ? "PENDIENTE" : "RECHAZADO"}
-                    </div>
-                    <span className="text-[13px] text-slate-400">{new Date(item.created_at).toLocaleDateString()}</span>
-                  </div>
-
-                  <p className="text-base font-extrabold mb-2 dark:text-white">
-                    {item.initiator === "admin" ? (admin.contact_name ? `Mensaje de ${admin.contact_name}:` : "Mensaje del Administrador:") : "Tu solicitud:"}
-                  </p>
-                  <p className="text-sm leading-relaxed text-slate-500 line-clamp-3">{item.message || "Sin mensaje adicional."}</p>
-
-                  {isPending && item.initiator === "admin" && (
-                    <div className="flex gap-3 mt-5">
-                      <button onClick={(e) => { e.stopPropagation(); handleAccept(item.id); }} className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600">Aceptar</button>
-                      <button onClick={(e) => { e.stopPropagation(); handleReject(item.id); }} className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none bg-red-100 dark:bg-red-900/30 text-red-600">Declinar</button>
-                    </div>
-                  )}
-
-                  {isAccepted && (
-                    <div className="mt-5 p-5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
-                      <p className="text-xs font-extrabold uppercase tracking-[1px] mb-2 text-emerald-600">Contacto</p>
-                      {admin.contact_name && <p className="text-base font-bold mb-2 dark:text-white">👤 {admin.contact_name}</p>}
-                      {(admin.contact_email || admin.email) && <p className="text-base font-bold mb-2 dark:text-white">📧 {admin.contact_email || admin.email}</p>}
-                      {admin.contact_phone && <p className="text-base font-bold mb-3 dark:text-white">📞 {admin.contact_phone}</p>}
-                      <div className="flex gap-3 mt-2">
-                        {admin.contact_phone && (
-                          <button onClick={(e) => { e.stopPropagation(); window.open(`tel:${admin.contact_phone}`, "_self"); }} className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none flex items-center justify-center gap-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600">
-                            <Phone size={14} /> Llamar
-                          </button>
-                        )}
-                        {(admin.contact_email || admin.email) && (
-                          <button onClick={(e) => { e.stopPropagation(); window.open(`mailto:${admin.contact_email || admin.email}`, "_self"); }} className="flex-1 py-3 rounded-xl text-sm font-extrabold cursor-pointer border-none flex items-center justify-center gap-1 bg-violet-100 dark:bg-violet-900/30 text-violet-600">
-                            <Mail size={14} /> Email
-                          </button>
-                        )}
+                  <div className="p-5">
+                    {/* Cabecera: icono de estado, quién inició, fecha, badge */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm"
+                          style={{ backgroundColor: `${statusColor}15`, color: statusColor }}>
+                          {isAccepted ? "✓" : isPending ? "⏳" : "✗"}
+                        </div>
+                        <div>
+                          <span className="text-sm font-black dark:text-white">{item.initiator === "admin" ? "Mensaje del Administrador:" : "Tu solicitud:"}</span>
+                          <p className="text-[10px] font-bold text-slate-400 mt-0.5">{new Date(item.created_at).toLocaleDateString()}</p>
+                        </div>
                       </div>
+                      <span className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg"
+                        style={{ backgroundColor: `${statusColor}12`, color: statusColor }}>
+                        {statusLabel}
+                      </span>
                     </div>
-                  )}
 
-                  {isRejected && (
-                    <div className="mt-5 p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 text-center">
-                      <p className="text-sm font-bold text-red-600">Invitación declinada</p>
-                    </div>
-                  )}
+                    {/* Cuerpo del mensaje (texto opcional) */}
+                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 mb-4">
+                      {item.message || "Sin mensaje adicional."}
+                    </p>
+
+                    {/* Solicitud entrante del admin: botones Aceptar / Declinar */}
+                    {isPending && item.initiator === "admin" && (
+                      <div className="flex gap-2">
+                        <button onClick={(e) => { e.stopPropagation(); handleAccept(item.id); }}
+                          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer border-none transition-all hover:scale-[1.02]"
+                          style={{ backgroundColor: "#10B981", color: "#fff" }}>
+                          <Check className="w-3.5 h-3.5" /> Aceptar
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleReject(item.id); }}
+                          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer border-none transition-all hover:scale-[1.02]"
+                          style={{ backgroundColor: "#EF444415", color: "#EF4444" }}>
+                          <X className="w-3.5 h-3.5" /> Declinar
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Solicitud aceptada: botón para ver info del contacto profesional */}
+                    {isAccepted && (
+                      <button onClick={() => handleShowContact(item)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer border-none transition-all hover:scale-[1.02]"
+                        style={{ backgroundColor: "#10B98115", color: "#10B981" }}>
+                        <User className="w-3.5 h-3.5" /> Ver información de contacto
+                      </button>
+                    )}
+
+                    {/* Solicitud rechazada: mensaje informativo */}
+                    {isRejected && (
+                      <p className="text-xs font-bold text-slate-400 italic">Invitación declinada</p>
+                    )}
+                  </div>
                 </motion.div>
               );
             })}
@@ -143,6 +184,7 @@ export default function Inbox() {
         )}
       </div>
 
+      {/* Modal de contacto profesional (nombre, email, teléfono) */}
       <ContactInfoModal visible={contactModal.visible} onClose={() => setContactModal({ visible: false, name: "", email: "", phone: "" })} adminName={contactModal.name} adminEmail={contactModal.email} adminPhone={contactModal.phone} />
     </div>
   );

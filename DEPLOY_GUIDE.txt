@@ -3,26 +3,24 @@
 ==  INICIAR API LOCAL ==
 cd ai_api
 .\venv\Scripts\activate
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
+uvicorn main:app --host 0.0.0.0 --port 8000
 
-==  INICIAR TUNEL NGORK (otra terminal) ==
+==  EXPONER API CON NGROK (tunnel publico) ==
+cd ai_api
+.\venv\Scripts\activate
 ngrok http 8000
-# Copiar URL tipo https://xxx.ngrok-free.dev
+# URL publica: https://XXXX-XX-XX-XXX-XX.ngrok-free.app
 
-==  ACTUALIZAR URL EN VERCEL ==
-vercel env rm VITE_API_NGROK_URL production --yes
-echo "https://tu-nueva-url.ngrok-free.dev" | vercel env add VITE_API_NGROK_URL production --yes
-vercel --prod
+==  INICIAR FRONTEND ==
+cd mindmood-web
+npm run dev
 
 ==  DESPLEGAR FRONTEND A VERCEL ==
 cd mindmood-web
 vercel --prod
 
 ==  COMPROBAR ESTADO ==
-curl http://127.0.0.1:8000/health                    # API local
-curl -H "ngrok-skip-browser-warning: true" https://tu-url.ngrok-free.dev/health  # Tunnel
-curl https://mindmood-web.vercel.app                   # Frontend
+curl http://127.0.0.1:8000/health   # API local
+curl http://localhost:5173           # Frontend local
 
 ========================================================
-# Find and kill all ngrok processes
-taskkill /F /IM ngrok.exe
