@@ -1413,9 +1413,10 @@ def diagrama_flujo_pipeline_ia(doc, titulo="Pipeline de IA - 10 Etapas"):
     }
 
     n = len(etapas)
-    fig, ax = plt.subplots(figsize=(12, n * 0.95 + 2))
+    row_h = 1.35
+    fig, ax = plt.subplots(figsize=(12, n * row_h + 3))
     ax.set_xlim(0, 10)
-    ax.set_ylim(0, n * 0.95 + 2.5)
+    ax.set_ylim(0, n * row_h + 3.5)
     ax.axis('off')
     ax.set_title(titulo, fontsize=15, fontweight='bold', pad=20, color=PALETTA['primario'])
 
@@ -1425,51 +1426,54 @@ def diagrama_flujo_pipeline_ia(doc, titulo="Pipeline de IA - 10 Etapas"):
     # Dibujar fondos de capa
     last_capa = None
     capa_start_y = None
-    capa_rows = []
     for i, (_, _, capa) in enumerate(etapas):
-        y = (n - i) * 0.95 + 0.5
+        y = (n - i) * row_h + 0.8
         if capa != last_capa:
             if last_capa and capa_start_y is not None:
-                rect_h = capa_start_y - y + 0.9
+                rect_h = capa_start_y - y + (box_h + 0.15)
                 if rect_h > 0:
-                    bg_rect = mpatches.FancyBboxPatch((0.3, y - 0.2), 9.4, rect_h,
-                               boxstyle="round,pad=0.1", edgecolor='none',
+                    bg_rect = mpatches.FancyBboxPatch((0.15, y - 0.25), 9.7, rect_h,
+                               boxstyle="round,pad=0.15", edgecolor='none',
                                facecolor=capas_colors.get(last_capa, '#F8F9FA'), linewidth=0)
                     ax.add_patch(bg_rect)
-                    ax.text(0.6, y + (rect_h / 2) - 0.1, last_capa, fontsize=7, fontweight='bold',
+                    mid = y + (rect_h / 2) - 0.15
+                    ax.text(0.5, mid, last_capa, fontsize=7.5, fontweight='bold',
                            color=PALETTA['neutro'], rotation=90, va='center', ha='center')
             last_capa = capa
             capa_start_y = y
+
+    # Last capa background
     if last_capa and capa_start_y:
-        bottom_y = (n - (n - 1)) * 0.95 + 0.5 - 0.85
-        rect_h = capa_start_y - bottom_y + 0.5
+        bottom_y = (n - (n - 1)) * row_h + 0.8 - box_h - 0.3
+        rect_h = capa_start_y - bottom_y + (box_h + 0.15)
         if rect_h > 0:
-            bg_rect = mpatches.FancyBboxPatch((0.3, bottom_y - 0.2), 9.4, rect_h,
-                       boxstyle="round,pad=0.1", edgecolor='none',
+            bg_rect = mpatches.FancyBboxPatch((0.15, bottom_y - 0.15), 9.7, rect_h,
+                       boxstyle="round,pad=0.15", edgecolor='none',
                        facecolor=capas_colors.get(last_capa, '#F8F9FA'), linewidth=0)
             ax.add_patch(bg_rect)
-            ax.text(0.6, bottom_y + (rect_h / 2) - 0.1, last_capa, fontsize=7, fontweight='bold',
+            mid = bottom_y + (rect_h / 2)
+            ax.text(0.5, mid, last_capa, fontsize=7.5, fontweight='bold',
                    color=PALETTA['neutro'], rotation=90, va='center', ha='center')
 
-    # Dibujar cajas y flechas
-    positions = []
+    # Dibujar cajas con espacio amplio entre ellas
+    arrow_gap = 0.25
     for i, (texto, color, _) in enumerate(etapas):
-        y = (n - i) * 0.95 + 0.5
+        y = (n - i) * row_h + 0.8
         x = cx - box_w / 2
-        positions.append((x, y, color))
 
         rect = mpatches.FancyBboxPatch((x, y), box_w, box_h,
                boxstyle="round,pad=0.12", edgecolor=color,
                facecolor=f'{color}18', linewidth=2)
         ax.add_patch(rect)
         ax.text(cx, y + box_h / 2, texto, ha='center', va='center',
-                fontsize=7.5, fontweight='bold', color=color, linespacing=1.3)
+                fontsize=8, fontweight='bold', color=color, linespacing=1.3)
 
         if i > 0:
-            prev_y = positions[i - 1][1] + box_h
-            curr_y = y
-            ax.annotate('', xy=(cx, curr_y), xytext=(cx, prev_y),
-                       arrowprops=dict(arrowstyle='->', color=PALETTA['neutro'], lw=2.0))
+            start_y = y + box_h
+            end_y = y - arrow_gap
+            ax.annotate('', xy=(cx, end_y), xytext=(cx, start_y),
+                       arrowprops=dict(arrowstyle='->', color=PALETTA['neutro'], lw=2.2,
+                                      connectionstyle='arc3,rad=0'))
 
     plt.tight_layout()
     buf = _fig_to_png(fig)
