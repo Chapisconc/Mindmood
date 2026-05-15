@@ -14,7 +14,7 @@ import { motion } from "framer-motion";
 // Iconos de Lucide para toda la interfaz administrativa
 import {
   AlertTriangle, Search, Send, Shield, RefreshCw, Sun, Moon, LogOut,
-  Users, FileText, Activity, BarChart3, PieChart, Radar,
+  Users, FileText, Activity, BarChart3, PieChart, TrendingUp
 } from "lucide-react";
 // Recharts para el gráfico de pastel (donut)
 import { PieChart as RePieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
@@ -57,30 +57,7 @@ const MOOD_EMOJI = {
 const CHART_TYPES = [
   { id: "bar", icon: BarChart3, label: "Barras" },
   { id: "pie", icon: PieChart, label: "Pastel" },
-  { id: "radar", icon: Radar, label: "Radar" },
 ];
-
-/* Convierte coordenadas polares a cartesianas para dibujar arcos SVG */
-function polarToCartesian(cx, cy, r, angleDeg) {
-  const rad = ((angleDeg - 90) * Math.PI) / 180;
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-}
-
-/* Genera el string de path SVG para un arco de dona (anillo) */
-function describeDonutArc(cx, cy, innerR, outerR, startDeg, endDeg) {
-  const startOuter = polarToCartesian(cx, cy, outerR, endDeg);
-  const endOuter = polarToCartesian(cx, cy, outerR, startDeg);
-  const startInner = polarToCartesian(cx, cy, innerR, endDeg);
-  const endInner = polarToCartesian(cx, cy, innerR, startDeg);
-  const largeArc = endDeg - startDeg > 180 ? 1 : 0;
-  return [
-    `M ${startOuter.x} ${startOuter.y}`,
-    `A ${outerR} ${outerR} 0 ${largeArc} 0 ${endOuter.x} ${endOuter.y}`,
-    `L ${endInner.x} ${endInner.y}`,
-    `A ${innerR} ${innerR} 0 ${largeArc} 1 ${startInner.x} ${startInner.y}`,
-    `Z`,
-  ].join(" ");
-}
 
 /* Colores cíclicos para sectores del gráfico de pastel */
 const PIE_COLORS = ["#EC4899", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#F97316", "#84CC16", "#7C3AED", "#F43F5E", "#6366F1", "#14B8A6"];
@@ -105,79 +82,6 @@ function PieChartRecharts({ data, dominant }) {
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">predominante</span>
       </div>
     </div>
-  );
-}
-
-/* Componente de gráfico radar SVG personalizado */
-/* Dibuja polígonos concéntricos, ejes radiales, etiquetas y datos */
-function RadarChartSVG({ data, size = 430 }) {
-  const cx = size / 2;
-  const cy = size / 2;
-  const n = data.length;
-  const maxVal = Math.max(...data.map((d) => d.count), 1);
-  const r = size * 0.35;
-  const labelR = r + Math.max(20, Math.min(45, 55 - n * 2));
-  const fontSize = Math.max(6.5, Math.min(9, 11 - n * 0.3));
-
-  /* Calcula puntos de datos normalizados proporcionalmente */
-  const dataPoints = data.map((d, i) => {
-    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    const val = d.count / maxVal;
-    return { x: cx + r * val * Math.cos(angle), y: cy + r * val * Math.sin(angle), color: d.color, label: d.name, count: d.count };
-  });
-
-  /* String de polígono para los datos */
-  const dataPolygon = dataPoints.map((p) => `${p.x},${p.y}`).join(" ");
-
-  /* Punto en un eje a una escala dada (0-1) */
-  const getPoint = (i, scale) => {
-    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    return { x: cx + r * scale * Math.cos(angle), y: cy + r * scale * Math.sin(angle) };
-  };
-
-  /* Punto para etiqueta en el extremo del eje */
-  const getLabelPoint = (i, rScale) => {
-    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    const cos = Math.cos(angle), sin = Math.sin(angle);
-    const labelR_ = rScale;
-    let x = cx + labelR_ * cos;
-    let y = cy + labelR_ * sin;
-    return { x, y, angle: angle * 180 / Math.PI, cos, sin };
-  };
-
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {/* Cuadrícula concéntrica: 25%, 50%, 75%, 100% */}
-      {[0.25, 0.5, 0.75, 1].map((level, li) => (
-        <polygon key={li} points={data.map((_, i) => getPoint(i, level)).map((p) => `${p.x},${p.y}`).join(" ")}
-          fill="none" className="stroke-slate-200 dark:stroke-slate-700" strokeWidth="1" />
-      ))}
-      {/* Ejes radiales desde el centro */}
-      {data.map((_, i) => {
-        const end = getPoint(i, 1);
-        return <line key={i} x1={cx} y1={cy} x2={end.x} y2={end.y} className="stroke-slate-200 dark:stroke-slate-700" strokeWidth="1" />;
-      })}
-      {/* Etiquetas de cada eje */}
-      {data.map((_, i) => {
-        const lp = getLabelPoint(i, labelR);
-        const anchor = lp.cos > 0.1 ? "start" : lp.cos < -0.1 ? "end" : "middle";
-        return (
-          <text key={`lbl-${i}`} x={lp.x} y={lp.y} textAnchor={anchor} dominantBaseline="middle"
-            className="fill-slate-500 dark:fill-slate-400 font-bold uppercase" style={{ fontSize: `${fontSize}px` }}>
-            {data[i].name}
-          </text>
-        );
-      })}
-      {/* Polígono de datos con relleno semitransparente */}
-      <polygon points={dataPolygon} fill="rgba(99,102,241,0.12)" stroke="#6366F1" strokeWidth="2" />
-      {/* Puntos de datos interactivos con tooltip nativo SVG */}
-      {dataPoints.map((p, i) => (
-        <g key={i} className="cursor-pointer">
-          <title>{p.label}: {p.count} entradas</title>
-          <circle cx={p.x} cy={p.y} r="4.5" fill={p.color} stroke="#fff" strokeWidth="2" />
-        </g>
-      ))}
-    </svg>
   );
 }
 
@@ -580,12 +484,15 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              {/* Gráfico radar personalizado en SVG */}
-              {chartType === "radar" && (
-                <div className="flex justify-center py-4">
-                  <RadarChartSVG data={sortedMoods} size={300} />
-                </div>
-              )}
+              {/* Insight IA al pie del grafico */}
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                <TrendingUp size={18} className="text-indigo-500 shrink-0" />
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {sortedMoods[0]?.name === "Crisis" || sortedMoods[0]?.name === "Triste"
+                    ? `La emoción dominante es ${sortedMoods[0]?.name}. Se recomienda revisar las alarmas activas y contactar a los usuarios que requieran apoyo.`
+                    : `La emoción dominante es ${sortedMoods[0]?.name}. El estado general del sistema es favorable con ${Math.round((sortedMoods.filter(m => ["Feliz","Excelente","Neutral","Agradecido"].includes(m.name)).reduce((s,m)=>s+m.count,0) / Math.max(sortedMoods.reduce((s,m)=>s+m.count,0),1)) * 100)}% de emociones positivas o neutras.`}
+                </p>
+              </div>
             </div>
           )}
 
